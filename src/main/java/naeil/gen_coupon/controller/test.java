@@ -20,10 +20,13 @@ public class test {
     @PostMapping()
     public String testPostWorld (@RequestBody Map<String, String> var) {
         log.info("variable : {}", var.get("var"));
-        if (var.get("var").equalsIgnoreCase("a")) {
-            return "test test hello world";
+        String param = var.get("var");
+        if (param.equalsIgnoreCase("a")) {
+            return "a";
+        } else if ("b".equals(param)){
+            return "b";
         } else {
-            return "test";
+            return "c";
         }
     }
 }
