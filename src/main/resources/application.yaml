@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: gen-coupon
+  datasource:
+    url:
+    driver-class-name:
+    username:
+    password:
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    properties:
+      hibernate:
+        format_sql: true
+    messages:
+      basename: messages
+      encoding: utf-8
+      cache-duration: 3
+server:
+  port: 8081
