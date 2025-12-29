@@ -1,4 +1,4 @@
-package naeil.gen_coupon.dto.request;
+package naeil.gen_coupon.dto.response;
 
 import lombok.Builder;
 import lombok.Data;
