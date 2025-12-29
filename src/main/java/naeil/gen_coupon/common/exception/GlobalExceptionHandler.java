@@ -1,4 +1,4 @@
-package naeil.gen_coupon.common;
+package naeil.gen_coupon.common.exception;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;

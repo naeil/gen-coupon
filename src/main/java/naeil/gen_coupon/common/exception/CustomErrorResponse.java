@@ -1,4 +1,4 @@
-package naeil.gen_coupon.common;
+package naeil.gen_coupon.common.exception;
 
 
 import lombok.*;

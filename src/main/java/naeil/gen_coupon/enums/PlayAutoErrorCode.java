@@ -2,7 +2,7 @@ package naeil.gen_coupon.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import naeil.gen_coupon.common.CustomException;
+import naeil.gen_coupon.common.exception.CustomException;
 import org.springframework.http.HttpStatus;
 
 import java.util.Arrays;
