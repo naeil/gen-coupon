@@ -17,8 +17,11 @@ public class ShopEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer shopId;
+
     private String shopCode;
+
     private String shopName;
+
     @OneToMany(mappedBy = "order_history", fetch = FetchType.LAZY)
     private List<OrderHistoryEntity> orderHistoryEntities;
 }

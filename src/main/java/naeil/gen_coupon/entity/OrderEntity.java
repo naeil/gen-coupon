@@ -17,13 +17,19 @@ public class OrderEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer orderId;
+
     private String orderName;
+
     private String orderEmail;
+
     private String orderHtel;
+
     @OneToMany(mappedBy = "order_history", fetch = FetchType.LAZY)
     private List<OrderHistoryEntity> orderHistoryEntities;
+
     @OneToMany(mappedBy = "stamp", fetch = FetchType.LAZY)
     private List<StampEntity> stampEntities;
+
     @OneToMany(mappedBy = "coupon_issue", fetch = FetchType.LAZY)
     private List<CouponIssueEntity> couponIssueEntities;
 }

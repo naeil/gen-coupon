@@ -19,10 +19,14 @@ public class CouponEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer couponId;
+
     private String couponCode;
+
     private String couponName;
+
     @CreatedDate
     private LocalDateTime createDate;
+
     @OneToMany(mappedBy = "coupon_issue", fetch = FetchType.LAZY)
     private List<CouponIssueEntity> couponIssueEntities;
 }

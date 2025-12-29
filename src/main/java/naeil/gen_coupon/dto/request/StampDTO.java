@@ -11,14 +11,12 @@ import java.time.LocalDateTime;
 public class StampDTO {
 
     private Integer stampId;
-    private Integer count;
-    private LocalDateTime updateAt;
+    private LocalDateTime createDate;
 
     public static StampDTO toDTO(StampEntity stampEntity) {
         return StampDTO.builder()
                 .stampId(stampEntity.getStampId())
-                .count(stampEntity.getCount())
-                .updateAt(stampEntity.getUpdateAt())
+                .createDate(stampEntity.getCreateDate())
                 .build();
     }
 }

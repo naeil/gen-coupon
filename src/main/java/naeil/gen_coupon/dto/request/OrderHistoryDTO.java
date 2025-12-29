@@ -15,7 +15,8 @@ public class OrderHistoryDTO {
     private Integer payAmt;
     private String shopSaleName;
     private String shopOrdNoReal;
-    private LocalDateTime orderDate;
+    private LocalDateTime createDate;
+    private StampDTO stampDTO;
 
     public static OrderHistoryDTO toDTO(OrderHistoryEntity orderHistory) {
         return OrderHistoryDTO.builder()
@@ -24,7 +25,8 @@ public class OrderHistoryDTO {
                 .payAmt(orderHistory.getPayAmt())
                 .shopSaleName(orderHistory.getShopSaleName())
                 .shopOrdNoReal(orderHistory.getShopOrdNoReal())
-                .orderDate(orderHistory.getOrderDate())
+                .createDate(orderHistory.getCreateDate())
+                .stampDTO(StampDTO.toDTO(orderHistory.getStampEntity()))
                 .build();
     }
 }

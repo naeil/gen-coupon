@@ -28,7 +28,6 @@ public class OrderDTO {
                         .stream().map(OrderHistoryDTO::toDTO).toList())
                 .couponIssueDTOList(orderEntity.getCouponIssueEntities()
                         .stream().map(CouponIssueDTO::toDTO).toList())
-
                 .stampDTOList(orderEntity.getStampEntities()
                         .stream().map(StampDTO::toDTO).toList())
                 .build();

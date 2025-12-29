@@ -12,13 +12,13 @@ public class CouponIssueDTO {
 
     private Integer issueId;
     private String issuedCouponCode;
-    private LocalDateTime issuedDate;
+    private LocalDateTime createDate;
 
     public static CouponIssueDTO toDTO(CouponIssueEntity issue) {
         return CouponIssueDTO.builder()
                 .issueId(issue.getIssueId())
                 .issuedCouponCode(issue.getIssuedCouponCode())
-                .issuedDate(issue.getIssuedDate())
+                .createDate(issue.getCreateDate())
                 .build();
     }
 }

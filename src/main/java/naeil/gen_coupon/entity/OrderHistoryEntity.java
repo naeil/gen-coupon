@@ -17,15 +17,25 @@ public class OrderHistoryEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer orderHistoryId;
-    private String uniq;
-    private Integer payAmt;
-    private String shopSaleName;
-    private String shopOrdNoReal;
-    private LocalDateTime orderDate;
-    @ManyToOne
-    @JoinColumn(name = "shopId")
-    private ShopEntity shopEntity;
+
     @ManyToOne
     @JoinColumn(name = "orderId")
     private OrderEntity orderEntity;
+
+    @ManyToOne
+    @JoinColumn(name = "shopId")
+    private ShopEntity shopEntity;
+
+    private String uniq;
+
+    private Integer payAmt;
+
+    private String shopSaleName;
+
+    private String shopOrdNoReal;
+
+    private LocalDateTime createDate;
+
+    @OneToOne(mappedBy = "stamp", fetch = FetchType.LAZY)
+    private StampEntity stampEntity;
 }

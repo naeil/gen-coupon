@@ -17,12 +17,16 @@ public class CouponIssueEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer issueId;
-    private String issuedCouponCode;
-    private LocalDateTime issuedDate;
+
     @ManyToOne
     @JoinColumn(name = "couponId")
     private CouponEntity couponEntity;
+
     @ManyToOne
     @JoinColumn(name = "orderId")
     private OrderEntity orderEntity;
+
+    private String issuedCouponCode;
+
+    private LocalDateTime createDate;
 }

@@ -17,9 +17,14 @@ public class StampEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer stampId;
-    private Integer count;
-    private LocalDateTime updateAt;
+
     @OneToMany
     @JoinColumn(name = "orderId")
     private OrderEntity orderEntity;
+
+    @OneToOne
+    @JoinColumn(name = "orderHistoryId")
+    private OrderHistoryEntity orderHistoryEntity;
+
+    private LocalDateTime createDate;
 }
