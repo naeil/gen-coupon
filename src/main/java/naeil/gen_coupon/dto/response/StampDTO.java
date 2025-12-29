@@ -12,6 +12,7 @@ public class StampDTO {
 
     private Integer stampId;
     private LocalDateTime createDate;
+    private Integer issueId;
 
     public static StampDTO toDTO(StampEntity stampEntity) {
         return StampDTO.builder()

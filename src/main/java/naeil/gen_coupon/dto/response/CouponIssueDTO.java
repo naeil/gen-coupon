@@ -12,6 +12,8 @@ public class CouponIssueDTO {
 
     private Integer issueId;
     private String issuedCouponCode;
+    private String imwebCouponCode;
+    private String imwebCouponName;
     private LocalDateTime createDate;
 
     public static CouponIssueDTO toDTO(CouponIssueEntity issue) {

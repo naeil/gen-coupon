@@ -19,14 +19,14 @@ public class CouponIssueEntity {
     private Integer issueId;
 
     @ManyToOne
-    @JoinColumn(name = "couponId")
-    private CouponEntity couponEntity;
-
-    @ManyToOne
     @JoinColumn(name = "orderId")
     private OrderEntity orderEntity;
 
     private String issuedCouponCode;
+
+    private String imwebCouponCode;
+
+    private String imwebCouponName;
 
     private LocalDateTime createDate;
 }

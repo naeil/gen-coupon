@@ -27,4 +27,6 @@ public class StampEntity {
     private OrderHistoryEntity orderHistoryEntity;
 
     private LocalDateTime createDate;
+
+    private Integer issueId;
 }
