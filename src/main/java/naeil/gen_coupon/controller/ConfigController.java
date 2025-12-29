@@ -1,7 +1,7 @@
 package naeil.gen_coupon.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import naeil.gen_coupon.dto.ConfigDTO;
+import naeil.gen_coupon.dto.request.ConfigDTO;
 import naeil.gen_coupon.service.ConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

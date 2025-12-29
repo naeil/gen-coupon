@@ -1,7 +1,8 @@
 package naeil.gen_coupon.service;
 
 import jakarta.transaction.Transactional;
-import naeil.gen_coupon.dto.ConfigDTO;
+import naeil.gen_coupon.dto.request.ConfigDTO;
+import naeil.gen_coupon.dto.response.ConfigResponseDTO;
 import naeil.gen_coupon.entity.ConfigEntity;
 import naeil.gen_coupon.repository.ConfigRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,12 +18,12 @@ public class ConfigService {
     @Autowired
     private ConfigRepository configRepository;
 
-    public List<ConfigDTO> getConfig() {
+    public List<ConfigResponseDTO> getConfig() {
         List<ConfigEntity> configEntities = configRepository.findAll();
-        return configEntities.stream().map(ConfigDTO::toDTO).toList();
+        return configEntities.stream().map(ConfigResponseDTO::toDTO).toList();
     }
 
-    public List<ConfigDTO> updateConfig(List<ConfigDTO> configDTOList) {
+    public List<ConfigResponseDTO> updateConfig(List<ConfigDTO> configDTOList) {
         try{
             List<ConfigEntity> savedConfigEntity = new ArrayList<>();
             for(ConfigDTO configDTO : configDTOList){
@@ -34,6 +35,6 @@ public class ConfigService {
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
-        return configRepository.findAll().stream().map(ConfigDTO::toDTO).toList();
+        return configRepository.findAll().stream().map(ConfigResponseDTO::toDTO).toList();
     }
 }
