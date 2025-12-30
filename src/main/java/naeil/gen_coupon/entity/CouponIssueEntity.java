@@ -22,6 +22,7 @@ public class CouponIssueEntity {
     @JoinColumn(name = "customerId")
     private CustomerEntity customerEntity;
 
+    @Column(unique = true)
     private String issuedCouponCode;
 
     private String imwebCouponCode;

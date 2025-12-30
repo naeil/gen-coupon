@@ -1,0 +1,37 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+  application:
+    name: gen-coupon
+  datasource:
+    url: jdbc:mariadb://localhost:3306/gen-coupon?serverTimezone=Asia/Seoul
+    driver-class-name: org.mariadb.jdbc.Driver
+    username: ${naeil_db_username}
+    password: ${naeil_db_passwd}
+  jpa:
+    open-in-view: false
+    hibernate:
+      jdbc:
+        time_zone: Asia/Seoul
+      ddl-auto: none
+    properties:
+      hibernate:
+        format_sql: true
+    messages:
+      basename: messages
+      encoding: utf-8
+      cache-duration: 3
+server:
+  port: 8081
+  servlet:
+    context-path: "/naeil"
+
+imweb:
+  key: ${imweb_key}
+  secret: ${imweb_secret}
+
+playauto:
+  email: ${playauto_auth_email}
+  password: ${playauto_auth_passwd}
+  api-key: ${playauto_api_key}

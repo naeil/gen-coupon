@@ -2,7 +2,6 @@ package naeil.gen_coupon.common.config;
 
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.impl.DefaultRedirectStrategy;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.apache.hc.client5.http.socket.ConnectionSocketFactory;
@@ -54,7 +53,7 @@ public class RestTemplateConfig {
     }
 
     @Bean
-    public HttpComponentsClientHttpRequestFactory factory(CloseableHttpClient httpClient) {
+    public HttpComponentsClientHttpRequestFactory factory(HttpClient httpClient) {
         HttpComponentsClientHttpRequestFactory factory =
                 new HttpComponentsClientHttpRequestFactory(httpClient);
 
