@@ -13,9 +13,4 @@ public class GlobalExceptionHandler {
     public static ResponseEntity<CustomErrorResponse> customExceptionHandler(CustomException e) {
         return ResponseEntity.ok().body(CustomErrorResponse.errorResponse(e));
     }
-
-    @ExceptionHandler(Exception.class)
-    public static ResponseEntity<CustomErrorResponse> globalExceptionHandler(CustomException e) {
-        return ResponseEntity.ok().body(CustomErrorResponse.errorResponse(e.getDescription()));
-    }
 }

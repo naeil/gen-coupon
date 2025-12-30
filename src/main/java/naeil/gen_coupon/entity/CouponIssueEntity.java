@@ -19,8 +19,8 @@ public class CouponIssueEntity {
     private Integer issueId;
 
     @ManyToOne
-    @JoinColumn(name = "orderId")
-    private OrderEntity orderEntity;
+    @JoinColumn(name = "customerId")
+    private CustomerEntity customerEntity;
 
     private String issuedCouponCode;
 

@@ -24,6 +24,9 @@ public class ConfigController {
 
     @PutMapping()
     public ResponseEntity<?> updateCollectTime (@RequestBody List<ConfigDTO> configDTOList) {
+        configDTOList.forEach(
+                c -> log.info(c.getConfigKey().toString())
+        );
         return ResponseEntity.ok().body(configService.updateConfig(configDTOList));
     }
 }

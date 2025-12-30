@@ -18,9 +18,9 @@ public class StampEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer stampId;
 
-    @OneToMany
-    @JoinColumn(name = "orderId")
-    private OrderEntity orderEntity;
+    @ManyToOne
+    @JoinColumn(name = "customerId")
+    private CustomerEntity customerEntity;
 
     @OneToOne
     @JoinColumn(name = "orderHistoryId")

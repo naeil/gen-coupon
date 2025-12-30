@@ -8,28 +8,28 @@ import lombok.Setter;
 import java.util.List;
 
 @Entity
-@Table(name = "order")
+@Table(name = "customer")
 @Getter
 @Setter
 @RequiredArgsConstructor
-public class OrderEntity {
+public class CustomerEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer orderId;
+    private Integer customerId;
 
-    private String orderName;
+    private String customerName;
 
-    private String orderEmail;
+    private String customerEmail;
 
-    private String orderHtel;
+    private String customerHtel;
 
-    @OneToMany(mappedBy = "order_history", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "customerEntity", fetch = FetchType.LAZY)
     private List<OrderHistoryEntity> orderHistoryEntities;
 
-    @OneToMany(mappedBy = "stamp", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "customerEntity", fetch = FetchType.LAZY)
     private List<StampEntity> stampEntities;
 
-    @OneToMany(mappedBy = "coupon_issue", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "customerEntity", fetch = FetchType.LAZY)
     private List<CouponIssueEntity> couponIssueEntities;
 }

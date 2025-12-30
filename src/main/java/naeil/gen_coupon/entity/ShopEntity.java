@@ -22,6 +22,6 @@ public class ShopEntity {
 
     private String shopName;
 
-    @OneToMany(mappedBy = "order_history", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "shopEntity", fetch = FetchType.LAZY)
     private List<OrderHistoryEntity> orderHistoryEntities;
 }

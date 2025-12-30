@@ -1,6 +1,8 @@
 package naeil.gen_coupon.service;
 
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import naeil.gen_coupon.common.exception.CustomException;
 import naeil.gen_coupon.dto.request.ConfigDTO;
 import naeil.gen_coupon.dto.response.ConfigResponseDTO;
 import naeil.gen_coupon.entity.ConfigEntity;
@@ -13,6 +15,7 @@ import java.util.List;
 
 @Service
 @Transactional
+@Slf4j
 public class ConfigService {
 
     @Autowired
@@ -28,12 +31,12 @@ public class ConfigService {
             List<ConfigEntity> savedConfigEntity = new ArrayList<>();
             for(ConfigDTO configDTO : configDTOList){
                 ConfigEntity config = configRepository.findById(configDTO.getConfigId()).orElseThrow(() -> new IllegalArgumentException());
-                config.setConfigValue(config.getConfigValue());
+                config.setConfigValue(configDTO.getConfigValue());
                 savedConfigEntity.add(config);
             }
             configRepository.saveAll(savedConfigEntity);
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            throw new CustomException(500, e.getMessage());
         }
         return configRepository.findAll().stream().map(ConfigResponseDTO::toDTO).toList();
     }

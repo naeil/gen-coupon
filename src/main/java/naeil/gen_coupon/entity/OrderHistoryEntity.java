@@ -19,8 +19,8 @@ public class OrderHistoryEntity {
     private Integer orderHistoryId;
 
     @ManyToOne
-    @JoinColumn(name = "orderId")
-    private OrderEntity orderEntity;
+    @JoinColumn(name = "customerId")
+    private CustomerEntity customerEntity;
 
     @ManyToOne
     @JoinColumn(name = "shopId")
@@ -36,6 +36,6 @@ public class OrderHistoryEntity {
 
     private LocalDateTime createDate;
 
-    @OneToOne(mappedBy = "stamp", fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "orderHistoryEntity", fetch = FetchType.LAZY)
     private StampEntity stampEntity;
 }
