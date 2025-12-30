@@ -13,7 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import naeil.gen_coupon.dto.response.CouponIssueDTO;
 import naeil.gen_coupon.entity.ConfigEntity;
 import naeil.gen_coupon.entity.CouponIssueEntity;
-import naeil.gen_coupon.entity.OrderEntity;
+import naeil.gen_coupon.entity.CustomerEntity;
 import naeil.gen_coupon.entity.StampEntity;
 import naeil.gen_coupon.repository.ConfigRepository;
 import naeil.gen_coupon.repository.CouponIssueRepository;
@@ -32,9 +32,9 @@ public class Coupon {
         // 쿠폰 생성 로직 구현
         List<StampEntity> stamps = stampRepository.findByIssueIdIsNull();
 
-        Map<OrderEntity, List<StampEntity>> stampsByOrder = stamps.stream()
+        Map<CustomerEntity, List<StampEntity>> stampsByOrder = stamps.stream()
             .collect(Collectors.groupingBy(
-                stamp -> stamp.getOrderEntity()
+                stamp -> stamp.getCustomerEntity()
             ))
             .entrySet()
             .stream()
@@ -69,12 +69,12 @@ public class Coupon {
     }
 
     @Transactional
-    public List<CouponIssueEntity> issueCoupons(Map<OrderEntity, List<StampEntity>> stampsByOrder, List<CouponIssueDTO> fetchedCoupons) {
+    public List<CouponIssueEntity> issueCoupons(Map<CustomerEntity, List<StampEntity>> stampsByOrder, List<CouponIssueDTO> fetchedCoupons) {
 
         List<CouponIssueEntity> issuedCoupons = new ArrayList<>();
-        for (Map.Entry<OrderEntity, List<StampEntity>> entry : stampsByOrder.entrySet()) {
+        for (Map.Entry<CustomerEntity, List<StampEntity>> entry : stampsByOrder.entrySet()) {
 
-            OrderEntity order = entry.getKey();
+            CustomerEntity customer = entry.getKey();
             List<StampEntity> stamps = entry.getValue();
 
             // 1️⃣ CouponIssue 생성 및 저장
