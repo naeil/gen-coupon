@@ -1,17 +1,19 @@
 package naeil.gen_coupon.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 import lombok.Data;
 import naeil.gen_coupon.entity.StampEntity;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Data
 @Builder
 public class StampDTO {
 
     private Integer stampId;
-    private LocalDateTime createDate;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private LocalDate createDate;
     private Integer issueId;
 
     public static StampDTO toDTO(StampEntity stampEntity) {

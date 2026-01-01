@@ -1,17 +1,16 @@
 package naeil.gen_coupon.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "customer")
 @Getter
 @Setter
-@RequiredArgsConstructor
+@NoArgsConstructor
 public class CustomerEntity {
 
     @Id
@@ -20,16 +19,24 @@ public class CustomerEntity {
 
     private String customerName;
 
+    @Column(unique = true)
     private String customerEmail;
 
+    @Column(unique = true)
     private String customerHtel;
 
-    @OneToMany(mappedBy = "customerEntity", fetch = FetchType.LAZY)
-    private List<OrderHistoryEntity> orderHistoryEntities;
+    @OneToMany(mappedBy = "customerEntity", cascade = CascadeType.PERSIST)
+    private List<OrderHistoryEntity> orderHistoryEntities = new ArrayList<>();
 
-    @OneToMany(mappedBy = "customerEntity", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "customerEntity")
     private List<StampEntity> stampEntities;
 
-    @OneToMany(mappedBy = "customerEntity", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "customerEntity")
     private List<CouponIssueEntity> couponIssueEntities;
+
+    public CustomerEntity(String name, String email, String htel) {
+        this.customerName = name;
+        this.customerEmail = email;
+        this.customerHtel = htel;
+    }
 }

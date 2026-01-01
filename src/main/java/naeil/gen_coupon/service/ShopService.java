@@ -26,7 +26,6 @@ public class ShopService {
     @Autowired
     private ShopRepository shopRepository;
 
-    // todo : order_history 업데이트 시 아래 메소드 호출 -> shop 변경 사항 업데이트 -> order_history에서 조회되는 shopcode로 shop entity 조회 후 관계저장
     public void syncShopInfo(String token) {
 
         PlayAutoShopResponseDTO[] shopInfoList = playAutoExternal.getShopInfo(token);
@@ -53,5 +52,9 @@ public class ShopService {
         } catch (Exception e) {
             throw new CustomException(500, "DB error");
         }
+    }
+
+    public ShopEntity getShopEntity(String shopCode) {
+        return shopRepository.findByShopCode(shopCode);
     }
 }

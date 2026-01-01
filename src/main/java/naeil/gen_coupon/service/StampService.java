@@ -1,14 +1,15 @@
 package naeil.gen_coupon.service;
 
-import java.util.List;
-
-import org.springframework.stereotype.Service;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import naeil.gen_coupon.dto.response.StampDTO;
+import naeil.gen_coupon.entity.OrderHistoryEntity;
 import naeil.gen_coupon.entity.StampEntity;
 import naeil.gen_coupon.repository.StampRepository;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -27,5 +28,15 @@ public class StampService {
         }
 
         return stamps.stream().map(stamp -> StampDTO.toDTO(stamp)).toList();
+    }
+
+    public void createStamp(List<OrderHistoryEntity> orderHistories) {
+
+        List<StampEntity> stampEntities = new ArrayList<>();
+        for(OrderHistoryEntity history : orderHistories) {
+            StampEntity stamp = new StampEntity(history);
+            stampEntities.add(stamp);
+        }
+        stampRepository.saveAll(stampEntities);
     }
 }

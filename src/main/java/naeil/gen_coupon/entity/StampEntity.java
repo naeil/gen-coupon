@@ -2,20 +2,20 @@ package naeil.gen_coupon.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "stamp")
 @Getter
 @Setter
-@RequiredArgsConstructor
+@NoArgsConstructor
 public class StampEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer stampId;
 
     @ManyToOne
@@ -26,7 +26,13 @@ public class StampEntity {
     @JoinColumn(name = "orderHistoryId")
     private OrderHistoryEntity orderHistoryEntity;
 
-    private LocalDateTime createDate;
+    private LocalDate createDate;
 
     private Integer issueId;
+
+    public StampEntity (OrderHistoryEntity orderHistory) {
+        this.customerEntity = orderHistory.getCustomerEntity();
+        this.orderHistoryEntity =orderHistory;
+        this.createDate = LocalDate.now();
+    }
 }
