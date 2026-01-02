@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 
 @Getter
@@ -43,6 +44,7 @@ public class PlayAutoOrderHistoryResponseDTO {
     // EDITED: api 수집 + 주문정보 수정
 
     @JsonProperty("pay_amt")
+    @Setter
     private Integer payAmt;
 
     @JsonProperty("discount_amt")

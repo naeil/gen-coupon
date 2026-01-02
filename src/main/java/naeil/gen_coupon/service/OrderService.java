@@ -38,14 +38,12 @@ public class OrderService {
     @Autowired
     private OrderHistoryRepository orderHistoryRepository;
 
-    private final Map<String, CustomerEntity> customer = new HashMap<>();
-
     @Transactional
     public void createOrderInfo() {
         log.info("save order history method");
         String token = playAutoExternal.getPlayToken();
 
-        playAutoExternal.getShopInfo(token);
+        shopService.syncShopInfo(token);
 
         PlayAutoOrderHistoryResponseDTO[] orderHistoryInfos =
                 playAutoExternal.getOrderInfo(token);
@@ -56,7 +54,6 @@ public class OrderService {
         Map<String, ShopEntity> shopMap = new HashMap<>();
 
         for (PlayAutoOrderHistoryResponseDTO dto : filteredOrders) {
-
             ShopEntity shop = shopMap.computeIfAbsent(
                     dto.getShopCode(),
                     shopService::getShopEntity
@@ -81,24 +78,22 @@ public class OrderService {
     // todo : 주문 내역 관련 조회 메소드
 
     private CustomerEntity getCustomInfo(PlayAutoOrderHistoryResponseDTO dto) {
-        return customer.computeIfAbsent(
-                dto.getOrderHtel(),
-                h -> customerRepository.findByCustomerHtel(h)
-                        .orElseGet(() ->
-                                customerRepository.save(
-                                    new CustomerEntity(
-                                            dto.getOrderName(),
-                                            dto.getOrderEmail(),
-                                            h
+        return customerRepository.findByCustomerHtel(dto.getOrderHtel())
+                .orElseGet(() ->
+                        customerRepository.save(
+                                new CustomerEntity(
+                                        dto.getOrderName(),
+                                        dto.getOrderEmail(),
+                                        dto.getOrderHtel()
                                 )
                         )
-                )
-        );
+                );
     }
 
     private List<PlayAutoOrderHistoryResponseDTO> filteredOrders (PlayAutoOrderHistoryResponseDTO[] orderHistoryInfos) {
-        ConfigEntity config = configRepository.findByConfigKey("minimum_amount");
-        Integer standardAmt = Integer.parseInt(config.getConfigValue());
+        log.info("filtering order");
+        ConfigEntity config = configRepository.findByConfigKey("minimum_amount").orElse(null);
+        Integer standardAmt = config != null ? Integer.parseInt(config.getConfigValue()) : 20000;
 
         List<String> uniqList = Arrays.stream(orderHistoryInfos)
                 .map(PlayAutoOrderHistoryResponseDTO::getUniq)
@@ -108,26 +103,44 @@ public class OrderService {
         Set<String> existUniqList = new HashSet<>(orderHistoryRepository.findExistingUniqs(uniqList));
 
         return Arrays.stream(orderHistoryInfos)
-                        .filter(dto -> !existUniqList.contains(dto.getUniq()))
-                        .filter(dto -> isValidHtel(dto.getOrderHtel()))
-                        .filter(dto -> {
-                            // 아임웹
-                            if ("아임웹".equals(dto.getShopName())) {
-                                Integer realAmount =
-                                        dto.getSales()
-                                                - (dto.getShopDiscount()
-                                                + dto.getSellerDiscount()
-                                                + dto.getCouponDiscount()
-                                                + dto.getPointDiscount()
-                                        );
-                                return realAmount >= standardAmt;
-                            }
-                            // 아임웹 아님
-                            else {
-                                return dto.getPayAmt() >= standardAmt;
-                            }
-                        })
-                        .toList();
+                .map(dto -> {
+                    if ("아임웹".equals(dto.getShopName())) {
+                        Integer realAmount =
+                                dto.getSales()
+                                        - (dto.getShopDiscount()
+                                        + dto.getSellerDiscount()
+                                        + dto.getCouponDiscount()
+                                        + dto.getPointDiscount());
+                        dto.setPayAmt(realAmount); // payAmt 갱신
+                    }
+                    return dto;
+                })
+                .filter(dto -> !existUniqList.contains(dto.getUniq()))
+                .filter(dto -> isValidHtel(dto.getOrderHtel()))
+                .filter(dto -> dto.getPayAmt() >= standardAmt) // 아임웹/아임웹아님 통합
+                .toList();
+//        return Arrays.stream(orderHistoryInfos)
+//                        .filter(dto -> !existUniqList.contains(dto.getUniq()))
+//                        .filter(dto -> isValidHtel(dto.getOrderHtel()))
+//                        .filter(dto -> {
+//                            // 아임웹
+//                            if ("아임웹".equals(dto.getShopName())) {
+//                                Integer realAmount =
+//                                        dto.getSales()
+//                                                - (dto.getShopDiscount()
+//                                                + dto.getSellerDiscount()
+//                                                + dto.getCouponDiscount()
+//                                                + dto.getPointDiscount()
+//                                        );
+//                                dto.setPayAmt(realAmount);
+//                                return realAmount >= standardAmt;
+//                            }
+//                            // 아임웹 아님
+//                            else {
+//                                return dto.getPayAmt() >= standardAmt;
+//                            }
+//                        })
+//                        .toList();
     }
 
     private boolean isValidHtel(String htel) {

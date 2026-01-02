@@ -1,5 +1,6 @@
 package naeil.gen_coupon.common.external;
 
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import naeil.gen_coupon.common.exception.CustomException;
 import naeil.gen_coupon.dto.external.PlayAutoOrderHistoryResponseDTO;
@@ -89,6 +90,7 @@ public class PlayAutoExternal {
         return token;
     }
 
+    @Transactional
     public PlayAutoShopResponseDTO[] getShopInfo(String token) {
 
         HttpHeaders headers = new HttpHeaders();

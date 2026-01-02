@@ -15,7 +15,7 @@ import java.time.LocalDate;
 public class StampEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer stampId;
 
     @ManyToOne

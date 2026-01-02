@@ -1,4 +1,68 @@
 package naeil.gen_coupon.scheduler;
 
+import lombok.extern.slf4j.Slf4j;
+import naeil.gen_coupon.enums.TimeUnitType;
+import naeil.gen_coupon.service.OrderService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.stereotype.Component;
+
+import java.util.concurrent.ScheduledFuture;
+
+@Component
+@Slf4j
 public class CollectDataScheduler {
+
+    @Autowired
+    private TaskScheduler taskScheduler;
+
+    @Autowired
+    private OrderService orderService;
+
+    private ScheduledFuture<?> scheduledFuture;
+
+    public synchronized void start(String configValue) {
+        log.info("schedule start");
+        log.info("collect time : {}", configValue);
+        long interval;
+        String value = "";
+        try {
+             value = (configValue != null && !configValue.isBlank())
+                        ? configValue
+                        : "1m";
+
+            interval = TimeUnitType.toMillis(value);
+        } catch (Exception e) {
+            log.error("Invalid schedule config. fall bach to 24h", e);
+            interval = TimeUnitType.toMillis("24h");
+        }
+
+        stop();
+
+        execute();
+
+        scheduledFuture = taskScheduler.scheduleWithFixedDelay(
+                this::execute,
+                interval
+        );
+
+        log.info("Scheduler started. interval={}", value);
+
+    }
+
+    public synchronized void stop() {
+        if (scheduledFuture != null) {
+            scheduledFuture.cancel(false);
+            log.info("Scheduler stopped");
+        }
+    }
+
+    private void execute() {
+        try {
+            log.info("Scheduler executing...");
+            orderService.createOrderInfo();
+        } catch (Exception e) {
+            log.error("Scheduler execution error", e);
+        }
+    }
 }

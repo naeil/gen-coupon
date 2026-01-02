@@ -1,15 +1,8 @@
 package naeil.gen_coupon.scheduler;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import naeil.gen_coupon.common.exception.CustomException;
 import naeil.gen_coupon.dto.response.CouponIssueDTO;
 import naeil.gen_coupon.entity.ConfigEntity;
 import naeil.gen_coupon.entity.CouponIssueEntity;
@@ -18,6 +11,13 @@ import naeil.gen_coupon.entity.StampEntity;
 import naeil.gen_coupon.repository.ConfigRepository;
 import naeil.gen_coupon.repository.CouponIssueRepository;
 import naeil.gen_coupon.repository.StampRepository;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -51,7 +51,7 @@ public class Coupon {
         Long totalCouponCount = couponIssueRepository.count();
 
         // 아임웹에서 쿠폰 발급 조회(디비에서 구한 갯수를 토대로)
-        ConfigEntity config = configRepository.findByConfigKey("imweb_coupon_code");
+        ConfigEntity config = configRepository.findByConfigKey("imweb_coupon_code").orElseThrow(() -> new CustomException(500, "DB read error"));
         String couponCode = config.getConfigValue();
 
         // stampsByOrder 맵의 키값을 기준으로 필요한 쿠폰 갯수 계산 후, 모자란 경우 한번 더 조회

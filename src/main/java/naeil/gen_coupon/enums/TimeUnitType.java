@@ -2,9 +2,11 @@ package naeil.gen_coupon.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Getter
 @RequiredArgsConstructor
+@Slf4j
 public enum TimeUnitType {
 
     S("s", 1000L),
@@ -23,7 +25,9 @@ public enum TimeUnitType {
         value = value.trim().toLowerCase();
 
         String num = value.substring(0, value.length() - 1);
+        log.info("time : {}", num);
         String unit = value.substring(value.length() -1);
+        log.info("time unit : {}", unit);
 
         int time;
         try {
@@ -40,11 +44,11 @@ public enum TimeUnitType {
             if(t.suffix.equals(unit)) {
                 long millis = time * t.millis;
 
-                if (time < 60_000) {
+                if (millis < 60_000) {
                     throw new IllegalArgumentException("Interval is too short");
                 }
 
-                if (time > 86_400_000L) {
+                if (millis > 86_400_000L) {
                     throw new IllegalArgumentException("Interval is too long");
                 }
                 return millis;
