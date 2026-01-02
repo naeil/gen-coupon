@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import naeil.gen_coupon.common.external.PlayAutoExternal;
 import naeil.gen_coupon.dto.external.PlayAutoOrderHistoryResponseDTO;
+import naeil.gen_coupon.dto.response.CustomerDTO;
 import naeil.gen_coupon.entity.ConfigEntity;
 import naeil.gen_coupon.entity.CustomerEntity;
 import naeil.gen_coupon.entity.OrderHistoryEntity;
@@ -37,6 +38,12 @@ public class OrderService {
 
     @Autowired
     private OrderHistoryRepository orderHistoryRepository;
+
+    @Transactional
+    public List<CustomerDTO> getCustomerInfos(){
+        List<CustomerEntity> customerEntities = customerRepository.findAll();
+        return customerEntities.stream().map(CustomerDTO::toDTO).toList();
+    }
 
     @Transactional
     public void createOrderInfo() {
@@ -79,6 +86,7 @@ public class OrderService {
     // todo : 주문 내역 관련 조회 메소드
 
     private CustomerEntity getCustomInfo(PlayAutoOrderHistoryResponseDTO dto) {
+        // todo : email, htel 암호화 필요
         return customerRepository.findByCustomerHtel(dto.getOrderHtel())
                 .orElseGet(() ->
                         customerRepository.save(

@@ -2,6 +2,7 @@ package naeil.gen_coupon.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import naeil.gen_coupon.common.converter.EncryptConverter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,9 +21,11 @@ public class CustomerEntity {
     private String customerName;
 
     @Column(unique = true)
+    @Convert(converter = EncryptConverter.class)
     private String customerEmail;
 
     @Column(unique = true)
+    @Convert(converter = EncryptConverter.class)
     private String customerHtel;
 
     @OneToMany(mappedBy = "customerEntity", cascade = CascadeType.PERSIST)

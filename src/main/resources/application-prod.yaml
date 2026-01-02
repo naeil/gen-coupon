@@ -35,3 +35,6 @@ playauto:
   email: ${playauto_auth_email}
   password: ${playauto_auth_passwd}
   api-key: ${playauto_api_key}
+
+crypto:
+  secret_key: ${secret_key}
