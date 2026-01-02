@@ -1,6 +1,7 @@
 package naeil.gen_coupon.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -30,4 +31,16 @@ public class CouponIssueEntity {
     private String imwebCouponName;
 
     private LocalDateTime createDate;
+
+    @Builder
+    public CouponIssueEntity(CustomerEntity customerEntity, 
+        String issuedCouponCode, 
+        String imwebCouponCode, 
+        String imwebCouponName) {   
+        this.customerEntity = customerEntity;
+        this.issuedCouponCode = issuedCouponCode;
+        this.imwebCouponCode = imwebCouponCode;
+        this.imwebCouponName = imwebCouponName;
+        this.createDate = LocalDateTime.now();
+    }
 }
