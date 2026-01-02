@@ -27,6 +27,7 @@ public class CollectDataScheduler {
         long interval;
         String value = "";
         try {
+            // test 로 인해 1m default 값 설정 해둠
              value = (configValue != null && !configValue.isBlank())
                         ? configValue
                         : "1m";
@@ -37,6 +38,7 @@ public class CollectDataScheduler {
             interval = TimeUnitType.toMillis("24h");
         }
 
+        // 스케줄 값 새로 설정 시 기존 스케줄을 종료 후 다시 시작
         stop();
 
         execute();

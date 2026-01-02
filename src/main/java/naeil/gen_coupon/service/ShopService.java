@@ -26,6 +26,7 @@ public class ShopService {
     @Autowired
     private ShopRepository shopRepository;
 
+    // shop 정보 동기화
     public void syncShopInfo(String token) {
 
         PlayAutoShopResponseDTO[] shopInfoList = playAutoExternal.getShopInfo(token);
@@ -34,8 +35,8 @@ public class ShopService {
         Arrays.stream(shopInfoList)
                 .collect(Collectors.toMap(
                         PlayAutoShopResponseDTO::getShopCode,   // key
-                        dto -> dto,                            // value
-                        (a, b) -> a                            // 중복 제거
+                        dto -> dto,      // value
+                        (a, b) -> a   // 중복 제거
                 ))
                 .values()
                 .forEach(dto -> {

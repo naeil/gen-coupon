@@ -43,6 +43,7 @@ public class OrderService {
         log.info("save order history method");
         String token = playAutoExternal.getPlayToken();
 
+        // shop 정보 업데이트
         shopService.syncShopInfo(token);
 
         PlayAutoOrderHistoryResponseDTO[] orderHistoryInfos =
@@ -104,6 +105,7 @@ public class OrderService {
 
         return Arrays.stream(orderHistoryInfos)
                 .map(dto -> {
+                    // 아임웹인 경우
                     if ("아임웹".equals(dto.getShopName())) {
                         Integer realAmount =
                                 dto.getSales()
@@ -117,7 +119,7 @@ public class OrderService {
                 })
                 .filter(dto -> !existUniqList.contains(dto.getUniq()))
                 .filter(dto -> isValidHtel(dto.getOrderHtel()))
-                .filter(dto -> dto.getPayAmt() >= standardAmt) // 아임웹/아임웹아님 통합
+                .filter(dto -> dto.getPayAmt() >= standardAmt)
                 .toList();
 //        return Arrays.stream(orderHistoryInfos)
 //                        .filter(dto -> !existUniqList.contains(dto.getUniq()))
@@ -143,6 +145,7 @@ public class OrderService {
 //                        .toList();
     }
 
+    // 휴대폰 번호 validation check 메소드
     private boolean isValidHtel(String htel) {
         if (htel == null) {
             return false;

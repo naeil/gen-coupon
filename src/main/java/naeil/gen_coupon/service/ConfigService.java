@@ -49,6 +49,7 @@ public class ConfigService {
 
                 ConfigEntity config = configRepository.findById(configDTO.getConfigId()).orElseThrow(() -> new IllegalArgumentException());
 
+                // 스케줄 시간 값 변경 확인
                 if("collect_time".equalsIgnoreCase(config.getConfigKey())
                         && !Objects.equals(config.getConfigValue(), configDTO.getConfigValue())) {
                     log.info("collect time changed");
@@ -62,6 +63,7 @@ public class ConfigService {
             }
             configRepository.saveAll(savedConfigEntity);
 
+            // 새로운 시간으로 스케줄 재시작
             if(scheduleTimeChanged) {
                 scheduler.start(interval);
             }
