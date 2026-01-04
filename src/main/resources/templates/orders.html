@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: common-head('주문 목록')"></head>
+
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div th:replace="fragments/sidebar :: sidebar('orders')"></div>
+
+        <!-- 🔹 Main Content -->
+        <main class="col-md-10 content">
+
+            <!-- Header -->
+            <div class="mb-4">
+                <h3>주문 내역</h3>
+                <p class="text-muted mb-0">
+                    주문 및 스탬프 정보를 조회합니다.
+                </p>
+            </div>
+
+            <!-- 🔹 Filter -->
+            <form class="card shadow-sm mb-4 p-3"
+                  th:action="@{/orders}" method="get">
+
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">사용자</label>
+                        <select class="form-select" name="userId">
+                            <option value="">전체</option>
+                            <option th:each="user : ${users}"
+                                    th:value="${user.id}"
+                                    th:text="${user.email}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">시작일</label>
+                        <input type="date" class="form-control" name="fromDate">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">종료일</label>
+                        <input type="date" class="form-control" name="toDate">
+                    </div>
+
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary w-100">
+                            조회
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- 🔹 Order Table -->
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>주문번호</th>
+                            <th>사용자</th>
+                            <th>주문금액</th>
+                            <th>주문일</th>
+                            <th>스탬프 ID</th>
+                            <th class="text-center">상세</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="order : ${orders}">
+                            <td th:text="${order.orderCode}">ORD-001</td>
+                            <td th:text="${order.userEmail}">user@email.com</td>
+                            <td th:text="${order.amount}">50,000</td>
+                            <td th:text="${order.orderedAt}">2025-01-01</td>
+                            <td th:text="${order.stampId}">STAMP-001</td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-secondary"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#orderDetailModal"
+                                        th:attr="data-order-id=${order.id}">
+                                    보기
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<!-- 🔹 Order Detail Modal -->
+<div class="modal fade" id="orderDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">주문 상세</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <table class="table table-sm">
+                    <tbody>
+                    <tr>
+                        <th>주문번호</th>
+                        <td>ORD-001</td>
+                    </tr>
+                    <tr>
+                        <th>사용자</th>
+                        <td>user@email.com</td>
+                    </tr>
+                    <tr>
+                        <th>주문금액</th>
+                        <td>50,000</td>
+                    </tr>
+                    <tr>
+                        <th>주문일</th>
+                        <td>2025-01-01</td>
+                    </tr>
+                    <tr>
+                        <th>스탬프 ID</th>
+                        <td>STAMP-001</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

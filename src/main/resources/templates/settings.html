@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: common-head('설정')"></head>
+
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div th:replace="fragments/sidebar :: sidebar('settings')"></div>
+
+        <!-- 🔹 Main Content -->
+        <main class="col-md-10 content">
+
+            <!-- Header -->
+            <div class="mb-4">
+                <h3>설정 관리</h3>
+                <p class="text-muted mb-0">
+                    쿠폰 발급 정책 및 스케줄러 설정을 관리합니다.
+                </p>
+            </div>
+
+            <!-- 🔹 Settings Form -->
+            <form th:action="@{/settings/save}" th:object="${settings}" method="post">
+
+                <!-- 스케줄러 설정 -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <strong>스케줄러 설정</strong>
+                    </div>
+                    <div class="card-body">
+
+                        <div class="row mb-3">
+                            <label class="col-sm-3 col-form-label">
+                                실행 주기 (분)
+                            </label>
+                            <div class="col-sm-4">
+                                <input type="number"
+                                       class="form-control"
+                                       th:field="*{schedulerIntervalMinutes}"
+                                       min="1"
+                                       required>
+                            </div>
+                            <div class="col-sm-5 text-muted">
+                                예) 60 → 1시간마다 실행
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 쿠폰 발급 조건 -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <strong>쿠폰 발급 조건</strong>
+                    </div>
+                    <div class="card-body">
+
+                        <div class="row mb-3">
+                            <label class="col-sm-3 col-form-label">
+                                최소 주문 금액
+                            </label>
+                            <div class="col-sm-4">
+                                <input type="number"
+                                       class="form-control"
+                                       th:field="*{minimumOrderAmount}"
+                                       min="0"
+                                       required>
+                            </div>
+                            <div class="col-sm-5 text-muted">
+                                쿠폰 발급 대상이 되는 최소 주문 금액
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 쿠폰 정보 -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <strong>쿠폰 정보</strong>
+                    </div>
+                    <div class="card-body">
+
+                        <div class="row mb-3">
+                            <label class="col-sm-3 col-form-label">
+                                쿠폰 코드
+                            </label>
+                            <div class="col-sm-4">
+                                <input type="text"
+                                       class="form-control"
+                                       th:field="*{couponCode}"
+                                       placeholder="WELCOME10">
+                            </div>
+                            <div class="col-sm-5 text-muted">
+                                비워두면 기본값(init-sql) 사용
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <label class="col-sm-3 col-form-label">
+                                쿠폰 이름
+                            </label>
+                            <div class="col-sm-4">
+                                <input type="text"
+                                       class="form-control"
+                                       th:field="*{couponName}"
+                                       placeholder="웰컴 쿠폰">
+                            </div>
+                            <div class="col-sm-5 text-muted">
+                                관리자 화면 표시용 이름
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 저장 버튼 -->
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary px-4">
+                        저장
+                    </button>
+                </div>
+
+            </form>
+
+        </main>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

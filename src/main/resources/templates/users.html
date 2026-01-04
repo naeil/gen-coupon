@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: common-head('사용자 관리')"></head>
+
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div th:replace="fragments/sidebar :: sidebar('users')"></div>
+
+        <!-- 🔹 Main Content -->
+        <main class="col-md-10 content">
+
+            <!-- Header -->
+            <div class="mb-4">
+                <h3>사용자 목록</h3>
+                <p class="text-muted mb-0">
+                    사용자별 쿠폰 발급 현황 및 주문 내역을 조회합니다.
+                </p>
+            </div>
+
+            <!-- 🔹 User Table -->
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>이메일</th>
+                            <th>이름</th>
+                            <th>가입일</th>
+                            <th class="text-center">쿠폰</th>
+                            <th class="text-center">주문</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="user : ${users}">
+                            <td th:text="${user.id}">1</td>
+                            <td th:text="${user.email}">user@email.com</td>
+                            <td th:text="${user.name}">홍길동</td>
+                            <td th:text="${user.createdAt}">2025-01-01</td>
+
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-primary action-btn"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#couponModal"
+                                        th:attr="data-user-id=${user.id}">
+                                    쿠폰 보기
+                                </button>
+                            </td>
+
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-secondary action-btn"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#orderModal"
+                                        th:attr="data-user-id=${user.id}">
+                                    주문 보기
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<!-- 🔹 Coupon Modal -->
+<div class="modal fade" id="couponModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">발급된 쿠폰</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <table class="table table-sm">
+                    <thead>
+                    <tr>
+                        <th>쿠폰 코드</th>
+                        <th>발급일</th>
+                        <th>상태</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <!-- AJAX or Thymeleaf fragment -->
+                    <tr>
+                        <td>WELCOME10</td>
+                        <td>2025-01-10</td>
+                        <td><span class="badge bg-secondary">미사용</span></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- 🔹 Order Modal -->
+<div class="modal fade" id="orderModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">주문 내역</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <table class="table table-sm">
+                    <thead>
+                    <tr>
+                        <th>주문번호</th>
+                        <th>주문금액</th>
+                        <th>주문일</th>
+                        <th>스탬프 ID</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <!-- AJAX or Thymeleaf fragment -->
+                    <tr>
+                        <td>ORD-20250101</td>
+                        <td>50,000</td>
+                        <td>2025-01-01</td>
+                        <td>STAMP-001</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
