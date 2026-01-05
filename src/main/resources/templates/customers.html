@@ -6,7 +6,7 @@
 <div class="container-fluid">
     <div class="row">
         <!-- Sidebar -->
-        <div th:replace="~{fragments/sidebar :: sidebar('users')}"></div>
+        <div th:replace="~{fragments/sidebar :: sidebar('customers')}"></div>
 
         <!-- 🔹 Main Content -->
         <main class="col-md-10 content">
@@ -19,7 +19,7 @@
                 </p>
             </div>
 
-            <!-- 🔹 User Table -->
+            <!-- 🔹 Customer Table -->
             <div class="card shadow-sm">
                 <div class="card-body p-0">
                     <table class="table table-hover mb-0">
@@ -34,17 +34,17 @@
                         </tr>
                         </thead>
                         <tbody>
-                        <tr th:each="user : ${users}">
-                            <td th:text="${user.id}">1</td>
-                            <td th:text="${user.email}">user@email.com</td>
-                            <td th:text="${user.name}">홍길동</td>
-                            <td th:text="${user.createdAt}">2025-01-01</td>
+                        <tr th:each="customer : ${customers}">
+                            <td th:text="${customer.id}">1</td>
+                            <td th:text="${customer.email}">user@email.com</td>
+                            <td th:text="${customer.name}">홍길동</td>
+                            <td th:text="${customer.createdAt}">2025-01-01</td>
 
                             <td class="text-center">
                                 <button class="btn btn-sm btn-outline-primary action-btn"
                                         data-bs-toggle="modal"
                                         data-bs-target="#couponModal"
-                                        th:attr="data-user-id=${user.id}">
+                                        th:attr="data-customer-id=${customer.id}">
                                     쿠폰 보기
                                 </button>
                             </td>
@@ -53,7 +53,7 @@
                                 <button class="btn btn-sm btn-outline-secondary action-btn"
                                         data-bs-toggle="modal"
                                         data-bs-target="#orderModal"
-                                        th:attr="data-user-id=${user.id}">
+                                        th:attr="data-customer-id=${customer.id}">
                                     주문 보기
                                 </button>
                             </td>
