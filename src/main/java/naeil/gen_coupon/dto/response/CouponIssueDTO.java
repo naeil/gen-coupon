@@ -23,6 +23,7 @@ public class CouponIssueDTO {
         return CouponIssueDTO.builder()
                 .issueId(issue.getIssueId())
                 .issuedCouponCode(issue.getIssuedCouponCode())
+                .imwebCouponName(issue.getImwebCouponName())
                 .customerName(issue.getCustomerEntity().getCustomerName())
                 .mid(issue.getMid())
                 .rslt(issue.getRslt())

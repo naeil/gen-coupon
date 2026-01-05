@@ -25,7 +25,8 @@ public class OrderController {
     @GetMapping
     public ResponseEntity<?> getOrderHistories(
             @RequestParam(required = false) Integer customerId,            
-            @RequestParam(required = false) String customerName,            
+            @RequestParam(required = false) String customerName,
+            @RequestParam(required = false) Integer issueId,    
             @RequestParam(required = false) LocalDate fromDate,
             @RequestParam(required = false) LocalDate toDate,
             @RequestParam(required = false, defaultValue="1") int pageNumber,
@@ -36,6 +37,7 @@ public class OrderController {
             OrderSearchRequestDTO.builder()
                 .customerId(customerId)
                 .customerName(customerName)
+                .issueId(issueId)
                 .fromDate(fromDate)
                 .toDate(toDate)
                 .pageNumber(pageNumber)

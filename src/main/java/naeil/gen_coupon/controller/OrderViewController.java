@@ -24,7 +24,7 @@ public class OrderViewController {
     @GetMapping
     public String orders(
             @RequestParam(required = false) Integer customerId,            
-            @RequestParam(required = false) String customerName,            
+            @RequestParam(required = false) String customerName,
             @RequestParam(required = false) Integer issueId,            
             @RequestParam(required = false) LocalDate fromDate,
             @RequestParam(required = false) LocalDate toDate,

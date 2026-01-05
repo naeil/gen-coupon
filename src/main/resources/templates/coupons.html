@@ -57,7 +57,7 @@
                                 <th>쿠폰명</th>
                                 <th>주문자명</th>
                                 <th>발급일</th>
-                                <!-- <th>상태</th> -->
+                                <th>발송 결과</th>
                                 <th class="text-center">주문</th>
                             </tr>
                         </thead>
@@ -68,23 +68,18 @@
                                 <td th:text="${coupon.imwebCouponName}">웰컴 쿠폰</td>
                                 <td th:text="${coupon.customerName}">user</td>
                                 <td th:text="${coupon.createDate == null ? '-' : #temporals.format(coupon.createDate, 'yyyy-MM-dd HH:mm')}"></td>
-                                <!-- <td>
-                                    <span class="badge badge-status"
-                                        th:text="${coupon.used ? '사용' : '미사용'}"
-                                        th:classappend="${coupon.used} ? 'bg-success' : 'bg-secondary'">
-                                    </span>
-                                </td> -->
+                                <td th:text="${coupon.rslt}">user</td>
                                 <td class="text-center">
                                     <button class="btn btn-sm btn-outline-primary"
                                             data-bs-toggle="modal"
-                                            data-bs-target="#usedOrderModal"
+                                            data-bs-target="#orderModal"
                                             th:attr="data-coupon-id=${coupon.issueId}">
                                         보기
                                     </button>
                                 </td>
                             </tr>
                             <!-- 데이터 없을 때 -->
-                            <tr th:if="${orders == null or #lists.isEmpty(orders)}">
+                            <tr th:if="${coupons == null or #lists.isEmpty(coupons)}">
                                 <td colspan="6" class="text-center text-muted py-4">
                                     조회된 데이터가 없습니다.
                                 </td>
@@ -107,7 +102,7 @@
         <div class="modal-content">
 
             <div class="modal-header">
-                <h5 class="modal-title">쿠폰 발급 시 사용된 주문</h5>
+                <h5 class="modal-title">쿠폰 발급 시 사용된 주문 목록</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
@@ -116,18 +111,17 @@
                     <thead>
                         <tr>
                             <th>주문번호</th>
+                            <th>주문자</th>
+                            <th>상품명</th>
                             <th>주문금액</th>
                             <th>주문일</th>
-                            <th>스탬프 ID</th>
+                            <th>구매 결정일</th>
                         </tr>
                     </thead>
                     <tbody id="orderTableBody">
                         <!-- Thymeleaf fragment or AJAX -->
                     </tbody>
                 </table>
-                <nav>
-                    <ul class="pagination justify-content-center" id="orderPagination"></ul>
-                </nav>
             </div>
 
         </div>
@@ -137,94 +131,121 @@
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    function renderPaginatedTable({
-        data,
-        tbodyId,
-        paginationId,
-        pageSize,
-        rowRenderer
-    }) {
-        const tbody = document.getElementById(tbodyId);
-        const pagination = document.getElementById(paginationId);
+    document.addEventListener('DOMContentLoaded', function () {
+        const rows = document.querySelectorAll('#couponTable tbody tr[data-index]');
+        const rowsPerPage = 20;
+        const totalRows = rows.length;
+        const totalPages = Math.ceil(totalRows / rowsPerPage);
 
         let currentPage = 1;
-        const totalPages = Math.ceil(data.length / pageSize);
 
         function renderPage(page) {
             currentPage = page;
-            tbody.innerHTML = '';
+            const start = (page - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
 
-            const start = (page - 1) * pageSize;
-            const end = start + pageSize;
-
-            data.slice(start, end).forEach(item => {
-                tbody.innerHTML += rowRenderer(item);
+            rows.forEach((row, index) => {
+                row.style.display = (index >= start && index < end) ? '' : 'none';
             });
 
             renderPagination();
         }
 
         function renderPagination() {
+            const pagination = document.getElementById('pagination');
             pagination.innerHTML = '';
 
             for (let i = 1; i <= totalPages; i++) {
                 const li = document.createElement('li');
-                li.className = 'page-item' + (i === currentPage ? ' active' : '');
+                li.className = 'page-item ' + (i === currentPage ? 'active' : '');
 
                 const a = document.createElement('a');
                 a.className = 'page-link';
                 a.href = '#';
                 a.textContent = i;
 
-                a.onclick = e => {
+                a.addEventListener('click', function (e) {
                     e.preventDefault();
                     renderPage(i);
-                };
+                });
 
                 li.appendChild(a);
                 pagination.appendChild(li);
             }
         }
 
-        if (data.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="10" class="text-center text-muted">
-                        데이터가 없습니다.
-                    </td>
-                </tr>
-            `;
-            pagination.innerHTML = '';
-            return;
+        if (totalRows > 0) {
+            renderPage(1);
         }
-
-        renderPage(1);
-    }
+    });
 
     const orderModal = document.getElementById('orderModal');
     orderModal.addEventListener('show.bs.modal', function (event) {
-        const issueId = event.relatedTarget.getAttribute('data-coupon-id');
+        const button = event.relatedTarget;
+        const issueId = button.getAttribute('data-coupon-id');
+
+        const tbody = document.getElementById('orderTableBody');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-muted">조회 중...</td>
+            </tr>
+        `;
 
         fetch(`/naeil/api/orders?issueId=${issueId}`)
-            .then(res => res.json())
+            .then(response => response.json())
             .then(data => {
-                renderPaginatedTable({
-                    data,
-                    tbodyId: 'orderTableBody',
-                    paginationId: 'orderPagination',
-                    pageSize: 10,
-                    rowRenderer: order => `
+                tbody.innerHTML = '';
+
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = `
                         <tr>
+                            <td colspan="6" class="text-center text-muted">
+                                조회된 데이터가 없습니다.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                data.forEach(order => {
+                    tbody.innerHTML += `
+                        <tr>   
                             <td>${order.uniq}</td>
+                            <td>${order.customerName}</td>
                             <td>${order.shopSaleName}</td>
                             <td>${formatAmount(order.payAmt)}원</td>
                             <td>${formatDate(order.createDate)}</td>
                             <td>${formatDate(order.confirmDate)}</td>
                         </tr>
-                    `
+                    `;
                 });
+            })
+            .catch(error => {
+                console.error(error);
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-danger">
+                            주문 목록 조회 중 오류가 발생했습니다.
+                        </td>
+                    </tr>
+                `;
             });
     });
+
+    function formatDate(isoDate) {
+        if (isoDate === null || isoDate === undefined) {
+            return '-';
+        }
+        const date = new Date(isoDate);
+        return date.toLocaleDateString('ko-KR');
+    }
+
+    function formatAmount(amount) {
+        if (amount === null || amount === undefined) {
+            return '-';
+        }
+        return Number(amount).toLocaleString('ko-KR');
+    }
 </script>
 </body>
 </html>
