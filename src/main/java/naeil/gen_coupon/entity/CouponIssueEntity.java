@@ -30,17 +30,27 @@ public class CouponIssueEntity {
 
     private String imwebCouponName;
 
+    private String mid; // 알리고 메세지 id
+
+    private String rslt; // 알리고 발송 결과
+
     private LocalDateTime createDate;
 
     @Builder
     public CouponIssueEntity(CustomerEntity customerEntity, 
         String issuedCouponCode, 
         String imwebCouponCode, 
-        String imwebCouponName) {   
+        String imwebCouponName,
+        boolean sendResult) {
         this.customerEntity = customerEntity;
         this.issuedCouponCode = issuedCouponCode;
         this.imwebCouponCode = imwebCouponCode;
         this.imwebCouponName = imwebCouponName;
         this.createDate = LocalDateTime.now();
+    }
+
+    public void update(String mid, String rslt) {
+        this.mid = mid;
+        this.rslt = rslt;
     }
 }
