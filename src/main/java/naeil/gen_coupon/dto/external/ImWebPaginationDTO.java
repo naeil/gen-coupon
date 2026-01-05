@@ -1,5 +1,6 @@
 package naeil.gen_coupon.dto.external;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Getter;
@@ -11,13 +12,13 @@ import lombok.Setter;
 @NoArgsConstructor
 public class ImWebPaginationDTO {
     
-    @JsonProperty("data_count")
+    @JsonAlias("data_count")
     private String dataCount;   // 숫자지만 문자열로 옴
 
-    @JsonProperty("current_page")
+    @JsonAlias("current_page")
     private int currentPage;
 
-    @JsonProperty("total_page")
+    @JsonAlias("total_page")
     private int totalPage;
 
     @JsonProperty("pagesize")

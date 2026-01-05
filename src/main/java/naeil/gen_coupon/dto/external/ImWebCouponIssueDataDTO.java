@@ -11,9 +11,9 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class ImWebCouponDataDTO {
+public class ImWebCouponIssueDataDTO {
 
-    private List<ImWebCouponDTO> list;
+    private List<ImWebCouponItemDTO> list;
 
     @JsonProperty("pagenation")
     private ImWebPaginationDTO pagination;

@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
+import naeil.gen_coupon.dto.external.ImWebCouponDTO;
+import naeil.gen_coupon.dto.external.ImWebCouponDataDTO;
 import naeil.gen_coupon.dto.querydsl.CouponSearchRequestDTO;
 import naeil.gen_coupon.dto.response.CouponIssueDTO;
 import naeil.gen_coupon.service.CouponService;
@@ -29,8 +31,7 @@ public class CouponController {
             @RequestParam(required = false) LocalDate fromDate,
             @RequestParam(required = false) LocalDate toDate,
             @RequestParam(required = false, defaultValue="1") int pageNumber,
-            @RequestParam(required = false, defaultValue="20") int pageSize,
-            Model model
+            @RequestParam(required = false, defaultValue="20") int pageSize
     ) {       
         List<CouponIssueDTO> coupons = couponService.searchCouponIssueList(
             CouponSearchRequestDTO.builder()
@@ -42,6 +43,14 @@ public class CouponController {
                 .pageSize(pageSize)
                 .build()
         );
+        
+        return ResponseEntity.ok().body(coupons);
+    }
+
+    @GetMapping("/external")
+    public ResponseEntity<?> getCouponsFromImWeb(@RequestParam(required = false, defaultValue="10") int limit,
+                                                 @RequestParam(required = false, defaultValue="0") int offset) {
+        ImWebCouponDataDTO coupons = couponService.fetchCouponsFromImWeb(limit, offset);
         
         return ResponseEntity.ok().body(coupons);
     }

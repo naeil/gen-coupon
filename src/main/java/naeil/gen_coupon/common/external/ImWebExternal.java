@@ -2,8 +2,12 @@ package naeil.gen_coupon.common.external;
 
 import lombok.extern.slf4j.Slf4j;
 import naeil.gen_coupon.common.exception.CustomException;
+import naeil.gen_coupon.dto.external.ImWebCouponDTO;
+import naeil.gen_coupon.dto.external.ImWebCouponDataDTO;
 import naeil.gen_coupon.dto.external.ImWebCouponIssueResponseDTO;
 import naeil.gen_coupon.dto.external.ImWebCouponItemDTO;
+import naeil.gen_coupon.dto.external.ImWebCouponResponseDTO;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -98,5 +102,37 @@ public class ImWebExternal {
         }
 
         return response.getBody().getData().getList();
+    }
+
+    public ImWebCouponDataDTO fetchCoupons(String token, int limit, Integer offset) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Accept", "*/*");
+        headers.set("access-token", token);
+
+        HttpEntity request = new HttpEntity(headers);
+        String requestUrl = UriComponentsBuilder
+                .fromUriString("https://api.imweb.me/v2/shop/coupons")
+                .queryParam("limit", limit)
+                .queryParam("offset", offset)
+                .toUriString();
+
+        log.info("requestUrl : {}", requestUrl);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        ResponseEntity<ImWebCouponResponseDTO> response;
+        try {
+            response = restTemplate.exchange(
+                    requestUrl,
+                    HttpMethod.GET,
+                    request,
+                    ImWebCouponResponseDTO.class
+            );
+        } catch (RestClientException e) {
+            log.error("imweb get issued coupon list error : {}", e.getMessage());
+            throw new CustomException(502, "external api error");
+        }
+
+        return response.getBody().getData();
     }
 }

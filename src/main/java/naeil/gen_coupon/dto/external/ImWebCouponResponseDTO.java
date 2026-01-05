@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class ImWebCouponIssueResponseDTO {
+public class ImWebCouponResponseDTO {
     
     private String msg;
     private int code;
@@ -19,5 +19,5 @@ public class ImWebCouponIssueResponseDTO {
 
     private String version;
 
-    private ImWebCouponIssueDataDTO data;
+    private ImWebCouponDataDTO data;
 }

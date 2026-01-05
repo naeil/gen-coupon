@@ -30,8 +30,7 @@ public class OrderController {
             @RequestParam(required = false) LocalDate fromDate,
             @RequestParam(required = false) LocalDate toDate,
             @RequestParam(required = false, defaultValue="1") int pageNumber,
-            @RequestParam(required = false, defaultValue="20") int pageSize,
-            Model model
+            @RequestParam(required = false, defaultValue="20") int pageSize
     ) {
         List<OrderHistoryDTO> orders = orderService.searchOrderHistoryList(
             OrderSearchRequestDTO.builder()

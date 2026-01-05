@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import naeil.gen_coupon.common.exception.CustomException;
 import naeil.gen_coupon.common.external.ImWebExternal;
+import naeil.gen_coupon.dto.external.ImWebCouponDTO;
+import naeil.gen_coupon.dto.external.ImWebCouponDataDTO;
 import naeil.gen_coupon.dto.external.ImWebCouponItemDTO;
 import naeil.gen_coupon.entity.ConfigEntity;
 import naeil.gen_coupon.entity.CouponIssueEntity;
@@ -72,7 +74,7 @@ public class CouponService extends GenericService<CouponIssueEntity, QCouponIssu
         String couponName = couponNameConfig.getConfigValue();
 
         // stampsByOrder 맵의 키값을 기준으로 필요한 쿠폰 갯수 계산 후, 모자란 경우 한번 더 조회
-        List<ImWebCouponItemDTO> fetchedCoupons = fetchCouponsFromImweb(couponCode, requiredCouponIssueCount, totalCouponCount);
+        List<ImWebCouponItemDTO> fetchedCoupons = fetchIssueCouponsFromImweb(couponCode, requiredCouponIssueCount, totalCouponCount);
 
         // 쿠폰 발급 처리
         Map<Integer, List<StampEntity>> issuedCoupons = issueCoupons(stampsByOrder, fetchedCoupons, couponCode, couponName);
@@ -97,7 +99,7 @@ public class CouponService extends GenericService<CouponIssueEntity, QCouponIssu
         // todo : messageservice 함수 호출
     }
 
-    public List<ImWebCouponItemDTO> fetchCouponsFromImweb(String couponCode, Integer needCount, Long usedCount) {
+    public List<ImWebCouponItemDTO> fetchIssueCouponsFromImweb(String couponCode, Integer needCount, Long usedCount) {
         // 아임웹 API 호출 로직 구현
         int PAGE_SIZE = 100;
         Long totalNeeded = Long.valueOf(usedCount) + needCount;
@@ -207,5 +209,14 @@ public class CouponService extends GenericService<CouponIssueEntity, QCouponIssu
         return new OrderSpecifier[] {
                 qClass.createDate.desc()
         };
+    }
+
+    public ImWebCouponDataDTO fetchCouponsFromImWeb(Integer limit, Integer pageNumber) {        
+
+        // imweb API 호출
+        String token = apiClient.getImWebToken();
+        ImWebCouponDataDTO pageResult = apiClient.fetchCoupons(token, limit, pageNumber);
+
+        return pageResult;
     }
 }
