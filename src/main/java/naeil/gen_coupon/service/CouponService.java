@@ -1,4 +1,4 @@
-package naeil.gen_coupon.scheduler;
+package naeil.gen_coupon.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +12,7 @@ import naeil.gen_coupon.entity.StampEntity;
 import naeil.gen_coupon.repository.ConfigRepository;
 import naeil.gen_coupon.repository.CouponIssueRepository;
 import naeil.gen_coupon.repository.StampRepository;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
@@ -20,17 +20,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Component
+@Service
 @RequiredArgsConstructor
 @Slf4j
-public class Coupon {
+public class CouponService {
     
     private final StampRepository stampRepository;
     private final CouponIssueRepository couponIssueRepository;
     private final ConfigRepository configRepository;
     private final ImWebExternal apiClient;
 
-    public List<CouponIssueEntity> generateCoupons() {
+    public void generateCoupons() {
         // 쿠폰 생성 로직 구현
         List<StampEntity> stamps = stampRepository.findByIssueIdIsNull();
 
@@ -64,7 +64,7 @@ public class Coupon {
         // 쿠폰 발급 처리
         List<CouponIssueEntity> issuedCoupons = issueCoupons(stampsByOrder, fetchedCoupons, couponCode, couponName);
 
-        return issuedCoupons;
+        // todo : messageservice 함수 호출
     }
 
     public List<ImWebCouponItemDTO> fetchCouponsFromImweb(String couponCode, Integer needCount, Long usedCount) {
@@ -94,7 +94,7 @@ public class Coupon {
             int pageToCall = lastUsedPage + i;
             
             // imweb API 호출
-            List<ImWebCouponItemDTO> pageResult = apiClient.fetchIssuedCoupons(token, couponCode, pageToCall, pageToCall);
+            List<ImWebCouponItemDTO> pageResult = apiClient.fetchIssuedCoupons(token, couponCode, PAGE_SIZE, pageToCall);
 
             if (i == 1 && skipInFirstPage > 0) {
                 // 첫 페이지에서만 이미 사용된 부분 skip

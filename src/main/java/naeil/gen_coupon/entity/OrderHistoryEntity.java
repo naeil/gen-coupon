@@ -38,6 +38,8 @@ public class OrderHistoryEntity {
 
     private LocalDateTime createDate;
 
+    private LocalDateTime confirmDate;
+
     @OneToOne(mappedBy = "orderHistoryEntity")
     private StampEntity stampEntity;
 
@@ -52,5 +54,6 @@ public class OrderHistoryEntity {
         this.shopSaleName = dto.getShopSaleName();
         this.shopOrdNoReal = dto.getShopOrdNoReal();
         this.createDate = LocalDateTime.parse(dto.getOrdTime(), DATA_FORMAT);
+        this.confirmDate = LocalDateTime.parse(dto.getConfirmDate(), DATA_FORMAT);
     }
 }

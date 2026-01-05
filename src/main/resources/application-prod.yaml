@@ -36,5 +36,11 @@ playauto:
   password: ${playauto_auth_passwd}
   api-key: ${playauto_api_key}
 
+aligo:
+  api-key: ${aligo_api_key}
+  user-id: ${user_id}
+  sender-key: ${sender_key}
+  template-code: ${template_code}
+
 crypto:
   secret_key: ${secret_key}

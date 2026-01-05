@@ -37,6 +37,9 @@ public class PlayAutoOrderHistoryResponseDTO {
     @JsonProperty("pay_time")
     private String payTime;
 
+    @JsonProperty("ord_status_mdate")
+    private String confirmDate;
+
     @JsonProperty("api_read_status")
     private String apiReadStatus;
     // NONE: api 미수집 주문
