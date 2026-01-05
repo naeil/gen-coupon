@@ -27,7 +27,6 @@ public class ConfigViewController {
     
     @GetMapping("")
     public String settings(Model model) {
-        log.info("@@@@@@@@@@@@@@@ 테스트");
         List<ConfigResponseDTO> configList = configService.getConfig();
         Map<String, String> configMap = configList.stream()
             .collect(Collectors.toMap(

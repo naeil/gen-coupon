@@ -14,12 +14,14 @@ public class CouponIssueDTO {
     private String issuedCouponCode;
     private String imwebCouponCode;
     private String imwebCouponName;
+    private String customerName;
     private LocalDateTime createDate;
 
     public static CouponIssueDTO toDTO(CouponIssueEntity issue) {
         return CouponIssueDTO.builder()
                 .issueId(issue.getIssueId())
                 .issuedCouponCode(issue.getIssuedCouponCode())
+                .customerName(issue.getCustomerEntity().getCustomerName())
                 .createDate(issue.getCreateDate())
                 .build();
     }

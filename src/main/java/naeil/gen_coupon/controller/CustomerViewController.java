@@ -1,6 +1,5 @@
 package naeil.gen_coupon.controller;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Controller;

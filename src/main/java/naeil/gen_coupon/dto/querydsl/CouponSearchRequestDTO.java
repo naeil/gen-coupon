@@ -10,11 +10,10 @@ import naeil.gen_coupon.common.dto.BaseSearchDTO;
 @Getter
 @NoArgsConstructor
 @SuperBuilder
-public class OrderSearchRequestDTO extends BaseSearchDTO {
+public class CouponSearchRequestDTO extends BaseSearchDTO {
     
     private Integer customerId;
     private String customerName;
-    private Integer issueId;
     private LocalDate fromDate;
     private LocalDate toDate; 
 }

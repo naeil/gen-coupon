@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/config")
+@RequestMapping("/api/config")
 @Slf4j
 public class ConfigController {
 
@@ -23,7 +23,7 @@ public class ConfigController {
     }
 
     @PutMapping()
-    public ResponseEntity<?> updateCollectTime (@RequestBody List<ConfigDTO> configDTOList) {
+    public ResponseEntity<?> updateConfig(@RequestBody List<ConfigDTO> configDTOList) {
         configDTOList.forEach(
                 c -> log.info(c.getConfigKey().toString())
         );
