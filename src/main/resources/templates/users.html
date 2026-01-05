@@ -1,21 +1,21 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="fragments/head :: common-head('사용자 관리')"></head>
+<head th:replace="~{fragments/head :: common-head('주문자 목록')}"></head>
 
 <body>
 <div class="container-fluid">
     <div class="row">
         <!-- Sidebar -->
-        <div th:replace="fragments/sidebar :: sidebar('users')"></div>
+        <div th:replace="~{fragments/sidebar :: sidebar('users')}"></div>
 
         <!-- 🔹 Main Content -->
         <main class="col-md-10 content">
 
             <!-- Header -->
             <div class="mb-4">
-                <h3>사용자 목록</h3>
+                <h3>주문자 목록</h3>
                 <p class="text-muted mb-0">
-                    사용자별 쿠폰 발급 현황 및 주문 내역을 조회합니다.
+                    주문자별 쿠폰 발급 현황 및 주문 내역을 조회합니다.
                 </p>
             </div>
 

@@ -11,14 +11,14 @@ import lombok.RequiredArgsConstructor;
 
 @Controller
 @RequiredArgsConstructor
-@RequestMapping("/customers")
-public class CustomerViewController {
+@RequestMapping("/coupons")
+public class CouponViewController {
     
     @GetMapping
-    public String users(Model model) {
+    public String coupons(Model model) {
         // model.addAttribute("users", orderService.findAll());
-
-        model.addAttribute("users", new ArrayList<>());
-        return "users";
+        model.addAttribute("coupons", new ArrayList<>());
+        
+        return "coupons";
     }
 }

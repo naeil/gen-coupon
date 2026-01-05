@@ -1,6 +1,7 @@
 package naeil.gen_coupon.controller;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,7 +19,7 @@ public class OrderViewController {
     
     private final OrderService orderService;
    
-    @GetMapping("/orders")
+    @GetMapping
     public String orders(
             @RequestParam(required = false) Long userId,
             @RequestParam(required = false) LocalDate fromDate,
@@ -26,6 +27,7 @@ public class OrderViewController {
             Model model
     ) {
         // model.addAttribute("orders", orderService.search(userId, fromDate, toDate));
+        model.addAttribute("orders", new ArrayList<>());
         return "orders";
     }
 }

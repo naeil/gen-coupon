@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="fragments/head :: common-head('설정')"></head>
+<head th:replace="~{fragments/head :: common-head('설정')}"></head>
 
 <body>
 <div class="container-fluid">
     <div class="row">
         <!-- Sidebar -->
-        <div th:replace="fragments/sidebar :: sidebar('settings')"></div>
+        <div th:replace="~{fragments/sidebar :: sidebar('settings')}"></div>
 
         <!-- 🔹 Main Content -->
         <main class="col-md-10 content">
@@ -20,7 +20,7 @@
             </div>
 
             <!-- 🔹 Settings Form -->
-            <form th:action="@{/settings/save}" th:object="${settings}" method="post">
+            <form th:action="@{/settings/save}" method="post">
 
                 <!-- 스케줄러 설정 -->
                 <div class="card shadow-sm mb-4">
@@ -36,7 +36,7 @@
                             <div class="col-sm-4">
                                 <input type="number"
                                        class="form-control"
-                                       th:field="*{schedulerIntervalMinutes}"
+                                       th:value="${configMap['collect_time']}"
                                        min="1"
                                        required>
                             </div>
@@ -62,7 +62,7 @@
                             <div class="col-sm-4">
                                 <input type="number"
                                        class="form-control"
-                                       th:field="*{minimumOrderAmount}"
+                                       th:value="${configMap['minimum_amount']}"
                                        min="0"
                                        required>
                             </div>
@@ -88,7 +88,7 @@
                             <div class="col-sm-4">
                                 <input type="text"
                                        class="form-control"
-                                       th:field="*{couponCode}"
+                                       th:value="${configMap['imweb_coupon_code']}"
                                        placeholder="WELCOME10">
                             </div>
                             <div class="col-sm-5 text-muted">
@@ -103,7 +103,7 @@
                             <div class="col-sm-4">
                                 <input type="text"
                                        class="form-control"
-                                       th:field="*{couponName}"
+                                       th:value="${configMap['imweb_coupon_name']}"
                                        placeholder="웰컴 쿠폰">
                             </div>
                             <div class="col-sm-5 text-muted">

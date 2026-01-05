@@ -1,35 +1,12 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="fragments/head :: common-head('발급 쿠폰')"></head>
+<head th:replace="~{fragments/head :: common-head('발급 쿠폰')}"></head>
 
 <body>
 <div class="container-fluid">
     <div class="row">
         <!-- Sidebar -->
-        <div th:replace="fragments/sidebar :: sidebar('coupons')"></div>
-
-        <!-- 🔹 Sidebar -->
-        <nav class="col-md-2 sidebar d-flex flex-column p-3">
-            <h4 class="text-white mb-4">Coupon Admin</h4>
-
-            <ul class="nav nav-pills flex-column gap-1">
-                <!-- <li class="nav-item">
-                    <a class="nav-link" href="/">대시보드</a>
-                </li> -->
-                <li class="nav-item">
-                    <a class="nav-link" href="/users">사용자</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/orders">주문 내역</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="/coupons">발급 쿠폰</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/settings">설정</a>
-                </li>
-            </ul>
-        </nav>
+        <div th:replace="~{fragments/sidebar :: sidebar('coupons')}"></div>
 
         <!-- 🔹 Main Content -->
         <main class="col-md-10 content">
