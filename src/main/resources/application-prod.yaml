@@ -1,46 +1,44 @@
 spring:
+  messages:
+    basename: messages
+    encoding: utf-8
+    cache-duration: 3
   config:
     activate:
       on-profile: prod
   application:
     name: gen-coupon
   datasource:
-    url: jdbc:mariadb://localhost:3306/gen-coupon?serverTimezone=Asia/Seoul
+    url: ${SPRING_DATASOURCE_URL}
     driver-class-name: org.mariadb.jdbc.Driver
-    username: ${naeil_db_username}
-    password: ${naeil_db_passwd}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
   jpa:
     open-in-view: false
     hibernate:
-      jdbc:
-        time_zone: Asia/Seoul
       ddl-auto: none
     properties:
       hibernate:
         format_sql: true
-    messages:
-      basename: messages
-      encoding: utf-8
-      cache-duration: 3
 server:
   port: 8081
   servlet:
     context-path: "/naeil"
 
 imweb:
-  key: ${imweb_key}
-  secret: ${imweb_secret}
+  key: ${IMWEB_KEY}
+  secret: ${IMWEB_SECRET}
 
 playauto:
-  email: ${playauto_auth_email}
-  password: ${playauto_auth_passwd}
-  api-key: ${playauto_api_key}
+  email: ${PLAYAUTO_EMAIL}
+  password: ${PLAYAUTO_PASSWD}
+  api-key: ${PLAYAUTO_API_KEY}
 
 aligo:
-  api-key: ${aligo_api_key}
-  user-id: ${user_id}
-  sender-key: ${sender_key}
-  template-code: ${template_code}
+  api-key: ${ALIGO_API_KEY}
+  user-id: ${ALIGO_USER_ID}
+  sender-key: ${ALIGO_SENDER_KEY}
+  template-code: ${ALIGO_TEMPLATE_CODE}
 
 crypto:
-  secret_key: ${secret_key}
+  secret_key: ${CRYPTO_SECRET_KEY}

@@ -1,0 +1,45 @@
+services:
+  mariadb:
+    image: mariadb:latest
+    container_name: naeil-db
+    restart: always
+    command:
+      - --skip-character-set-client-handshake
+    volumes:
+      - ./db/init:/docker-entrypoint-initdb.d
+      - mariadb-data:/var/lib/mysql
+    ports:
+      - target: 3306
+        published: 3301
+        protocol: tcp
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Seoul
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  gen-coupon:
+    image: naeil/gen-coupon:latest
+    container_name: gen-coupon
+    restart: always
+    ports:
+      - "8081:8081"
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:mariadb://mariadb:3306/${DB_NAME}
+    env_file:
+      - .env
+    depends_on:
+      - mariadb
+
+volumes:
+  mariadb-data:
