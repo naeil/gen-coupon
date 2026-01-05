@@ -11,9 +11,10 @@ import naeil.gen_coupon.scheduler.CollectDataScheduler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -41,27 +42,33 @@ public class ConfigService {
     public List<ConfigResponseDTO> updateConfig(List<ConfigDTO> configDTOList) {
 
         boolean scheduleTimeChanged = false;
+        Map<String, String> configMap = configDTOList.stream()
+            .collect(Collectors.toMap(
+                ConfigDTO::getConfigKey,
+                ConfigDTO::getConfigValue
+            )
+        );
 
         try{
-            List<ConfigEntity> savedConfigEntity = new ArrayList<>();
+            List<ConfigEntity> configs = configRepository.findAll();
             String interval = "";
-            for(ConfigDTO configDTO : configDTOList){
-
-                ConfigEntity config = configRepository.findById(configDTO.getConfigId()).orElseThrow(() -> new IllegalArgumentException());
+            for(ConfigEntity config : configs){
+                String key = config.getConfigKey();
+                String currentValue = config.getConfigValue();
+                String newValue = configMap.getOrDefault(key, currentValue);
 
                 // 스케줄 시간 값 변경 확인
-                if("collect_time".equalsIgnoreCase(config.getConfigKey())
-                        && !Objects.equals(config.getConfigValue(), configDTO.getConfigValue())) {
+                if("collect_time".equalsIgnoreCase(key)
+                        && !Objects.equals(currentValue, newValue)) {
                     log.info("collect time changed");
                     scheduleTimeChanged = true;
-                    interval = configDTO.getConfigValue();
+                    interval = newValue;
                 }
 
-                config.setConfigValue(configDTO.getConfigValue());
-                savedConfigEntity.add(config);
+                config.setConfigValue(newValue);
 
             }
-            configRepository.saveAll(savedConfigEntity);
+            configRepository.saveAll(configs);
 
             // 새로운 시간으로 스케줄 재시작
             if(scheduleTimeChanged) {

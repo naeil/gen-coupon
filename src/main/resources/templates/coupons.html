@@ -15,7 +15,7 @@
             <div class="mb-4">
                 <h3>발급 쿠폰</h3>
                 <p class="text-muted mb-0">
-                    사용자에게 발급된 쿠폰과 사용된 주문 정보를 조회합니다.
+                    주문자에게 발급된 쿠폰과 사용된 주문 정보를 조회합니다.
                 </p>
             </div>
 
@@ -25,14 +25,8 @@
 
                 <div class="row g-3 align-items-end">
                     <div class="col-md-3">
-                        <label class="form-label">사용자</label>
-                        <select class="form-select" name="userId">
-                            <option value="">전체</option>
-                            <option th:each="user : ${users}"
-                                    th:value="${user.id}"
-                                    th:text="${user.email}">
-                            </option>
-                        </select>
+                        <label class="form-label">주문자명</label>
+                        <input type="text" class="form-control" name="customerName">
                     </div>
 
                     <div class="col-md-3">
@@ -56,40 +50,50 @@
             <!-- 🔹 Coupon Table -->
             <div class="card shadow-sm">
                 <div class="card-body p-0">
-                    <table class="table table-hover mb-0">
+                    <table class="table table-hover" id="couponTable">
                         <thead class="table-light">
-                        <tr>
-                            <th>쿠폰 코드</th>
-                            <th>쿠폰명</th>
-                            <th>사용자</th>
-                            <th>발급일</th>
-                            <th>상태</th>
-                            <th class="text-center">주문</th>
-                        </tr>
+                            <tr>
+                                <th>쿠폰 코드</th>
+                                <th>쿠폰명</th>
+                                <th>주문자명</th>
+                                <th>발급일</th>
+                                <!-- <th>상태</th> -->
+                                <th class="text-center">주문</th>
+                            </tr>
                         </thead>
                         <tbody>
-                        <tr th:each="coupon : ${coupons}">
-                            <td th:text="${coupon.couponCode}">WELCOME10</td>
-                            <td th:text="${coupon.couponName}">웰컴 쿠폰</td>
-                            <td th:text="${coupon.userEmail}">user@email.com</td>
-                            <td th:text="${coupon.issuedAt}">2025-01-10</td>
-                            <td>
-                                <span class="badge badge-status"
-                                      th:text="${coupon.used ? '사용' : '미사용'}"
-                                      th:classappend="${coupon.used} ? 'bg-success' : 'bg-secondary'">
-                                </span>
-                            </td>
-                            <td class="text-center">
-                                <button class="btn btn-sm btn-outline-primary"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#usedOrderModal"
-                                        th:attr="data-coupon-id=${coupon.id}">
-                                    보기
-                                </button>
-                            </td>
-                        </tr>
+                            <tr th:each="coupon, stat : ${coupons}"
+                                th:attr="data-index=${stat.index}">
+                                <td th:text="${coupon.issuedCouponCode}">WELCOME10</td>
+                                <td th:text="${coupon.imwebCouponName}">웰컴 쿠폰</td>
+                                <td th:text="${coupon.customerName}">user</td>
+                                <td th:text="${coupon.createDate == null ? '-' : #temporals.format(coupon.createDate, 'yyyy-MM-dd HH:mm')}"></td>
+                                <!-- <td>
+                                    <span class="badge badge-status"
+                                        th:text="${coupon.used ? '사용' : '미사용'}"
+                                        th:classappend="${coupon.used} ? 'bg-success' : 'bg-secondary'">
+                                    </span>
+                                </td> -->
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-primary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#usedOrderModal"
+                                            th:attr="data-coupon-id=${coupon.issueId}">
+                                        보기
+                                    </button>
+                                </td>
+                            </tr>
+                            <!-- 데이터 없을 때 -->
+                            <tr th:if="${orders == null or #lists.isEmpty(orders)}">
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    조회된 데이터가 없습니다.
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
+                    <nav>
+                        <ul class="pagination justify-content-center" id="pagination"></ul>
+                    </nav>
                 </div>
             </div>
 
@@ -98,8 +102,8 @@
 </div>
 
 <!-- 🔹 Used Orders Modal -->
-<div class="modal fade" id="usedOrderModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+<div class="modal fade" id="orderModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-custom">
         <div class="modal-content">
 
             <div class="modal-header">
@@ -110,23 +114,20 @@
             <div class="modal-body">
                 <table class="table table-sm">
                     <thead>
-                    <tr>
-                        <th>주문번호</th>
-                        <th>주문금액</th>
-                        <th>주문일</th>
-                        <th>스탬프 ID</th>
-                    </tr>
+                        <tr>
+                            <th>주문번호</th>
+                            <th>주문금액</th>
+                            <th>주문일</th>
+                            <th>스탬프 ID</th>
+                        </tr>
                     </thead>
-                    <tbody>
-                    <!-- Thymeleaf fragment or AJAX -->
-                    <tr>
-                        <td>ORD-001</td>
-                        <td>50,000</td>
-                        <td>2025-01-01</td>
-                        <td>STAMP-001</td>
-                    </tr>
+                    <tbody id="orderTableBody">
+                        <!-- Thymeleaf fragment or AJAX -->
                     </tbody>
                 </table>
+                <nav>
+                    <ul class="pagination justify-content-center" id="orderPagination"></ul>
+                </nav>
             </div>
 
         </div>
@@ -135,5 +136,95 @@
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function renderPaginatedTable({
+        data,
+        tbodyId,
+        paginationId,
+        pageSize,
+        rowRenderer
+    }) {
+        const tbody = document.getElementById(tbodyId);
+        const pagination = document.getElementById(paginationId);
+
+        let currentPage = 1;
+        const totalPages = Math.ceil(data.length / pageSize);
+
+        function renderPage(page) {
+            currentPage = page;
+            tbody.innerHTML = '';
+
+            const start = (page - 1) * pageSize;
+            const end = start + pageSize;
+
+            data.slice(start, end).forEach(item => {
+                tbody.innerHTML += rowRenderer(item);
+            });
+
+            renderPagination();
+        }
+
+        function renderPagination() {
+            pagination.innerHTML = '';
+
+            for (let i = 1; i <= totalPages; i++) {
+                const li = document.createElement('li');
+                li.className = 'page-item' + (i === currentPage ? ' active' : '');
+
+                const a = document.createElement('a');
+                a.className = 'page-link';
+                a.href = '#';
+                a.textContent = i;
+
+                a.onclick = e => {
+                    e.preventDefault();
+                    renderPage(i);
+                };
+
+                li.appendChild(a);
+                pagination.appendChild(li);
+            }
+        }
+
+        if (data.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="10" class="text-center text-muted">
+                        데이터가 없습니다.
+                    </td>
+                </tr>
+            `;
+            pagination.innerHTML = '';
+            return;
+        }
+
+        renderPage(1);
+    }
+
+    const orderModal = document.getElementById('orderModal');
+    orderModal.addEventListener('show.bs.modal', function (event) {
+        const issueId = event.relatedTarget.getAttribute('data-coupon-id');
+
+        fetch(`/naeil/api/orders?issueId=${issueId}`)
+            .then(res => res.json())
+            .then(data => {
+                renderPaginatedTable({
+                    data,
+                    tbodyId: 'orderTableBody',
+                    paginationId: 'orderPagination',
+                    pageSize: 10,
+                    rowRenderer: order => `
+                        <tr>
+                            <td>${order.uniq}</td>
+                            <td>${order.shopSaleName}</td>
+                            <td>${formatAmount(order.payAmt)}원</td>
+                            <td>${formatDate(order.createDate)}</td>
+                            <td>${formatDate(order.confirmDate)}</td>
+                        </tr>
+                    `
+                });
+            });
+    });
+</script>
 </body>
 </html>

@@ -3,26 +3,27 @@ package naeil.gen_coupon.controller;
 import java.time.LocalDate;
 import java.util.List;
 
-import org.springframework.stereotype.Controller;
+import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
 import naeil.gen_coupon.dto.querydsl.CouponSearchRequestDTO;
 import naeil.gen_coupon.dto.response.CouponIssueDTO;
 import naeil.gen_coupon.service.CouponService;
 
-@Controller
+@RestController
 @RequiredArgsConstructor
-@RequestMapping("/coupons")
-public class CouponViewController {
-
-    private final CouponService couponService;
+@RequestMapping("/api/coupons")
+public class CouponController {
     
+    private final CouponService couponService;
+
     @GetMapping
-    public String coupons(
+    public ResponseEntity<?> getCoupons(
             @RequestParam(required = false) Integer customerId,            
             @RequestParam(required = false) String customerName,            
             @RequestParam(required = false) LocalDate fromDate,
@@ -41,8 +42,7 @@ public class CouponViewController {
                 .pageSize(pageSize)
                 .build()
         );
-        model.addAttribute("coupons", coupons);
         
-        return "coupons";
+        return ResponseEntity.ok().body(coupons);
     }
 }

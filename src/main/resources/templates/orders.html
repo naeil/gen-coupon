@@ -50,37 +50,49 @@
             <!-- 🔹 Order Table -->
             <div class="card shadow-sm">
                 <div class="card-body p-0">
-                    <table class="table table-hover mb-0">
+                    <table class="table table-hover" id="orderTable">
                         <thead class="table-light">
-                        <tr>
-                            <th>주문번호</th>
-                            <th>원주문번호</th>
-                            <th>주문자</th>
-                            <th>상품명</th>
-                            <th>주문금액</th>
-                            <th>구매 결정일</th>
-                            <!-- <th class="text-center">상세</th> -->
-                        </tr>
+                            <tr>
+                                <th>주문번호</th>
+                                <!-- <th>원주문번호</th> -->
+                                <th>주문자</th>
+                                <th>상품명</th>
+                                <th>주문금액</th>
+                                <th>주문일</th>
+                                <th>구매 결정일</th>
+                                <!-- <th class="text-center">상세</th> -->
+                            </tr>
                         </thead>
                         <tbody>
-                        <tr th:each="order : ${orders}">
-                            <td th:text="${order.uniq}">ORD-001</td>
-                            <td th:text="${order.shopOrdNoReal}">1</td>
-                            <td th:text="${order.customerName}">이지형</td>
-                            <td th:text="${order.shopSaleName}">상품</td>
-                            <td th:text="${#numbers.formatInteger(order.payAmt, 3, 'COMMA')}">50,000</td>
-                            <td th:text="${#temporals.format(order.createDate, 'yyyy-MM-dd HH:mm')}"></td>                            
-                            <!-- <td class="text-center">
-                                <button class="btn btn-sm btn-outline-secondary"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#orderDetailModal"
-                                        th:attr="data-order-id=${order.orderHistoryId}">
-                                    보기
-                                </button>
-                            </td> -->
-                        </tr>
+                            <tr th:each="order, stat : ${orders}"
+                                th:attr="data-index=${stat.index}">
+                                <td th:text="${order.uniq}">ORD-001</td>
+                                <!-- <td th:text="${order.shopOrdNoReal}">1</td> -->
+                                <td th:text="${order.customerName}">이지형</td>
+                                <td th:text="${order.shopSaleName}">상품</td>
+                                <td th:text="${#numbers.formatInteger(order.payAmt, 3, 'COMMA')}">50,000</td>
+                                <td th:text="${order.createDate == null ? '-' : #temporals.format(order.createDate, 'yyyy-MM-dd HH:mm')}"></td>
+                                <td th:text="${order.confirmDate == null ? '-' : #temporals.format(order.confirmDate, 'yyyy-MM-dd HH:mm')}"></td>                         
+                                <!-- <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-secondary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#orderDetailModal"
+                                            th:attr="data-order-id=${order.orderHistoryId}">
+                                        보기
+                                    </button>
+                                </td> -->
+                            </tr>
+                            <!-- 데이터 없을 때 -->
+                            <tr th:if="${orders == null or #lists.isEmpty(orders)}">
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    조회된 데이터가 없습니다.
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
+                    <nav>
+                        <ul class="pagination justify-content-center" id="pagination"></ul>
+                    </nav>
                 </div>
             </div>
 
@@ -88,48 +100,56 @@
     </div>
 </div>
 
-<!-- 🔹 Order Detail Modal -->
-<div class="modal fade" id="orderDetailModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-
-            <div class="modal-header">
-                <h5 class="modal-title">주문 상세</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-
-            <div class="modal-body">
-                <table class="table table-sm">
-                    <tbody>
-                    <tr>
-                        <th>주문번호</th>
-                        <td>ORD-001</td>
-                    </tr>
-                    <tr>
-                        <th>사용자</th>
-                        <td>user@email.com</td>
-                    </tr>
-                    <tr>
-                        <th>주문금액</th>
-                        <td>50,000</td>
-                    </tr>
-                    <tr>
-                        <th>주문일</th>
-                        <td>2025-01-01</td>
-                    </tr>
-                    <tr>
-                        <th>스탬프 ID</th>
-                        <td>STAMP-001</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-
-        </div>
-    </div>
-</div>
-
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const rows = document.querySelectorAll('#orderTable tbody tr[data-index]');
+        const rowsPerPage = 20;
+        const totalRows = rows.length;
+        const totalPages = Math.ceil(totalRows / rowsPerPage);
+
+        let currentPage = 1;
+
+        function renderPage(page) {
+            currentPage = page;
+            const start = (page - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+
+            rows.forEach((row, index) => {
+                row.style.display = (index >= start && index < end) ? '' : 'none';
+            });
+
+            renderPagination();
+        }
+
+        function renderPagination() {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+
+            for (let i = 1; i <= totalPages; i++) {
+                const li = document.createElement('li');
+                li.className = 'page-item ' + (i === currentPage ? 'active' : '');
+
+                const a = document.createElement('a');
+                a.className = 'page-link';
+                a.href = '#';
+                a.textContent = i;
+
+                a.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    renderPage(i);
+                });
+
+                li.appendChild(a);
+                pagination.appendChild(li);
+            }
+        }
+
+        if (totalRows > 0) {
+            renderPage(1);
+        }
+    });
+</script>
 </body>
 </html>

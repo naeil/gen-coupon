@@ -18,7 +18,6 @@ import naeil.gen_coupon.repository.ConfigRepository;
 import naeil.gen_coupon.repository.CustomerRepository;
 import naeil.gen_coupon.repository.OrderHistoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.jaxb.SpringDataJaxb.OrderDto;
 import org.springframework.stereotype.Service;
 
 import com.querydsl.core.BooleanBuilder;
@@ -211,6 +210,8 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
             stop = LocalDateTime.parse(condition.getToDate() + " 23:59:59", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         }
 
+        builder.and(PredicateBuilderHelper.eq(path, "customerEntity.customerId", condition.getCustomerId()));
+        builder.and(PredicateBuilderHelper.eq(path, "stampEntity.issueId", condition.getIssueId()));
         builder.and(PredicateBuilderHelper.like(path, "customerEntity.customerName", condition.getCustomerName()));
         builder.and(PredicateBuilderHelper.between(path, "createDate", start, stop));
 

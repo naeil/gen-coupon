@@ -1,7 +1,6 @@
 package naeil.gen_coupon.controller;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Controller;
@@ -24,7 +23,9 @@ public class OrderViewController {
    
     @GetMapping
     public String orders(
+            @RequestParam(required = false) Integer customerId,            
             @RequestParam(required = false) String customerName,            
+            @RequestParam(required = false) Integer issueId,            
             @RequestParam(required = false) LocalDate fromDate,
             @RequestParam(required = false) LocalDate toDate,
             @RequestParam(required = false, defaultValue="1") int pageNumber,
@@ -33,7 +34,9 @@ public class OrderViewController {
     ) {
         List<OrderHistoryDTO> orders = orderService.searchOrderHistoryList(
             OrderSearchRequestDTO.builder()
+                .customerId(customerId)
                 .customerName(customerName)
+                .issueId(issueId)
                 .fromDate(fromDate)
                 .toDate(toDate)
                 .pageNumber(pageNumber)
@@ -41,6 +44,7 @@ public class OrderViewController {
                 .build()
         );
         model.addAttribute("orders", orders);
+
         return "orders";
     }
 }

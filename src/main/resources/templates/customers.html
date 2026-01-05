@@ -22,41 +22,51 @@
             <!-- 🔹 Customer Table -->
             <div class="card shadow-sm">
                 <div class="card-body p-0">
-                    <table class="table table-hover mb-0">
+                    <table class="table table-hover" id="customerTable">
                         <thead class="table-light">
-                        <tr>
-                            <th>이름</th>
-                            <th>핸드폰 번호</th>
-                            <th>이메일</th>
-                            <th class="text-center">쿠폰</th>
-                            <th class="text-center">주문</th>
-                        </tr>
+                            <tr>
+                                <th>이름</th>
+                                <th>핸드폰 번호</th>
+                                <th>이메일</th>
+                                <th class="text-center">쿠폰</th>
+                                <th class="text-center">주문</th>
+                            </tr>
                         </thead>
                         <tbody>
-                        <tr th:each="customer : ${customers}">
-                            <td th:text="${customer.customerName}">홍길동</td>
-                            <td th:text="${customer.customerHtel}">010-1111-2222</td>
-                            <td th:text="${customer.customerEmail}">user@email.com</td>
-                            <td class="text-center">
-                                <button class="btn btn-sm btn-outline-primary action-btn"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#couponModal"
-                                        th:attr="data-customer-id=${customer.customerId}">
-                                    쿠폰 보기
-                                </button>
-                            </td>
+                            <tr th:each="customer, stat : ${customers}"
+                                th:attr="data-index=${stat.index}">
+                                <td th:text="${customer.customerName}">홍길동</td>
+                                <td th:text="${customer.customerHtel}">010-1111-2222</td>
+                                <td th:text="${customer.customerEmail}">user@email.com</td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-primary action-btn"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#couponModal"
+                                            th:attr="data-customer-id=${customer.customerId}">
+                                        쿠폰 보기
+                                    </button>
+                                </td>
 
-                            <td class="text-center">
-                                <button class="btn btn-sm btn-outline-secondary action-btn"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#orderModal"
-                                        th:attr="data-customer-id=${customer.customerId}">
-                                    주문 보기
-                                </button>
-                            </td>
-                        </tr>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-secondary action-btn"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#orderModal"
+                                            th:attr="data-customer-id=${customer.customerId}">
+                                        주문 보기
+                                    </button>
+                                </td>
+                            </tr>
+                            <!-- 데이터 없을 때 -->
+                            <tr th:if="${customers == null or #lists.isEmpty(customers)}">
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    조회된 데이터가 없습니다.
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
+                    <nav>
+                        <ul class="pagination justify-content-center" id="pagination"></ul>
+                    </nav>
                 </div>
             </div>
 
@@ -76,21 +86,19 @@
             <div class="modal-body">
                 <table class="table table-sm">
                     <thead>
-                    <tr>
-                        <th>쿠폰 코드</th>
-                        <th>발급일</th>
-                        <th>상태</th>
-                    </tr>
+                        <tr>
+                            <th>쿠폰 코드</th>
+                            <th>쿠폰명</th>
+                            <th>발급일</th>
+                        </tr>
                     </thead>
-                    <tbody>
-                    <!-- AJAX or Thymeleaf fragment -->
-                    <tr>
-                        <td>WELCOME10</td>
-                        <td>2025-01-10</td>
-                        <td><span class="badge bg-secondary">미사용</span></td>
-                    </tr>
+                    <tbody id="couponTableBody">
+                        <!-- AJAX or Thymeleaf fragment -->
                     </tbody>
                 </table>
+                <nav>
+                    <ul class="pagination justify-content-center" id="couponPagination"></ul>
+                </nav>
             </div>
 
         </div>
@@ -99,7 +107,8 @@
 
 <!-- 🔹 Order Modal -->
 <div class="modal fade" id="orderModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <!-- <div class="modal-dialog modal-xl modal-dialog-scrollable"> -->
+    <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-custom">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">주문 내역</h5>
@@ -109,23 +118,21 @@
             <div class="modal-body">
                 <table class="table table-sm">
                     <thead>
-                    <tr>
-                        <th>주문번호</th>
-                        <th>주문금액</th>
-                        <th>주문일</th>
-                        <th>스탬프 ID</th>
-                    </tr>
+                        <tr>
+                            <th>주문번호</th>
+                            <th>상품명</th>
+                            <th>주문금액</th>
+                            <th>주문일</th>
+                            <th>구매 결정일</th>
+                        </tr>
                     </thead>
-                    <tbody>
-                    <!-- AJAX or Thymeleaf fragment -->
-                    <tr>
-                        <td>ORD-20250101</td>
-                        <td>50,000</td>
-                        <td>2025-01-01</td>
-                        <td>STAMP-001</td>
-                    </tr>
+                    <tbody id="orderTableBody">
+                        <!-- AJAX or Thymeleaf fragment -->
                     </tbody>
                 </table>
+                <nav>
+                    <ul class="pagination justify-content-center" id="orderPagination"></ul>
+                </nav>
             </div>
 
         </div>
@@ -134,5 +141,133 @@
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function renderPaginatedTable({
+        data,
+        tbodyId,
+        paginationId,
+        pageSize,
+        rowRenderer
+    }) {
+        const tbody = document.getElementById(tbodyId);
+        const pagination = document.getElementById(paginationId);
+
+        let currentPage = 1;
+        const totalPages = Math.ceil(data.length / pageSize);
+
+        function renderPage(page) {
+            currentPage = page;
+            tbody.innerHTML = '';
+
+            const start = (page - 1) * pageSize;
+            const end = start + pageSize;
+
+            data.slice(start, end).forEach(item => {
+                tbody.innerHTML += rowRenderer(item);
+            });
+
+            renderPagination();
+        }
+
+        function renderPagination() {
+            pagination.innerHTML = '';
+
+            for (let i = 1; i <= totalPages; i++) {
+                const li = document.createElement('li');
+                li.className = 'page-item' + (i === currentPage ? ' active' : '');
+
+                const a = document.createElement('a');
+                a.className = 'page-link';
+                a.href = '#';
+                a.textContent = i;
+
+                a.onclick = e => {
+                    e.preventDefault();
+                    renderPage(i);
+                };
+
+                li.appendChild(a);
+                pagination.appendChild(li);
+            }
+        }
+
+        if (data.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="10" class="text-center text-muted">
+                        데이터가 없습니다.
+                    </td>
+                </tr>
+            `;
+            pagination.innerHTML = '';
+            return;
+        }
+
+        renderPage(1);
+    }
+    
+    const couponModal = document.getElementById('couponModal');
+    couponModal.addEventListener('show.bs.modal', function (event) {
+        const customerId = event.relatedTarget.getAttribute('data-customer-id');
+
+        fetch(`/naeil/api/coupons?customerId=${customerId}`)
+            .then(res => res.json())
+            .then(data => {
+                renderPaginatedTable({
+                    data,
+                    tbodyId: 'couponTableBody',
+                    paginationId: 'couponPagination',
+                    pageSize: 10,
+                    rowRenderer: coupon => `
+                        <tr>
+                            <td>${coupon.issuedCouponCode}</td>
+                            <td>${coupon.imwebCouponName}</td>
+                            <td>${formatDate(coupon.createDate)}</td>
+                        </tr>
+                    `
+                });
+            });
+    });
+
+    const orderModal = document.getElementById('orderModal');
+    orderModal.addEventListener('show.bs.modal', function (event) {
+        const customerId = event.relatedTarget.getAttribute('data-customer-id');
+
+        fetch(`/naeil/api/orders?customerId=${customerId}`)
+            .then(res => res.json())
+            .then(data => {
+                renderPaginatedTable({
+                    data,
+                    tbodyId: 'orderTableBody',
+                    paginationId: 'orderPagination',
+                    pageSize: 10,
+                    rowRenderer: order => `
+                        <tr>
+                            <td>${order.uniq}</td>
+                            <td>${order.shopSaleName}</td>
+                            <td>${formatAmount(order.payAmt)}원</td>
+                            <td>${formatDate(order.createDate)}</td>
+                            <td>${formatDate(order.confirmDate)}</td>
+                        </tr>
+                    `
+                });
+            });
+    });
+
+    function formatDate(isoDate) {
+        if (isoDate === null || isoDate === undefined) {
+            return '-';
+        }
+        const date = new Date(isoDate);
+        return date.toLocaleDateString('ko-KR');
+    }
+
+    function formatAmount(amount) {
+        if (amount === null || amount === undefined) {
+            return '-';
+        }
+        return Number(amount).toLocaleString('ko-KR');
+    }
+</script>
 </body>
 </html>

@@ -17,6 +17,7 @@ public class OrderHistoryDTO {
     private String shopSaleName;
     private String shopOrdNoReal;
     private LocalDateTime createDate;
+    private LocalDateTime confirmDate;
     private StampDTO stampDTO;
 
     public static OrderHistoryDTO toDTO(OrderHistoryEntity orderHistory) {
@@ -28,6 +29,7 @@ public class OrderHistoryDTO {
                 .shopSaleName(orderHistory.getShopSaleName())
                 .shopOrdNoReal(orderHistory.getShopOrdNoReal())
                 .createDate(orderHistory.getCreateDate())
+                .confirmDate(LocalDateTime.now())// TODO - 추후 확정일자 컬럼 추가 시 매핑
                 .stampDTO(StampDTO.toDTO(orderHistory.getStampEntity()))
                 .build();
     }
