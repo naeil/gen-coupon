@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -41,6 +42,7 @@ public class CouponService extends GenericService<CouponIssueEntity, QCouponIssu
     private final ConfigRepository configRepository;
     private final ImWebExternal apiClient;
 
+    @Transactional
     public void generateCoupons() {
         // 쿠폰 생성 로직 구현
         List<StampEntity> stamps = stampRepository.findByIssueIdIsNull();
@@ -73,8 +75,25 @@ public class CouponService extends GenericService<CouponIssueEntity, QCouponIssu
         List<ImWebCouponItemDTO> fetchedCoupons = fetchCouponsFromImweb(couponCode, requiredCouponIssueCount, totalCouponCount);
 
         // 쿠폰 발급 처리
-        List<CouponIssueEntity> issuedCoupons = issueCoupons(stampsByOrder, fetchedCoupons, couponCode, couponName);
+        Map<Integer, List<StampEntity>> issuedCoupons = issueCoupons(stampsByOrder, fetchedCoupons, couponCode, couponName);
 
+        // 스탬프에 발급된 쿠폰 이슈 ID 업데이트
+        int ISSUE_LIMIT = 10;
+        for (Map.Entry<Integer, List<StampEntity>> entry : issuedCoupons.entrySet()) {
+            Integer issueId = entry.getKey();
+            List<StampEntity> stampByIssueId = entry.getValue();
+
+            List<StampEntity> targetStamps = stampByIssueId.stream()
+                        .limit(ISSUE_LIMIT)
+                        .toList();
+
+            targetStamps.forEach(stamp ->
+                stamp.setIssueId(issueId)
+            );
+
+            // StampEntity 일괄 업데이트
+            stampRepository.saveAll(stamps);
+        }
         // todo : messageservice 함수 호출
     }
 
@@ -97,7 +116,7 @@ public class CouponService extends GenericService<CouponIssueEntity, QCouponIssu
         int pagesToCall = Math.max(lastPageNeeded - lastUsedPage, 0);
 
         List<ImWebCouponItemDTO> mergedResults = new ArrayList<>();
-
+        
         String token = apiClient.getImWebToken();
 
         int skipInFirstPage = (int) (usedCount % PAGE_SIZE);
@@ -121,42 +140,28 @@ public class CouponService extends GenericService<CouponIssueEntity, QCouponIssu
     }
 
     @Transactional
-    public List<CouponIssueEntity> issueCoupons(Map<CustomerEntity, List<StampEntity>> stampsByOrder, 
-        List<ImWebCouponItemDTO> fetchedCoupons,
-        String couponCode,
-        String couponName) {
-
-        List<CouponIssueEntity> issuedCoupons = new ArrayList<>();
+    public Map<Integer, List<StampEntity>> issueCoupons(Map<CustomerEntity, List<StampEntity>> stampsByOrder, List<ImWebCouponItemDTO> fetchedCoupons, String couponCode, String couponName) {
+           
+        Map<Integer, List<StampEntity>> issuedCoupons = new HashMap<>();
         for (Map.Entry<CustomerEntity, List<StampEntity>> entry : stampsByOrder.entrySet()) {
 
             CustomerEntity customer = entry.getKey();
             List<StampEntity> stamps = entry.getValue();
-
+           
             // 1️⃣ CouponIssue 생성 및 저장
             CouponIssueEntity couponIssue = CouponIssueEntity.builder()
                     .customerEntity(customer)
                     .issuedCouponCode(fetchedCoupons.remove(0).getCouponIssueCode())
                     .imwebCouponCode(couponCode)
                     .imwebCouponName(couponName)
+                    .createDate(LocalDateTime.now())
                     .build();
-
-            CouponIssueEntity savedCouponIssue = couponIssueRepository.save(couponIssue);
-            issuedCoupons.add(savedCouponIssue);
-
-            Integer couponIssueId = savedCouponIssue.getIssueId();
-
-            // 2️⃣ StampEntity에 couponIssueId 세팅
-            int ISSUE_LIMIT = 10;
-            List<StampEntity> targetStamps = stamps.stream()
-                        .limit(ISSUE_LIMIT)
-                        .toList();
-
-            targetStamps.forEach(stamp ->
-                    stamp.setIssueId(couponIssueId)
-            );
-
-            // 3️⃣ StampEntity 일괄 업데이트
-            stampRepository.saveAll(stamps);
+            
+            CouponIssueEntity coupon = couponIssueRepository.saveAndFlush(couponIssue);
+            // savedCouponIssue.get
+            log.info("Saved CouponIssue: {}", coupon.getIssueId());
+            Integer couponIssueId = coupon.getIssueId();
+            issuedCoupons.put(couponIssueId, stamps);
         }
 
         return issuedCoupons;

@@ -72,6 +72,8 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
         List<OrderHistoryEntity> orderHistoryEntities = new ArrayList<>();
         Map<String, ShopEntity> shopMap = new HashMap<>();
 
+
+        List<CustomerEntity> existingCustomers = customerRepository.findAll();
         for (PlayAutoOrderHistoryResponseDTO dto : filteredOrders) {
             ShopEntity shop = shopMap.computeIfAbsent(
                     dto.getShopCode(),
@@ -79,7 +81,7 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
             );
 
             OrderHistoryEntity order = new OrderHistoryEntity(
-                getCustomInfo(dto),
+                getCustomInfo(dto, existingCustomers),
                     shop,
                     dto
             );
@@ -96,18 +98,18 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
 
     // todo : 주문 내역 관련 조회 메소드
 
-    private CustomerEntity getCustomInfo(PlayAutoOrderHistoryResponseDTO dto) {
-        // todo : email, htel 암호화 필요
-        return customerRepository.findByCustomerHtel(dto.getOrderHtel())
-                .orElseGet(() ->
+    private CustomerEntity getCustomInfo(PlayAutoOrderHistoryResponseDTO dto, List<CustomerEntity> existingCustomers) {
+    
+        CustomerEntity customer = existingCustomers.stream().filter(c -> c.getCustomerHtel().equals(dto.getOrderHtel())).findFirst().orElseGet(() ->
                         customerRepository.save(
                                 new CustomerEntity(
                                         dto.getOrderName(),
                                         dto.getOrderEmail(),
                                         dto.getOrderHtel()
                                 )
-                        )
-                );
+                        ));  
+
+        return customer;
     }
 
     private List<PlayAutoOrderHistoryResponseDTO> filteredOrders (PlayAutoOrderHistoryResponseDTO[] orderHistoryInfos) {

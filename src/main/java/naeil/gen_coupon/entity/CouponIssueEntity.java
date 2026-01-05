@@ -3,20 +3,19 @@ package naeil.gen_coupon.entity;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "coupon_issue")
 @Getter
-@Setter
-@RequiredArgsConstructor
+@NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 public class CouponIssueEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "issue_id")
     private Integer issueId;
 
     @ManyToOne
@@ -41,12 +40,12 @@ public class CouponIssueEntity {
         String issuedCouponCode, 
         String imwebCouponCode, 
         String imwebCouponName,
-        boolean sendResult) {
+        LocalDateTime createDate) {
         this.customerEntity = customerEntity;
         this.issuedCouponCode = issuedCouponCode;
         this.imwebCouponCode = imwebCouponCode;
         this.imwebCouponName = imwebCouponName;
-        this.createDate = LocalDateTime.now();
+        this.createDate = createDate;
     }
 
     public void update(String mid, String rslt) {

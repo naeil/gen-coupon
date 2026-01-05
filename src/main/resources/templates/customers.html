@@ -144,7 +144,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const rows = document.querySelectorAll('#customerTable tbody tr[data-index]');
-        const rowsPerPage = 1; // 한 페이지당 row 수
+        const rowsPerPage = 20; // 한 페이지당 row 수
         const totalRows = rows.length;
         const totalPages = Math.ceil(totalRows / rowsPerPage);
 
@@ -210,7 +210,6 @@
 
             const start = (page - 1) * pageSize;
             const end = start + pageSize;
-
             data.slice(start, end).forEach(item => {
                 tbody.innerHTML += rowRenderer(item);
             });
@@ -244,7 +243,7 @@
             tbody.innerHTML = `
                 <tr>
                     <td colspan="10" class="text-center text-muted">
-                        데이터가 없습니다.
+                        조회된 데이터가 없습니다.
                     </td>
                 </tr>
             `;

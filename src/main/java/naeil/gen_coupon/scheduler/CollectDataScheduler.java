@@ -1,9 +1,10 @@
 package naeil.gen_coupon.scheduler;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import naeil.gen_coupon.enums.TimeUnitType;
+import naeil.gen_coupon.service.CouponService;
 import naeil.gen_coupon.service.OrderService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
 
@@ -11,14 +12,12 @@ import java.util.concurrent.ScheduledFuture;
 
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class CollectDataScheduler {
 
-    @Autowired
-    private TaskScheduler taskScheduler;
-
-    @Autowired
-    private OrderService orderService;
-
+    private final TaskScheduler taskScheduler;
+    private final OrderService orderService;
+    private final CouponService couponService;
     private ScheduledFuture<?> scheduledFuture;
 
     public synchronized void start(String configValue) {
@@ -63,6 +62,7 @@ public class CollectDataScheduler {
         try {
             log.info("Scheduler executing...");
             orderService.createOrderInfo();
+            couponService.generateCoupons();
         } catch (Exception e) {
             log.error("Scheduler execution error", e);
         }

@@ -21,22 +21,23 @@
 
             <!-- 🔹 Filter -->
             <form class="card shadow-sm mb-4 p-3"
-                  th:action="@{/coupons}" method="get">
+                  th:action="@{/coupons}" method="get"
+                  onsubmit="return validateDateRange();">
 
                 <div class="row g-3 align-items-end">
                     <div class="col-md-3">
-                        <label class="form-label">주문자명</label>
+                        <label class="form-label fw-bold">주문자명</label>
                         <input type="text" class="form-control" name="customerName">
                     </div>
 
                     <div class="col-md-3">
-                        <label class="form-label">시작일</label>
-                        <input type="date" class="form-control" name="fromDate">
+                        <label class="form-label fw-bold">발급일(시작 ~ 종료)</label>
+                        <input type="date" class="form-control" name="fromDate" id="fromDate">
                     </div>
 
                     <div class="col-md-3">
-                        <label class="form-label">종료일</label>
-                        <input type="date" class="form-control" name="toDate">
+                        <!-- <label class="form-label">종료일</label> -->
+                        <input type="date" class="form-control" name="toDate" id="toDate">
                     </div>
 
                     <div class="col-md-3">
@@ -245,6 +246,26 @@
             return '-';
         }
         return Number(amount).toLocaleString('ko-KR');
+    }
+
+    function validateDateRange() {
+        const from = document.getElementById('fromDate').value;
+        const to = document.getElementById('toDate').value;
+
+        // 둘 다 비어 있으면 OK
+        if (!from || !to) {
+            return true;
+        }
+
+        const fromDate = new Date(from);
+        const toDate = new Date(to);
+
+        if (fromDate > toDate) {
+            alert('시작일은 종료일보다 늦을 수 없습니다.');
+            return false;
+        }
+
+        return true;
     }
 </script>
 </body>

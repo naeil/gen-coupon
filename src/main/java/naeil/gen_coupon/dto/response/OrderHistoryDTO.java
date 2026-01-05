@@ -29,7 +29,7 @@ public class OrderHistoryDTO {
                 .shopSaleName(orderHistory.getShopSaleName())
                 .shopOrdNoReal(orderHistory.getShopOrdNoReal())
                 .createDate(orderHistory.getCreateDate())
-                .confirmDate(LocalDateTime.now())// TODO - 추후 확정일자 컬럼 추가 시 매핑
+                .confirmDate(orderHistory.getConfirmDate())
                 .stampDTO(StampDTO.toDTO(orderHistory.getStampEntity()))
                 .build();
     }
