@@ -3,23 +3,35 @@ package naeil.gen_coupon.service;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import naeil.gen_coupon.common.external.PlayAutoExternal;
+import naeil.gen_coupon.common.service.GenericService;
+import naeil.gen_coupon.common.util.PredicateBuilderHelper;
 import naeil.gen_coupon.dto.external.PlayAutoOrderHistoryResponseDTO;
+import naeil.gen_coupon.dto.querydsl.OrderSearchRequestDTO;
 import naeil.gen_coupon.dto.response.CustomerDTO;
+import naeil.gen_coupon.dto.response.OrderHistoryDTO;
 import naeil.gen_coupon.entity.ConfigEntity;
 import naeil.gen_coupon.entity.CustomerEntity;
 import naeil.gen_coupon.entity.OrderHistoryEntity;
+import naeil.gen_coupon.entity.QOrderHistoryEntity;
 import naeil.gen_coupon.entity.ShopEntity;
 import naeil.gen_coupon.repository.ConfigRepository;
 import naeil.gen_coupon.repository.CustomerRepository;
 import naeil.gen_coupon.repository.OrderHistoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.jaxb.SpringDataJaxb.OrderDto;
 import org.springframework.stereotype.Service;
 
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.PathBuilder;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
 @Slf4j
-public class OrderService {
+public class OrderService extends GenericService<OrderHistoryEntity, QOrderHistoryEntity, OrderSearchRequestDTO> {
 
     @Autowired
     private PlayAutoExternal playAutoExternal;
@@ -169,6 +181,46 @@ public class OrderService {
 
         // 마지막 4자리
         return digits.length() >= 10 && !digits.endsWith("0000");
+    }
+
+    public List<OrderHistoryDTO> searchOrderHistoryList(OrderSearchRequestDTO requestDTO) {
+        List<OrderHistoryEntity> searchedList = searchList(
+                requestDTO,
+                QOrderHistoryEntity.orderHistoryEntity, q -> buildPredicate(requestDTO),
+                q -> buildOrderSpecifier(requestDTO, q)
+        );
+
+        return searchedList.stream().map(order -> OrderHistoryDTO.toDTO(order)).toList();
+    }
+
+    @Override
+    protected PathBuilder<OrderHistoryEntity> getPathBuilder() {
+        return new PathBuilder<>(OrderHistoryEntity.class, "orderHistoryEntity");
+    }
+
+    private BooleanBuilder buildPredicate(OrderSearchRequestDTO condition) {
+        PathBuilder<OrderHistoryEntity> path = getPathBuilder();
+        BooleanBuilder builder = new BooleanBuilder();
+
+        LocalDateTime start = null;
+        if(condition.getFromDate() != null) {
+            start = LocalDateTime.parse(condition.getFromDate() + " 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        }
+        LocalDateTime stop = null;
+        if(condition.getToDate() != null) {
+            stop = LocalDateTime.parse(condition.getToDate() + " 23:59:59", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        }
+
+        builder.and(PredicateBuilderHelper.like(path, "customerEntity.customerName", condition.getCustomerName()));
+        builder.and(PredicateBuilderHelper.between(path, "createDate", start, stop));
+
+        return builder;
+    }
+
+    private OrderSpecifier<?>[] buildOrderSpecifier(OrderSearchRequestDTO condition, QOrderHistoryEntity qClass) {
+        return new OrderSpecifier[] {
+                qClass.createDate.desc()
+        };
     }
 
 

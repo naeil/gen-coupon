@@ -14,13 +14,6 @@
         </li> -->
         <li class="nav-item">
             <a class="nav-link"
-               th:classappend="${activeMenu == 'settings'} ? 'active'"
-               href="/naeil/settings">
-                설정
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link"
                th:classappend="${activeMenu == 'customers'} ? 'active'"
                href="/naeil/customers">
                 주문자
@@ -38,6 +31,13 @@
                th:classappend="${activeMenu == 'coupons'} ? 'active'"
                href="/naeil/coupons">
                 발급 쿠폰
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link"
+               th:classappend="${activeMenu == 'settings'} ? 'active'"
+               href="/naeil/settings">
+                설정
             </a>
         </li>
     </ul>

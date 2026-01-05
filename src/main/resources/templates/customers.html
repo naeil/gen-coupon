@@ -25,26 +25,23 @@
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                         <tr>
-                            <th>ID</th>
-                            <th>이메일</th>
                             <th>이름</th>
-                            <th>가입일</th>
+                            <th>핸드폰 번호</th>
+                            <th>이메일</th>
                             <th class="text-center">쿠폰</th>
                             <th class="text-center">주문</th>
                         </tr>
                         </thead>
                         <tbody>
                         <tr th:each="customer : ${customers}">
-                            <td th:text="${customer.id}">1</td>
-                            <td th:text="${customer.email}">user@email.com</td>
-                            <td th:text="${customer.name}">홍길동</td>
-                            <td th:text="${customer.createdAt}">2025-01-01</td>
-
+                            <td th:text="${customer.customerName}">홍길동</td>
+                            <td th:text="${customer.customerHtel}">010-1111-2222</td>
+                            <td th:text="${customer.customerEmail}">user@email.com</td>
                             <td class="text-center">
                                 <button class="btn btn-sm btn-outline-primary action-btn"
                                         data-bs-toggle="modal"
                                         data-bs-target="#couponModal"
-                                        th:attr="data-customer-id=${customer.id}">
+                                        th:attr="data-customer-id=${customer.customerId}">
                                     쿠폰 보기
                                 </button>
                             </td>
@@ -53,7 +50,7 @@
                                 <button class="btn btn-sm btn-outline-secondary action-btn"
                                         data-bs-toggle="modal"
                                         data-bs-target="#orderModal"
-                                        th:attr="data-customer-id=${customer.id}">
+                                        th:attr="data-customer-id=${customer.customerId}">
                                     주문 보기
                                 </button>
                             </td>
