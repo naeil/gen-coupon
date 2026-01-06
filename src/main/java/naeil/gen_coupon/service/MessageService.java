@@ -106,7 +106,7 @@ https://smartstore.naver.com/high_free/products/11726832244
         int index = 1;
 
         for(CouponIssueEntity couponIssue : couponIssueEntities) {
-            template.add("receiver_" + index, couponIssue.getCustomerEntity().getCustomerHtel());
+            template.add("receiver_" + index, couponIssue.getCustomerEntity().getCustomerHtel().replaceAll("\\D", ""));
             template.add("recvname_" + index, couponIssue.getCustomerEntity().getCustomerName());
             template.add("subject_" + index, "제목" + index);
             template.add("message_" + index, buildMessage(couponIssue));
@@ -123,7 +123,7 @@ https://smartstore.naver.com/high_free/products/11726832244
                 .replace("#{제품}", "test");
     }
 
-    private String buildButtonJson() {
+    public String buildButtonJson() {
         ObjectMapper mapper = new ObjectMapper();
 
         ObjectNode root = mapper.createObjectNode();
