@@ -71,11 +71,12 @@ public class PlayAutoExternal {
         }
 
         JsonNode root = response.getBody();
-        if (root == null || !root.isArray() || root.isEmpty()) {
+        if (root == null) {
             throw new CustomException(502, "Invalid auth response");
         }
 
-        JsonNode error = root.get(0).get("error_code");
+        JsonNode error = root.get("error_code");
+        log.info("error_code : {}", error);
         if(error != null && !error.isNull() && !error.asString().isBlank()) {
             String errorCode = error.asString();
             throw PlayAutoErrorCode.fromCode(errorCode);
@@ -137,18 +138,19 @@ public class PlayAutoExternal {
         headers.set("Authorization", "Token " + token);
 
         LocalDate today = LocalDate.now();
-        String date = today.format(DateTimeFormatter.ISO_DATE);
-        log.info("today : {}", date);
+        String startDate = today.format(DateTimeFormatter.ISO_DATE);
+        log.info("start date : {}", startDate);
+
+        String endDate = today.minusMonths(6).format(DateTimeFormatter.ISO_DATE);
+        log.info("end date : {}", endDate);
 
         Map<String, Object> body = new HashMap<>();
         body.put("start", 0);
         body.put("length", 3000);
         body.put("orderby", "wdate desc");
         body.put("date_type", "ord_status_mdate");
-        body.put("sdate", "2025-11-15");
-        body.put("edate", "2025-11-15");
-//        body.put("sdate", date);
-//        body.put("edate", date);
+        body.put("sdate", startDate);
+        body.put("edate", endDate);
         body.put("status", List.of("구매결정"));
         body.put("delay_status", false);
         body.put("multi_type", "shop_sale_no");
@@ -176,7 +178,7 @@ public class PlayAutoExternal {
 
         JsonNode root = response.getBody().get("results");
         if (root == null || !root.isArray() || root.isEmpty()) {
-            log.info("playauto order history empty (date={})", date);
+            log.info("playauto order history empty from {} to {}", startDate, endDate);
             return new PlayAutoOrderHistoryResponseDTO[0];
         }
 

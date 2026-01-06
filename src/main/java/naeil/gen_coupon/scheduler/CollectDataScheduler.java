@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import naeil.gen_coupon.enums.TimeUnitType;
 import naeil.gen_coupon.service.CouponService;
+import naeil.gen_coupon.service.MessageService;
 import naeil.gen_coupon.service.OrderService;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,7 @@ public class CollectDataScheduler {
     private final TaskScheduler taskScheduler;
     private final OrderService orderService;
     private final CouponService couponService;
+    private final MessageService messageService;
     private ScheduledFuture<?> scheduledFuture;
 
     public synchronized void start(String configValue) {
@@ -63,8 +65,9 @@ public class CollectDataScheduler {
             log.info("Scheduler executing...");
             orderService.createOrderInfo();
             couponService.generateCoupons();
+            messageService.sendAlimTok();
         } catch (Exception e) {
-            log.error("Scheduler execution error", e);
+            log.error("Scheduler execution error : {}", e.getMessage());
         }
     }
 }

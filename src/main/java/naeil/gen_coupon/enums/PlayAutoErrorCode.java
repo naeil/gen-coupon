@@ -41,7 +41,8 @@ public enum PlayAutoErrorCode {
     START_DATE_REQUIRED("e1019", "조회 종료일 설정시 조회 시작일은 필수입니다.", HttpStatus.BAD_REQUEST),
     END_DATE_REQUIRED("e1020", "조회 시작일 설정시 조회 종료일은 필수입니다.", HttpStatus.BAD_REQUEST),
 
-    UNKNOWN_ERROR("e1999", "정의되지 않은 오류", HttpStatus.INTERNAL_SERVER_ERROR);
+    UNKNOWN_ERROR("e1999", "정의되지 않은 오류", HttpStatus.INTERNAL_SERVER_ERROR),
+    UNSUPPORTED("e6002", "점검으로 인한 작업 제한", HttpStatus.INTERNAL_SERVER_ERROR);
 
     private final String code;
     private final String message;
@@ -56,7 +57,7 @@ public enum PlayAutoErrorCode {
 
         return new CustomException(
                 errorCode.getHttpStatus().value(),
-                errorCode.getMessage()
+                errorCode.getMessage() + " from playauto"
         );
     }
 }

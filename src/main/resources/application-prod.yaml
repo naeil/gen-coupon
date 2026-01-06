@@ -1,3 +1,7 @@
+logging:
+  level:
+    org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator: WARN
+
 spring:
   messages:
     basename: messages
@@ -20,6 +24,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        use_sql_comments: false
 server:
   port: 8081
   servlet:
@@ -39,6 +44,7 @@ aligo:
   user-id: ${ALIGO_USER_ID}
   sender-key: ${ALIGO_SENDER_KEY}
   template-code: ${ALIGO_TEMPLATE_CODE}
+  sender: ${ALIGO_SENDER}
 
 crypto:
   secret_key: ${CRYPTO_SECRET_KEY}

@@ -48,8 +48,11 @@ public class CouponIssueEntity {
         this.createDate = createDate;
     }
 
-    public void update(String mid, String rslt) {
+    public void updateMid(String mid) {
         this.mid = mid;
+    }
+
+    public void updateRslt(String rslt) {
         this.rslt = rslt;
     }
 }

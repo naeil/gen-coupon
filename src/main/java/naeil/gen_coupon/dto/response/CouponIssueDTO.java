@@ -3,6 +3,7 @@ package naeil.gen_coupon.dto.response;
 import lombok.Builder;
 import lombok.Data;
 import naeil.gen_coupon.entity.CouponIssueEntity;
+import naeil.gen_coupon.enums.AlimTokResult;
 
 import java.time.LocalDateTime;
 
@@ -26,7 +27,7 @@ public class CouponIssueDTO {
                 .imwebCouponName(issue.getImwebCouponName())
                 .customerName(issue.getCustomerEntity().getCustomerName())
                 .mid(issue.getMid())
-                .rslt(issue.getRslt())
+                .rslt(AlimTokResult.getMessageByCode(issue.getRslt()))
                 .createDate(issue.getCreateDate())
                 .build();
     }
