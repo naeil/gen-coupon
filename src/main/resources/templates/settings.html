@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: common-head('설정')}"></head>
+
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div th:replace="~{fragments/sidebar :: sidebar('settings')}"></div>
+
+        <!-- 🔹 Main Content -->
+        <main class="col-md-10 content">
+
+            <!-- Header -->
+            <div class="mb-4">
+                <h3>설정 관리</h3>
+                <p class="text-muted mb-0">
+                    쿠폰 발급 정책 및 스케줄러 설정을 관리합니다.
+                </p>
+            </div>
+
+            <!-- 🔹 Settings Form -->
+            <form id="configForm">
+
+                <!-- 스케줄러 설정 -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <strong>스케줄러 설정</strong>
+                    </div>
+                    <div class="card-body">
+
+                        <div class="row mb-3">
+                            <label class="col-sm-3 col-form-label">
+                                실행 주기 (시간)
+                            </label>
+                            <div class="col-sm-4">
+                                <input type="number"
+                                       class="form-control"
+                                       name="collect_time"
+                                       th:value="${configMap['collect_time'] != null 
+                                                    ? #strings.replace(configMap['collect_time'], 'h', '') 
+                                                    : ''}"
+                                       required>
+                            </div>
+                            <div class="col-sm-5 text-muted">
+                                예) 12 → 12시간마다 실행
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 쿠폰 발급 조건 -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <strong>쿠폰 발급 조건</strong>
+                    </div>
+                    <div class="card-body">
+
+                        <div class="row mb-3">
+                            <label class="col-sm-3 col-form-label">
+                                최소 주문 금액
+                            </label>
+                            <div class="col-sm-4">
+                                <input type="number"
+                                       class="form-control"
+                                       name="minimum_amount"
+                                       th:value="${configMap['minimum_amount']}"
+                                       min="0"
+                                       required>
+                            </div>
+                            <div class="col-sm-5 text-muted">
+                                쿠폰 발급 대상이 되는 최소 주문 금액
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 쿠폰 정보 -->
+                <div class="card shadow-sm mb-4">                                    
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <strong>쿠폰 정보</strong>
+
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary"
+                                data-bs-toggle="modal"
+                                data-bs-target="#couponListModal">
+                            쿠폰 조회
+                        </button>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <label class="col-sm-3 col-form-label">
+                                쿠폰 코드
+                            </label>
+                            <div class="col-sm-4">
+                                <input type="text"
+                                       class="form-control"
+                                       name="imweb_coupon_code"
+                                       id="couponCodeInput"
+                                       th:value="${configMap['imweb_coupon_code']}"
+                                       placeholder="WELCOME10">
+                            </div>
+                            <div class="col-sm-5 text-muted">
+                                비워두면 기본값 사용
+                            </div>
+                        </div>
+                        <div class="row">
+                            <label class="col-sm-3 col-form-label">
+                                쿠폰 이름
+                            </label>
+                            <div class="col-sm-4">
+                                <input type="text"
+                                       class="form-control"
+                                       name="imweb_coupon_name"
+                                       id="couponNameInput"
+                                       th:value="${configMap['imweb_coupon_name']}"
+                                       placeholder="웰컴 쿠폰">
+                            </div>
+                            <div class="col-sm-5 text-muted">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 저장 버튼 -->
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary px-4">
+                        저장
+                    </button>
+                </div>
+
+            </form>
+
+        </main>
+    </div>
+</div>
+<div class="modal fade" id="couponListModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">쿠폰 목록</h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>쿠폰 코드</th>
+                            <th>쿠폰명</th>
+                            <th>상태</th>
+                        </tr>
+                    </thead>
+                    <tbody id="couponTableBody">
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">
+                                조회된 데이터가 없습니다.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <nav>
+                    <ul class="pagination justify-content-center mt-3"
+                        id="couponPagination"></ul>
+                </nav>
+            </div>
+
+        </div>
+    </div>
+</div>
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.getElementById('configForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const configList = Array.from(
+                document.querySelectorAll('#configForm input[name]')
+            ).map(input => {
+                let value = input.value;
+
+                if (input.name === 'collect_time' && value) {
+                    value = `${value}h`;
+                }
+
+                return {
+                    configKey: input.name,
+                    configValue: value
+                };
+            });
+
+        fetch('/naeil/api/config', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(configList)
+        }).then(() => alert('저장되었습니다.'));
+    });
+
+    let currentCouponPage = 1;
+    document.getElementById('couponListModal')
+        .addEventListener('show.bs.modal', function () {
+            loadCoupons(1);
+        });
+
+    function loadCoupons(page) {
+        currentCouponPage = page;
+
+        const tbody = document.getElementById('couponTableBody');
+        const pagination = document.getElementById('couponPagination');
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4" class="text-center text-muted">로딩 중...</td>
+            </tr>
+        `;
+        pagination.innerHTML = '';
+
+        fetch(`/naeil/api/coupons/external?offset=${page}`)
+            .then(res => res.json())
+            .then(data => {
+                tbody.innerHTML = '';
+
+                if (!data.list || data.list.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">
+                            조회된 쿠폰이 없습니다.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                data.list.forEach(coupon => {
+                    tbody.innerHTML += `
+                        <tr class="coupon-row"
+                            style="cursor:pointer"
+                            data-coupon-code="${coupon.couponCode}"
+                            data-coupon-name="${coupon.name}">
+                            <td>${coupon.couponCode}</td>
+                            <td>${coupon.name}</td>
+                            <td>${coupon.status}</td>
+                        </tr>
+                    `;
+                });
+
+                renderCouponPagination(
+                    data.pagenation.currentPage,
+                    data.pagenation.totalPage
+                );
+            })
+            .catch((e) => {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center text-danger">
+                            쿠폰 조회 중 오류가 발생했습니다.
+                        </td>
+                    </tr>
+                `;
+            });
+    }
+
+    function renderCouponPagination(current, total) {
+        const pagination = document.getElementById('couponPagination');
+        pagination.innerHTML = '';
+
+        if (total <= 1) return;
+
+        // Prev
+        pagination.innerHTML += `
+            <li class="page-item ${current === 1 ? 'disabled' : ''}">
+                <a class="page-link"
+                href="#"
+                onclick="loadCoupons(${current - 1})">
+                \<
+                </a>
+            </li>
+        `;
+
+        for (let i = 1; i <= total; i++) {
+            pagination.innerHTML += `
+                <li class="page-item ${i === current ? 'active' : ''}">
+                    <a class="page-link"
+                    href="#"
+                    onclick="loadCoupons(${i})">
+                    ${i}
+                    </a>
+                </li>
+            `;
+        }
+
+        // Next
+        pagination.innerHTML += `
+            <li class="page-item ${current === total ? 'disabled' : ''}">
+                <a class="page-link"
+                href="#"
+                onclick="loadCoupons(${current + 1})">
+                \>
+                </a>
+            </li>
+        `;
+    }
+
+    document.addEventListener('click', function (e) {
+        const row = e.target.closest('.coupon-row');
+        if (!row) return;
+
+        const couponCode = row.dataset.couponCode;
+        const couponName = row.dataset.couponName;
+
+        document.getElementById('couponCodeInput').value = couponCode;
+        document.getElementById('couponNameInput').value = couponName;
+
+        // 모달 닫기
+        const modal = bootstrap.Modal.getInstance(
+            document.getElementById('couponListModal')
+        );
+        modal.hide();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body th:fragment="sidebar(activeMenu)">
+<nav class="col-md-2 sidebar d-flex flex-column p-3">
+    <h4 class="text-white mb-4">Coupon Admin</h4>
+
+    <ul class="nav nav-pills flex-column gap-1">
+        <!-- <li class="nav-item">
+            <a class="nav-link"
+               th:classappend="${activeMenu == 'dashboard'} ? 'active'"
+               href="/">
+                대시보드
+            </a>
+        </li> -->
+        <li class="nav-item">
+            <a class="nav-link"
+               th:classappend="${activeMenu == 'customers'} ? 'active'"
+               href="/naeil/customers">
+                주문자
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link"
+               th:classappend="${activeMenu == 'orders'} ? 'active'"
+               href="/naeil/orders">
+                주문 내역
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link"
+               th:classappend="${activeMenu == 'coupons'} ? 'active'"
+               href="/naeil/coupons">
+                발급 쿠폰
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link"
+               th:classappend="${activeMenu == 'settings'} ? 'active'"
+               href="/naeil/settings">
+                설정
+            </a>
+        </li>
+    </ul>
+</nav>
+</body>
+</html>
