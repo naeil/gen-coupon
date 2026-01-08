@@ -1,38 +1,32 @@
 package naeil.gen_coupon.service;
 
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.PathBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import naeil.gen_coupon.common.exception.CustomException;
 import naeil.gen_coupon.common.external.ImWebExternal;
-import naeil.gen_coupon.dto.external.ImWebCouponDTO;
+import naeil.gen_coupon.common.service.GenericService;
+import naeil.gen_coupon.common.util.PredicateBuilderHelper;
 import naeil.gen_coupon.dto.external.ImWebCouponDataDTO;
 import naeil.gen_coupon.dto.external.ImWebCouponItemDTO;
-import naeil.gen_coupon.entity.ConfigEntity;
-import naeil.gen_coupon.entity.CouponIssueEntity;
-import naeil.gen_coupon.entity.CustomerEntity;
-import naeil.gen_coupon.entity.StampEntity;
+import naeil.gen_coupon.dto.querydsl.CouponSearchRequestDTO;
+import naeil.gen_coupon.dto.response.CouponIssueDTO;
+import naeil.gen_coupon.entity.*;
 import naeil.gen_coupon.repository.ConfigRepository;
 import naeil.gen_coupon.repository.CouponIssueRepository;
 import naeil.gen_coupon.repository.StampRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-
-import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.OrderSpecifier;
-import com.querydsl.core.types.dsl.PathBuilder;
-import naeil.gen_coupon.common.service.GenericService;
-import naeil.gen_coupon.common.util.PredicateBuilderHelper;
-import naeil.gen_coupon.dto.querydsl.CouponSearchRequestDTO;
-import naeil.gen_coupon.dto.response.CouponIssueDTO;
-import naeil.gen_coupon.entity.QCouponIssueEntity;
 
 @Service
 @RequiredArgsConstructor
@@ -48,6 +42,8 @@ public class CouponService extends GenericService<CouponIssueEntity, QCouponIssu
     public void generateCoupons() {
         // 쿠폰 생성 로직 구현
         List<StampEntity> stamps = stampRepository.findByIssueIdIsNull();
+        ConfigEntity config = configRepository.findByConfigKey("minimum_count").orElse(null);
+        Integer standardCount = config != null ? Integer.parseInt(config.getConfigValue()) : 10;
 
         Map<CustomerEntity, List<StampEntity>> stampsByOrder = stamps.stream()
             .collect(Collectors.groupingBy(
@@ -55,7 +51,7 @@ public class CouponService extends GenericService<CouponIssueEntity, QCouponIssu
             ))
             .entrySet()
             .stream()
-            .filter(entry -> entry.getValue().size() >= 10) 
+            .filter(entry -> entry.getValue().size() >= standardCount)
             .collect(Collectors.toMap(
                 Map.Entry::getKey,
                 Map.Entry::getValue

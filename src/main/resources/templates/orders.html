@@ -24,20 +24,31 @@
                   th:action="@{/orders}"
                   method="get"
                   onsubmit="return validateDateRange();">
-
+                <div class="mb-3">
+                    <label class="form-label fw-bold mb-1">쇼핑몰</label>
+                    <select class="form-select" name="shopCode" id="shopSelect" style="margin-top: 0;">
+                        <option value="">전체</option>
+                    </select>
+                </div>
                 <div class="row g-3 align-items-end">
+
+
                     <div class="col-md-3">
                         <label class="form-label fw-bold">주문자명</label>
                         <input type="text" class="form-control" name="customerName">
                     </div>
 
                     <div class="col-md-3">
-                        <label class="form-label fw-bold">주문일(시작 ~ 종료)</label>
+                        <label class="form-label fw-bold">
+                            주문일 <span class="text-muted">(시작)</span>
+                        </label>
                         <input type="date" class="form-control" name="fromDate" id="fromDate">
                     </div>
 
                     <div class="col-md-3">
-                        <!-- <label class="form-label">종료일</label> -->
+                        <label class="form-label fw-bold">
+                            주문일 <span class="text-muted">(종료)</span>
+                        </label>
                         <input type="date" class="form-control" name="toDate" id="toDate">
                     </div>
 
@@ -56,7 +67,7 @@
                         <thead class="table-light">
                             <tr>
                                 <th>주문번호</th>
-                                <!-- <th>원주문번호</th> -->
+                                <th>쇼핑몰</th>
                                 <th>주문자</th>
                                 <th>상품명</th>
                                 <th>주문금액</th>
@@ -69,7 +80,7 @@
                             <tr th:each="order, stat : ${orders}"
                                 th:attr="data-index=${stat.index}">
                                 <td th:text="${order.uniq}">ORD-001</td>
-                                <!-- <td th:text="${order.shopOrdNoReal}">1</td> -->
+                                <td th:text="${order.shopName}">1</td>
                                 <td th:text="${order.customerName}">이지형</td>
                                 <td th:text="${order.shopSaleName}">상품</td>
                                 <td th:text="${#numbers.formatInteger(order.payAmt, 3, 'COMMA')}">50,000</td>
@@ -86,7 +97,7 @@
                             </tr>
                             <!-- 데이터 없을 때 -->
                             <tr th:if="${orders == null or #lists.isEmpty(orders)}">
-                                <td colspan="6" class="text-center text-muted py-4">
+                                <td colspan="7" class="text-center text-muted py-4">
                                     조회된 데이터가 없습니다.
                                 </td>
                             </tr>
@@ -172,6 +183,21 @@
 
         return true;
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+    fetch('/naeil/api/shops')
+        .then(res => res.json())
+        .then(list => {
+            const select = document.getElementById('shopSelect');
+
+            list.forEach(shop => {
+                const option = document.createElement('option');
+                option.value = shop.shopCode;      // ⭐ 서버로 보낼 값
+                option.textContent = shop.shopName; // 화면 표시
+                select.appendChild(option);
+            });
+        });
+    });
 </script>
 </body>
 </html>

@@ -23,6 +23,7 @@ public class CustomerEntity {
     @Convert(converter = EncryptConverter.class)
     private String customerEmail;
 
+    @Column(unique = true)
     @Convert(converter = EncryptConverter.class)
     private String customerHtel;
 

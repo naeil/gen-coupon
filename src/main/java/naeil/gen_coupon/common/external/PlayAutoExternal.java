@@ -138,11 +138,12 @@ public class PlayAutoExternal {
         headers.set("Authorization", "Token " + token);
 
         LocalDate today = LocalDate.now();
-        String startDate = today.format(DateTimeFormatter.ISO_DATE);
-        log.info("start date : {}", startDate);
 
-        String endDate = today.minusMonths(6).format(DateTimeFormatter.ISO_DATE);
-        log.info("end date : {}", endDate);
+        String startDate = today.minusMonths(6).format(DateTimeFormatter.ISO_DATE);
+        log.info("startDate date : {}", startDate);
+
+        String endDate = today.format(DateTimeFormatter.ISO_DATE);
+        log.info("endDate date : {}", endDate);
 
         Map<String, Object> body = new HashMap<>();
         body.put("start", 0);

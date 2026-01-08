@@ -1,18 +1,17 @@
 package naeil.gen_coupon.controller;
 
-import java.time.LocalDate;
-import java.util.List;
-
+import lombok.RequiredArgsConstructor;
+import naeil.gen_coupon.dto.querydsl.OrderSearchRequestDTO;
+import naeil.gen_coupon.dto.response.OrderHistoryDTO;
+import naeil.gen_coupon.service.OrderService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import lombok.RequiredArgsConstructor;
-import naeil.gen_coupon.dto.querydsl.OrderSearchRequestDTO;
-import naeil.gen_coupon.dto.response.OrderHistoryDTO;
-import naeil.gen_coupon.service.OrderService;
+import java.time.LocalDate;
+import java.util.List;
 
 @Controller
 @RequestMapping("/orders")
@@ -23,6 +22,7 @@ public class OrderViewController {
    
     @GetMapping
     public String orders(
+            @RequestParam(required = false) String shopCode,
             @RequestParam(required = false) Integer customerId,            
             @RequestParam(required = false) String customerName,
             @RequestParam(required = false) Integer issueId,            
@@ -34,6 +34,7 @@ public class OrderViewController {
     ) {
         List<OrderHistoryDTO> orders = orderService.searchOrderHistoryList(
             OrderSearchRequestDTO.builder()
+                .shopCode(shopCode)
                 .customerId(customerId)
                 .customerName(customerName)
                 .issueId(issueId)

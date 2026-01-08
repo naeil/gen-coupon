@@ -50,10 +50,10 @@
                     </div>
                 </div>
 
-                <!-- 쿠폰 발급 조건 -->
+                <!-- 스탬프 적립 조건 -->
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-white">
-                        <strong>쿠폰 발급 조건</strong>
+                        <strong>스탬프 적립 금액</strong>
                     </div>
                     <div class="card-body">
 
@@ -70,7 +70,34 @@
                                        required>
                             </div>
                             <div class="col-sm-5 text-muted">
-                                쿠폰 발급 대상이 되는 최소 주문 금액
+                                스탬프 적립 기준이 되는 최소 주문 금액
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 쿠폰 발급 조건 -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <strong>쿠폰 발급 설정</strong>
+                    </div>
+                    <div class="card-body">
+
+                        <div class="row mb-3">
+                            <label class="col-sm-3 col-form-label">
+                                스탬프 개수
+                            </label>
+                            <div class="col-sm-4">
+                                <input type="number"
+                                       class="form-control"
+                                       name="minimum_count"
+                                       th:value="${configMap['minimum_count']}"
+                                       min="0"
+                                       required>
+                            </div>
+                            <div class="col-sm-5 text-muted">
+                                쿠폰 발급 기준이 되는 최소 스탬프 개수
                             </div>
                         </div>
 

@@ -20,8 +20,6 @@ public class ShopDTO {
                 .shopId(shopEntity.getShopId())
                 .shopCode(shopEntity.getShopCode())
                 .shopName(shopEntity.getShopName())
-                .orderHistoryDTOList(shopEntity.getOrderHistoryEntities()
-                        .stream().map(OrderHistoryDTO::toDTO).toList())
                 .build();
     }
 }
