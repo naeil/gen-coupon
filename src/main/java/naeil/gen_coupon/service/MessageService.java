@@ -51,6 +51,13 @@ https://smartstore.naver.com/high_free/products/11726832244
         List<CouponIssueEntity> couponIssueEntities =
                 couponIssueRepository.findByRsltNotOrRsltIsNull("0");
 
+        if (couponIssueEntities.isEmpty()) {
+            log.info("No coupons to send. Exiting sendAlimTok.");
+            return;
+        }
+
+        log.info("coupon not send list : {}", couponIssueEntities);
+
         MultiValueMap<String, String> template = genTemplate(couponIssueEntities);
 
         String mid = updateMid(template, couponIssueEntities);
