@@ -42,8 +42,6 @@ public class CollectDataScheduler {
         // 스케줄 값 새로 설정 시 기존 스케줄을 종료 후 다시 시작
         stop();
 
-        execute();
-
         scheduledFuture = taskScheduler.scheduleWithFixedDelay(
                 this::execute,
                 interval
@@ -56,6 +54,7 @@ public class CollectDataScheduler {
     public synchronized void stop() {
         if (scheduledFuture != null) {
             scheduledFuture.cancel(false);
+            scheduledFuture = null;
             log.info("Scheduler stopped");
         }
     }

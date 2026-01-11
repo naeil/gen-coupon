@@ -36,7 +36,7 @@ public class ConfigService {
     public String getValue(String key) {
         ConfigEntity config = configRepository.findByConfigKey(key).orElse(null);
         log.info("config : {}", config);
-        return config != null ? config.getConfigValue() : "1m";
+        return config != null ? config.getConfigValue() : "24h";
     }
 
     public List<ConfigResponseDTO> updateConfig(List<ConfigDTO> configDTOList) {

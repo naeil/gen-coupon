@@ -3,8 +3,9 @@ package naeil.gen_coupon.common.external;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import naeil.gen_coupon.common.exception.CustomException;
-import naeil.gen_coupon.dto.external.PlayAutoOrderHistoryResponseDTO;
-import naeil.gen_coupon.dto.external.PlayAutoShopResponseDTO;
+import naeil.gen_coupon.dto.external.playauto.PlayAutoOrderHistoryResponseDTO;
+import naeil.gen_coupon.dto.external.playauto.PlayAutoShopResponseDTO;
+import naeil.gen_coupon.entity.ConfigEntity;
 import naeil.gen_coupon.enums.PlayAutoErrorCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,10 +19,8 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -131,7 +130,7 @@ public class PlayAutoExternal {
         return response.getBody();
     }
 
-    public PlayAutoOrderHistoryResponseDTO[] getOrderInfo(String token) {
+    public PlayAutoOrderHistoryResponseDTO[] getOrderInfo(String token, ConfigEntity config) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("x-api-key", apiKey);
@@ -177,22 +176,52 @@ public class PlayAutoExternal {
             throw new CustomException(500, "external order history api error");
         }
 
-        JsonNode root = response.getBody().get("results");
-        if (root == null || !root.isArray() || root.isEmpty()) {
+        JsonNode responseBody = response.getBody();
+        if (responseBody == null) {
+            return new PlayAutoOrderHistoryResponseDTO[0];
+        }
+
+        Set<String> excludedUniqs = new HashSet<>();
+        Set<String> blockSuppliers;
+        if(config.getConfigValue() != null && !config.getConfigValue().isBlank()) {
+            blockSuppliers = Arrays.stream(config.getConfigValue().split(","))
+                    .map(String::trim)
+                    .collect(Collectors.toSet());
+        } else {
+            blockSuppliers = new HashSet<>();
+        }
+        JsonNode prodNode = responseBody.get("results_prod");
+
+        if (prodNode != null && prodNode.isArray()) {
+            for (JsonNode node : prodNode) {
+                String uniq = node.path("uniq").asText();
+                String suppName = node.path("supp_name").asText(""); // 매입처 이름 가져오기
+
+                // uniq가 유효하고, 매입처가 차단 목록에 포함되어 있다면
+                if (uniq != null && !uniq.isEmpty() && blockSuppliers.contains(suppName)) {
+                    excludedUniqs.add(uniq);
+                }
+            }
+        }
+
+        log.info("excluded uniqs & suppName : {} & {}", excludedUniqs, blockSuppliers);
+
+        JsonNode resultsNode = responseBody.get("results");
+        if (resultsNode == null || !resultsNode.isArray() || resultsNode.isEmpty()) {
             log.info("playauto order history empty from {} to {}", startDate, endDate);
             return new PlayAutoOrderHistoryResponseDTO[0];
         }
 
         ObjectMapper objectMapper = new ObjectMapper();
-
         PlayAutoOrderHistoryResponseDTO[] orderHistories =
                 objectMapper.treeToValue(
-                        root,
+                        resultsNode,
                         PlayAutoOrderHistoryResponseDTO[].class
                 );
-        Arrays.stream(orderHistories)
-                .forEach(dto -> log.info("response orderHistoryDTO = {}", dto));
 
-        return orderHistories;
+        return Arrays.stream(orderHistories)
+                .filter(dto -> !excludedUniqs.contains(dto.getUniq()))
+                .peek(dto -> log.info("response orderHistoryDTO = {}", dto)) // 로깅
+                .toArray(PlayAutoOrderHistoryResponseDTO[]::new);
     }
 }

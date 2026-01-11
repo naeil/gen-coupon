@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import naeil.gen_coupon.common.external.PlayAutoExternal;
 import naeil.gen_coupon.common.service.GenericService;
 import naeil.gen_coupon.common.util.PredicateBuilderHelper;
-import naeil.gen_coupon.dto.external.PlayAutoOrderHistoryResponseDTO;
+import naeil.gen_coupon.dto.external.playauto.PlayAutoOrderHistoryResponseDTO;
 import naeil.gen_coupon.dto.querydsl.OrderSearchRequestDTO;
 import naeil.gen_coupon.dto.response.CustomerDTO;
 import naeil.gen_coupon.dto.response.OrderHistoryDTO;
@@ -64,8 +64,10 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
         // shop 정보 업데이트
         shopService.syncShopInfo(token);
 
+        ConfigEntity config = configRepository.findByConfigKey("blocked_suppliers").orElse(null);
+
         PlayAutoOrderHistoryResponseDTO[] orderHistoryInfos =
-                playAutoExternal.getOrderInfo(token);
+                playAutoExternal.getOrderInfo(token, config);
 
         List<PlayAutoOrderHistoryResponseDTO> filteredOrders = filteredOrders(orderHistoryInfos);
 

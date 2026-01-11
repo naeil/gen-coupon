@@ -2,11 +2,10 @@ package naeil.gen_coupon.common.external;
 
 import lombok.extern.slf4j.Slf4j;
 import naeil.gen_coupon.common.exception.CustomException;
-import naeil.gen_coupon.dto.external.ImWebCouponDTO;
-import naeil.gen_coupon.dto.external.ImWebCouponDataDTO;
-import naeil.gen_coupon.dto.external.ImWebCouponIssueResponseDTO;
-import naeil.gen_coupon.dto.external.ImWebCouponItemDTO;
-import naeil.gen_coupon.dto.external.ImWebCouponResponseDTO;
+import naeil.gen_coupon.dto.external.imweb.ImWebCouponDataDTO;
+import naeil.gen_coupon.dto.external.imweb.ImWebCouponIssueResponseDTO;
+import naeil.gen_coupon.dto.external.imweb.ImWebCouponItemDTO;
+import naeil.gen_coupon.dto.external.imweb.ImWebCouponResponseDTO;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

@@ -12,6 +12,7 @@ public class OrderHistoryDTO {
 
     private Integer orderHistoryId;
     private String uniq;
+    private String shopCode;
     private String shopName;
     private String customerName;
     private Integer payAmt;
@@ -25,6 +26,7 @@ public class OrderHistoryDTO {
         return OrderHistoryDTO.builder()
                 .orderHistoryId(orderHistory.getOrderHistoryId())
                 .uniq(orderHistory.getUniq())
+                .shopCode(orderHistory.getShopEntity().getShopCode())
                 .shopName(orderHistory.getShopEntity().getShopName())
                 .customerName(orderHistory.getCustomerEntity().getCustomerName())
                 .payAmt(orderHistory.getPayAmt())

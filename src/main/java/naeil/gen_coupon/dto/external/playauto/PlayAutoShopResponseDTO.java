@@ -1,4 +1,4 @@
-package naeil.gen_coupon.dto.external;
+package naeil.gen_coupon.dto.external.playauto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

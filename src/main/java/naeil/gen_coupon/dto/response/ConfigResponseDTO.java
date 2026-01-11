@@ -7,6 +7,7 @@ import naeil.gen_coupon.entity.ConfigEntity;
 @SuperBuilder
 public class ConfigResponseDTO extends ConfigDTO {
     public static ConfigResponseDTO toDTO(ConfigEntity configEntity){
+
         return ConfigResponseDTO.builder()
                 .configId(configEntity.getConfigId())
                 .configKey(configEntity.getConfigKey())

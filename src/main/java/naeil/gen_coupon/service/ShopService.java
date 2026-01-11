@@ -1,9 +1,8 @@
 package naeil.gen_coupon.service;
 
 import lombok.extern.slf4j.Slf4j;
-import naeil.gen_coupon.common.exception.CustomException;
 import naeil.gen_coupon.common.external.PlayAutoExternal;
-import naeil.gen_coupon.dto.external.PlayAutoShopResponseDTO;
+import naeil.gen_coupon.dto.external.playauto.PlayAutoShopResponseDTO;
 import naeil.gen_coupon.dto.response.ShopDTO;
 import naeil.gen_coupon.entity.ShopEntity;
 import naeil.gen_coupon.repository.ShopRepository;
@@ -68,11 +67,6 @@ public class ShopService {
     }
 
     public ShopEntity getShopEntity(String shopCode) {
-        if("A000".equals(shopCode)) {
-            return shopRepository.findByShopCode(shopCode)
-                    .orElseGet(() -> shopRepository.save(new ShopEntity(shopCode, "직접입력")));
-        } else {
-            return shopRepository.findByShopCode(shopCode).orElseThrow(() -> new CustomException(404, "shop info not exist"));
-        }
+        return shopRepository.findByShopCode(shopCode).orElse(null);
     }
 }

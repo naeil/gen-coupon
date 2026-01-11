@@ -19,6 +19,7 @@ public class StampDTO {
     public static StampDTO toDTO(StampEntity stampEntity) {
         return StampDTO.builder()
                 .stampId(stampEntity.getStampId())
+                .issueId(stampEntity.getIssueId())
                 .createDate(stampEntity.getCreateDate())
                 .build();
     }

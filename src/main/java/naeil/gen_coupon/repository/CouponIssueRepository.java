@@ -12,4 +12,6 @@ public interface CouponIssueRepository extends JpaRepository<CouponIssueEntity, 
     List<CouponIssueEntity> findByRsltNotOrRsltIsNull(String rslt);
 
     List<CouponIssueEntity> findAllByMid(String mid);
+
+    List<CouponIssueEntity> findAllByCustomerEntity_CustomerIdOrderByCreateDateDesc(Integer customerId);
 }

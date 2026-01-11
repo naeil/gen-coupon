@@ -1,4 +1,4 @@
-package naeil.gen_coupon.dto.external;
+package naeil.gen_coupon.dto.external.imweb;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class ImWebCouponResponseDTO {
+public class ImWebCouponIssueResponseDTO {
     
     private String msg;
     private int code;
@@ -19,5 +19,5 @@ public class ImWebCouponResponseDTO {
 
     private String version;
 
-    private ImWebCouponDataDTO data;
+    private ImWebCouponIssueDataDTO data;
 }

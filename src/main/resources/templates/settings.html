@@ -5,13 +5,10 @@
 <body>
 <div class="container-fluid">
     <div class="row">
-        <!-- Sidebar -->
         <div th:replace="~{fragments/sidebar :: sidebar('settings')}"></div>
 
-        <!-- 🔹 Main Content -->
         <main class="col-md-10 content">
 
-            <!-- Header -->
             <div class="mb-4">
                 <h3>설정 관리</h3>
                 <p class="text-muted mb-0">
@@ -19,16 +16,13 @@
                 </p>
             </div>
 
-            <!-- 🔹 Settings Form -->
             <form id="configForm">
 
-                <!-- 스케줄러 설정 -->
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-white">
                         <strong>스케줄러 설정</strong>
                     </div>
                     <div class="card-body">
-
                         <div class="row mb-3">
                             <label class="col-sm-3 col-form-label">
                                 실행 주기 (시간)
@@ -37,8 +31,8 @@
                                 <input type="number"
                                        class="form-control"
                                        name="collect_time"
-                                       th:value="${configMap['collect_time'] != null 
-                                                    ? #strings.replace(configMap['collect_time'], 'h', '') 
+                                       th:value="${configMap['collect_time'] != null
+                                                    ? #strings.replace(configMap['collect_time'], 'h', '')
                                                     : ''}"
                                        required>
                             </div>
@@ -46,17 +40,14 @@
                                 예) 12 → 12시간마다 실행
                             </div>
                         </div>
-
                     </div>
                 </div>
 
-                <!-- 스탬프 적립 조건 -->
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-white">
                         <strong>스탬프 적립 금액</strong>
                     </div>
                     <div class="card-body">
-
                         <div class="row mb-3">
                             <label class="col-sm-3 col-form-label">
                                 최소 주문 금액
@@ -73,17 +64,14 @@
                                 스탬프 적립 기준이 되는 최소 주문 금액
                             </div>
                         </div>
-
                     </div>
                 </div>
 
-                <!-- 쿠폰 발급 조건 -->
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-white">
                         <strong>쿠폰 발급 설정</strong>
                     </div>
                     <div class="card-body">
-
                         <div class="row mb-3">
                             <label class="col-sm-3 col-form-label">
                                 스탬프 개수
@@ -100,15 +88,12 @@
                                 쿠폰 발급 기준이 되는 최소 스탬프 개수
                             </div>
                         </div>
-
                     </div>
                 </div>
 
-                <!-- 쿠폰 정보 -->
-                <div class="card shadow-sm mb-4">                                    
+                <div class="card shadow-sm mb-4">
                     <div class="card-header bg-white d-flex justify-content-between align-items-center">
                         <strong>쿠폰 정보</strong>
-
                         <button type="button"
                                 class="btn btn-sm btn-outline-primary"
                                 data-bs-toggle="modal"
@@ -146,13 +131,42 @@
                                        th:value="${configMap['imweb_coupon_name']}"
                                        placeholder="웰컴 쿠폰">
                             </div>
-                            <div class="col-sm-5 text-muted">
-                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 저장 버튼 -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <strong>차단 매입처 관리</strong>
+                    </div>
+                    <div class="card-body">
+                        <input type="hidden"
+                               name="blocked_suppliers"
+                               id="blockedSuppliersInput"
+                               th:value="${configMap['blocked_suppliers']}">
+
+                        <div class="row mb-3">
+                            <label class="col-sm-3 col-form-label">매입처 키워드 추가</label>
+                            <div class="col-sm-7">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="keywordInput" placeholder="예) 국민돈까스">
+                                    <button type="button" class="btn btn-outline-primary" id="addKeywordBtn">추가</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-3"></div> <div class="col-sm-9">
+                            <div id="blockedSupplierList" class="mb-2">
+                            </div>
+                            <p class="text-muted small mb-0">
+                                키워드를 추가하면 해당 매입처의 주문은 제외됩니다. 삭제하려면 'x'를 클릭하세요.
+                            </p>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="d-flex justify-content-end">
                     <button type="submit" class="btn btn-primary px-4">
                         저장
@@ -164,47 +178,116 @@
         </main>
     </div>
 </div>
+
 <div class="modal fade" id="couponListModal" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
-
             <div class="modal-header">
                 <h5 class="modal-title">쿠폰 목록</h5>
-                <button type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-
             <div class="modal-body">
-
                 <table class="table table-sm">
                     <thead>
-                        <tr>
-                            <th>쿠폰 코드</th>
-                            <th>쿠폰명</th>
-                            <th>상태</th>
-                        </tr>
+                    <tr>
+                        <th>쿠폰 코드</th>
+                        <th>쿠폰명</th>
+                        <th>상태</th>
+                    </tr>
                     </thead>
                     <tbody id="couponTableBody">
-                        <tr>
-                            <td colspan="3" class="text-center text-muted">
-                                조회된 데이터가 없습니다.
-                            </td>
-                        </tr>
+                    <tr><td colspan="3" class="text-center text-muted">조회된 데이터가 없습니다.</td></tr>
                     </tbody>
                 </table>
-                <nav>
-                    <ul class="pagination justify-content-center mt-3"
-                        id="couponPagination"></ul>
-                </nav>
+                <nav><ul class="pagination justify-content-center mt-3" id="couponPagination"></ul></nav>
             </div>
-
         </div>
     </div>
 </div>
-<!-- Bootstrap JS -->
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    // ==========================================
+    // 🔹 1. 차단 매입처 관리 로직 (추가됨)
+    // ==========================================
+    const hiddenInput = document.getElementById('blockedSuppliersInput');
+    const keywordInput = document.getElementById('keywordInput');
+    const addKeywordBtn = document.getElementById('addKeywordBtn');
+    const supplierListContainer = document.getElementById('blockedSupplierList');
+
+    // 초기 데이터 로드 (DB에서 가져온 콤마 문자열 -> 배열)
+    let blockedSuppliers = [];
+
+    const rawValue = hiddenInput.value;
+
+    // 1. 값이 있고(null/undefined 아님)
+    // 2. 빈 문자열("")이 아니며
+    // 3. 혹시 모를 문자열 "null"도 아닐 경우에만 split 실행
+    if (rawValue && rawValue.trim().length > 0 && rawValue !== 'null') {
+        blockedSuppliers = rawValue.split(',').map(s => s.trim()).filter(s => s);
+    }
+    // 화면 그리기 함수
+    function renderBadges() {
+        supplierListContainer.innerHTML = '';
+        blockedSuppliers.forEach((name, index) => {
+            const badge = document.createElement('span');
+            badge.className = 'badge bg-light text-dark border me-1 mb-1';
+            badge.style.fontSize = '0.9em';
+            badge.innerHTML = `${name} <i class="bi bi-x" style="cursor:pointer; margin-left:4px;" onclick="removeSupplier(${index})">x</i>`;
+
+            // x 버튼에 직접 이벤트 리스너를 달거나 위처럼 onclick 사용 (여기서는 편의상 onclick 문자열 주입 방식 사용하되, 함수를 전역으로 빼야 함)
+            // 더 안전한 방식을 위해 아래처럼 구현
+            const closeBtn = document.createElement('span');
+            closeBtn.innerText = ' x';
+            closeBtn.style.cursor = 'pointer';
+            closeBtn.style.marginLeft = '5px';
+            closeBtn.onclick = () => removeSupplier(index);
+
+            badge.innerText = name;
+            badge.appendChild(closeBtn);
+
+            supplierListContainer.appendChild(badge);
+        });
+
+        // ⭐ 핵심: 배열을 콤마 문자열로 변환하여 Hidden Input에 저장
+        hiddenInput.value = blockedSuppliers.join(',');
+    }
+
+    // 추가 함수
+    function addSupplier() {
+        const value = keywordInput.value.trim();
+        if (!value) return;
+        if (blockedSuppliers.includes(value)) {
+            alert('이미 등록된 매입처입니다.');
+            return;
+        }
+        blockedSuppliers.push(value);
+        keywordInput.value = '';
+        renderBadges();
+    }
+
+    // 삭제 함수
+    window.removeSupplier = function(index) {
+        blockedSuppliers.splice(index, 1);
+        renderBadges();
+    }
+
+    // 이벤트 리스너 등록
+    addKeywordBtn.addEventListener('click', addSupplier);
+    keywordInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // 폼 제출 방지
+            addSupplier();
+        }
+    });
+
+    // 페이지 로드 시 초기 렌더링
+    renderBadges();
+
+
+    // ==========================================
+    // 🔹 2. 기존 설정 저장 로직 (수정없음, Hidden Input이 자동으로 포함됨)
+    // ==========================================
     document.getElementById('configForm').addEventListener('submit', function (e) {
         e.preventDefault();
 
@@ -223,6 +306,9 @@
                 };
             });
 
+        // 디버깅용 로그 (개발자 도구 콘솔에서 확인 가능)
+        console.log('전송 데이터:', configList);
+
         fetch('/naeil/api/config', {
             method: 'PUT',
             headers: {
@@ -232,6 +318,9 @@
         }).then(() => alert('저장되었습니다.'));
     });
 
+    // ==========================================
+    // 🔹 3. 쿠폰 모달 로직 (기존 동일)
+    // ==========================================
     let currentCouponPage = 1;
     document.getElementById('couponListModal')
         .addEventListener('show.bs.modal', function () {
@@ -240,37 +329,23 @@
 
     function loadCoupons(page) {
         currentCouponPage = page;
-
         const tbody = document.getElementById('couponTableBody');
         const pagination = document.getElementById('couponPagination');
 
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="4" class="text-center text-muted">로딩 중...</td>
-            </tr>
-        `;
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">로딩 중...</td></tr>`;
         pagination.innerHTML = '';
 
         fetch(`/naeil/api/coupons/external?offset=${page}`)
             .then(res => res.json())
             .then(data => {
                 tbody.innerHTML = '';
-
                 if (!data.list || data.list.length === 0) {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="4" class="text-center text-muted">
-                            조회된 쿠폰이 없습니다.
-                            </td>
-                        </tr>
-                    `;
+                    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">조회된 쿠폰이 없습니다.</td></tr>`;
                     return;
                 }
-
                 data.list.forEach(coupon => {
                     tbody.innerHTML += `
-                        <tr class="coupon-row"
-                            style="cursor:pointer"
+                        <tr class="coupon-row" style="cursor:pointer"
                             data-coupon-code="${coupon.couponCode}"
                             data-coupon-name="${coupon.name}">
                             <td>${coupon.couponCode}</td>
@@ -279,60 +354,33 @@
                         </tr>
                     `;
                 });
-
-                renderCouponPagination(
-                    data.pagenation.currentPage,
-                    data.pagenation.totalPage
-                );
+                renderCouponPagination(data.pagenation.currentPage, data.pagenation.totalPage);
             })
             .catch((e) => {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="4" class="text-center text-danger">
-                            쿠폰 조회 중 오류가 발생했습니다.
-                        </td>
-                    </tr>
-                `;
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">쿠폰 조회 중 오류가 발생했습니다.</td></tr>`;
             });
     }
 
     function renderCouponPagination(current, total) {
         const pagination = document.getElementById('couponPagination');
         pagination.innerHTML = '';
-
         if (total <= 1) return;
 
-        // Prev
         pagination.innerHTML += `
             <li class="page-item ${current === 1 ? 'disabled' : ''}">
-                <a class="page-link"
-                href="#"
-                onclick="loadCoupons(${current - 1})">
-                \<
-                </a>
+                <a class="page-link" href="#" onclick="loadCoupons(${current - 1})"> \< </a>
             </li>
         `;
-
         for (let i = 1; i <= total; i++) {
             pagination.innerHTML += `
                 <li class="page-item ${i === current ? 'active' : ''}">
-                    <a class="page-link"
-                    href="#"
-                    onclick="loadCoupons(${i})">
-                    ${i}
-                    </a>
+                    <a class="page-link" href="#" onclick="loadCoupons(${i})"> ${i} </a>
                 </li>
             `;
         }
-
-        // Next
         pagination.innerHTML += `
             <li class="page-item ${current === total ? 'disabled' : ''}">
-                <a class="page-link"
-                href="#"
-                onclick="loadCoupons(${current + 1})">
-                \>
-                </a>
+                <a class="page-link" href="#" onclick="loadCoupons(${current + 1})"> \> </a>
             </li>
         `;
     }
@@ -340,17 +388,9 @@
     document.addEventListener('click', function (e) {
         const row = e.target.closest('.coupon-row');
         if (!row) return;
-
-        const couponCode = row.dataset.couponCode;
-        const couponName = row.dataset.couponName;
-
-        document.getElementById('couponCodeInput').value = couponCode;
-        document.getElementById('couponNameInput').value = couponName;
-
-        // 모달 닫기
-        const modal = bootstrap.Modal.getInstance(
-            document.getElementById('couponListModal')
-        );
+        document.getElementById('couponCodeInput').value = row.dataset.couponCode;
+        document.getElementById('couponNameInput').value = row.dataset.couponName;
+        const modal = bootstrap.Modal.getInstance(document.getElementById('couponListModal'));
         modal.hide();
     });
 </script>
