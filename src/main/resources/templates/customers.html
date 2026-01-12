@@ -7,7 +7,7 @@
     <div class="row">
         <div th:replace="~{fragments/sidebar :: sidebar('customers')}"></div>
 
-        <main class="col-md-10 content">
+        <main class="col-md-10-5 content">
 
             <div class="mb-4">
                 <h3>주문자 목록</h3>
@@ -70,7 +70,7 @@
 </div>
 
 <div class="modal fade" id="couponModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-half-screen-custom">
         <div class="modal-content shadow">
 
             <div class="modal-header bg-white border-bottom">
@@ -146,6 +146,7 @@
                                             <th>날짜</th>
                                             <th>내용</th>
                                             <th>적립</th>
+                                            <th>알림톡 발송 결과</th>
                                         </tr>
                                         </thead>
                                         <tbody id="stampHistoryBody">
@@ -165,7 +166,7 @@
                                             <th>발급일</th>
                                             <th>쿠폰명</th>
                                             <th>쿠폰 코드</th>
-                                            <th>상태</th>
+                                            <th>알림톡 발송 결과</th>
                                         </tr>
                                         </thead>
                                         <tbody id="couponHistoryBody">
@@ -386,6 +387,11 @@
                             <td>${formatDate(order.createDate)}</td>
                             <td class="text-start ps-4">${order.shopSaleName}</td>
                             <td class="fw-bold text-primary">1</td>
+                            <td>
+                                <span class="badge border bg-danger-subtle text-danger border-danger-subtle">
+                                    메시지가 비어있거나 잘못된 동보 전송 수신번호 리스트
+                                </span>
+                            </td>
                         </tr>
                     `
                 });
@@ -399,11 +405,11 @@
                     rowRenderer: coupon => `
                         <tr>
                             <td class="text-muted">${formatDate(coupon.createDate)}</td>
-                            <td class="text-start fw-bold">${coupon.imwebCouponName}</td>
+                            <td class="text-center fw-bold">${coupon.imwebCouponName}</td>
                             <td class="text-primary font-monospace">${coupon.issuedCouponCode}</td>
                             <td>
-                                <span class="badge bg-success-subtle text-success border border-success-subtle">
-                                    ${coupon.rslt || '발급완료'}
+                                <span class="badge border ${ (coupon.rslt === '알림톡 발송 완료' || !coupon.rslt) ? 'bg-success-subtle text-success border-success-subtle' : 'bg-danger-subtle text-danger border-danger-subtle' }">
+                                    ${coupon.rslt === '알림톡 발송 완료' ? coupon.rslt : '알림톡 발송 실패 : ' + coupon.rslt}
                                 </span>
                             </td>
                         </tr>

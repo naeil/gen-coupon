@@ -64,7 +64,7 @@ public class CollectDataScheduler {
             log.info("Scheduler executing...");
             orderService.createOrderInfo();
             couponService.generateCoupons();
-            messageService.sendAlimTok();
+            messageService.sendCouponAlimTok();
         } catch (Exception e) {
             log.error("Scheduler execution error : {}", e.getMessage());
         }

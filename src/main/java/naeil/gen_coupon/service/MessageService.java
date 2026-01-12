@@ -46,7 +46,7 @@ https://smartstore.naver.com/high_free/products/11726832244
 //            "*본 메시지는 최근 하이프리 제품 구매 고객님께 제공되는 안내 메시지입니다.";
 
     // todo : rslt/mid 결과 저장
-    public void sendAlimTok(){
+    public void sendCouponAlimTok(){
 
         List<CouponIssueEntity> couponIssueEntities =
                 couponIssueRepository.findByRsltNotOrRsltIsNull("0");

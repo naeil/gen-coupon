@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public enum AlimTokResult {
 
-    SUCCESS("0", "쿠폰발급 완료"),
+    SUCCESS("0", "알림톡 발송 완료"),
     EMPTY_MESSAGE("t", "메시지가 비어있거나 잘못된 동보 전송 수신번호 리스트"),
     MESSAGE_NOT_EXIST("k", "메시지가 존재하지 않음"),
 

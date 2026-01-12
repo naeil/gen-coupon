@@ -30,8 +30,6 @@ public class StampService {
         return stamps.stream().map(stamp -> StampDTO.toDTO(stamp)).toList();
     }
 
-    // todo : stamp 조회 메소드
-
     public void createStamp(List<OrderHistoryEntity> orderHistories) {
 
         List<StampEntity> stampEntities = new ArrayList<>();
@@ -39,6 +37,7 @@ public class StampService {
             StampEntity stamp = new StampEntity(history);
             stampEntities.add(stamp);
         }
-        stampRepository.saveAll(stampEntities);
+        List<StampEntity> savedStampEntities = stampRepository.saveAll(stampEntities);
+
     }
 }

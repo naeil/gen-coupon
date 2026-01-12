@@ -9,7 +9,7 @@
         <div th:replace="~{fragments/sidebar :: sidebar('orders')}"></div>
 
         <!-- 🔹 Main Content -->
-        <main class="col-md-10 content">
+        <main class="col-md-10-5 content">
 
             <!-- Header -->
             <div class="mb-4">
@@ -63,16 +63,16 @@
             <!-- 🔹 Order Table -->
             <div class="card shadow-sm">
                 <div class="card-body p-0">
-                    <table class="table table-hover" id="orderTable">
+                    <table class="table table-hover" id="orderTable" style="table-layout: fixed; width: 100%;">
                         <thead class="table-light">
                             <tr>
-                                <th>주문번호</th>
-                                <th>쇼핑몰</th>
-                                <th>주문자</th>
-                                <th>상품명</th>
-                                <th>주문금액</th>
-                                <th>주문일</th>
-                                <th>구매 결정일</th>
+                                <th style="width: 12%">주문번호</th>
+                                <th style="width: 7%">쇼핑몰</th>
+                                <th style="width: 5%">주문자</th>
+                                <th style="width: 50%">상품명</th>
+                                <th style="width: 6%">주문금액</th>
+                                <th style="width: 10%">주문일</th>
+                                <th style="width: 10%">구매 결정일</th>
                                 <!-- <th class="text-center">상세</th> -->
                             </tr>
                         </thead>
@@ -82,7 +82,10 @@
                                 <td th:text="${order.uniq}">ORD-001</td>
                                 <td th:text="${order.shopName}">1</td>
                                 <td th:text="${order.customerName}">이지형</td>
-                                <td th:text="${order.shopSaleName}">상품</td>
+                                <td class="text-truncate"
+                                    th:text="${order.shopSaleName}"
+                                    th:title="${order.shopSaleName}">상품
+                                </td>
                                 <td th:text="${#numbers.formatInteger(order.payAmt, 3, 'COMMA')}">50,000</td>
                                 <td th:text="${order.createDate == null ? '-' : #temporals.format(order.createDate, 'yyyy-MM-dd HH:mm')}"></td>
                                 <td th:text="${order.confirmDate == null ? '-' : #temporals.format(order.confirmDate, 'yyyy-MM-dd HH:mm')}"></td>                         
