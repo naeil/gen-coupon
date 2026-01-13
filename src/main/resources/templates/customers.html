@@ -8,12 +8,31 @@
         <div th:replace="~{fragments/sidebar :: sidebar('customers')}"></div>
 
         <main class="col-md-10-5 content">
-
             <div class="mb-4">
                 <h3>주문자 목록</h3>
                 <p class="text-muted mb-0">
                     주문자별 쿠폰 발급 현황 및 주문 내역을 조회합니다.
                 </p>
+            </div>
+
+            <!-- 통계 영역 -->
+            <div class="row g-3 mb-3">
+                <div class="col-lg-9">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body py-3">
+                            <h6 class="fw-bold mb-2">스탬프 보유 주문자 수 분포</h6>
+                            <canvas id="orderUserChart" height="90"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3">
+                    <div class="card shadow-sm h-100 text-center">
+                        <div class="card-body py-3 d-flex flex-column justify-content-center">
+                            <span class="text-muted mb-1">총 주문자 수</span>
+                            <span id="totalOrderUser" class="fs-4 fw-bold">-</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="card shadow-sm">
@@ -247,7 +266,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         // --- 1. 메인 테이블(주문자 목록) 클라이언트 사이드 페이지네이션 ---
         const rows = document.querySelectorAll('#customerTable tbody tr[data-index]');
-        const rowsPerPage = 20;
+        const rowsPerPage = 10;
         const totalRows = rows.length;
         const totalPages = Math.ceil(totalRows / rowsPerPage);
 
@@ -532,6 +551,83 @@
     function formatAmount(amount) {
         if (amount === null || amount === undefined) return '-';
         return Number(amount).toLocaleString('ko-KR');
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        fetch('/naeil/api/customers/summary')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('통계 데이터 조회 실패');
+                }
+                return response.json();
+            })
+            .then(data => {
+                renderSummary(data);
+            })
+            .catch(err => {
+                console.error(err);
+            });
+        });
+
+    function renderSummary(data) {
+        // 1️⃣ 총 주문자 수 세팅
+        document.getElementById('totalOrderUser').innerText = data.total + '명';
+
+        // 2️⃣ stamps 데이터 가공
+        const labels = Object.keys(data.stamps)
+            .sort((a, b) => Number(a) - Number(b))
+            .map(k => `${k}개`);
+
+        const values = Object.keys(data.stamps)
+            .sort((a, b) => Number(a) - Number(b))
+            .map(k => data.stamps[k]);
+
+        // 3️⃣ 그래프 렌더링
+        renderChart(labels, values);
+    }
+
+    function renderChart(labels, values) {
+        const ctx = document.getElementById('orderUserChart');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    borderRadius: 6,
+                    barThickness: 16,
+                    backgroundColor: '#2f80ed'
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `${ctx.raw}명`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            callback: value => value + '명'
+                        },
+                        grid: {
+                            color: '#eee'
+                        }
+                    },
+                    y: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
     }
 </script>
 </body>

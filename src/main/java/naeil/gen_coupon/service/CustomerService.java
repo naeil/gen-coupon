@@ -3,8 +3,11 @@ package naeil.gen_coupon.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import naeil.gen_coupon.common.exception.CustomException;
+import naeil.gen_coupon.dto.querydsl.CustomerStampSummary;
 import naeil.gen_coupon.dto.response.*;
 import naeil.gen_coupon.entity.CustomerEntity;
+import naeil.gen_coupon.entity.QCustomerEntity;
+import naeil.gen_coupon.entity.QStampEntity;
 import naeil.gen_coupon.entity.StampEntity;
 import naeil.gen_coupon.repository.CouponIssueRepository;
 import naeil.gen_coupon.repository.CustomerRepository;
@@ -13,7 +16,12 @@ import naeil.gen_coupon.repository.StampRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.querydsl.core.Tuple;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +34,7 @@ public class CustomerService {
     private final CouponIssueRepository couponIssueRepository;
     private final OrderHistoryRepository orderHistoryRepository;
     private final StampRepository stampRepository;
+    private final JPAQueryFactory queryFactory;
 
     public List<CustomerDTO> findAll() {
         List<CustomerDTO> customers = customerRepository.findAll().stream()
@@ -69,6 +78,34 @@ public class CustomerService {
                 .coupons(coupons)
                 .orderHistories(orders)
                 .build();
+    }
+
+    public CustomerStampSummary getStampSummary() {
+
+        QCustomerEntity customer = QCustomerEntity.customerEntity;
+        QStampEntity stamp = QStampEntity.stampEntity;
+
+        // 1️⃣ 전체 주문자 수
+        long total = queryFactory
+            .select(customer.count())
+            .from(customer)
+            .fetchOne();
+
+        List<Tuple> rows = queryFactory
+            .select(customer.customerId, stamp.stampId.count())
+            .from(customer)
+            .join(customer.stampEntities, stamp)
+            .where(stamp.issueId.isNull())
+            .groupBy(customer.customerId)
+            .fetch();
+
+        Map<Integer, Integer> stamps = new LinkedHashMap<>();
+        for (Tuple row : rows) {
+            int stampCount = row.get(stamp.stampId.count()).intValue();
+            stamps.merge(stampCount, 1, Integer::sum);
+        }
+
+        return new CustomerStampSummary(stamps, total);
     }
 }
 

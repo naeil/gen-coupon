@@ -16,7 +16,12 @@ public class CustomerController {
     private CustomerService customerService;
 
     @GetMapping("/{customerId}/detail")
-    public ResponseEntity<?> getCustomerDetail(@PathVariable Integer customerId) {
+    public ResponseEntity<?> getCustomerDetail(@PathVariable("customerId") Integer customerId) {
         return ResponseEntity.ok().body(customerService.getCustomerDetail(customerId));
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<?> getStampSummary() {
+        return ResponseEntity.ok().body(customerService.getStampSummary());
     }
 }

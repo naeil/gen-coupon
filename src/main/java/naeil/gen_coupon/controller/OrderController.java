@@ -22,14 +22,14 @@ public class OrderController {
    
     @GetMapping
     public ResponseEntity<?> getOrderHistories(
-            @RequestParam(required = false) String shopCode,
-            @RequestParam(required = false) Integer customerId,            
-            @RequestParam(required = false) String customerName,
-            @RequestParam(required = false) Integer issueId,    
-            @RequestParam(required = false) LocalDate fromDate,
-            @RequestParam(required = false) LocalDate toDate,
-            @RequestParam(required = false, defaultValue="1") int pageNumber,
-            @RequestParam(required = false, defaultValue="20") int pageSize
+            @RequestParam(required = false, name = "shopCode") String shopCode,
+            @RequestParam(required = false, name = "customerId") Integer customerId,            
+            @RequestParam(required = false, name = "customerName") String customerName,
+            @RequestParam(required = false, name = "issudId") Integer issueId,            
+            @RequestParam(required = false, name = "fromDate") LocalDate fromDate,
+            @RequestParam(required = false, name = "toDate") LocalDate toDate,
+            @RequestParam(required = false, defaultValue="1", name = "pageNumber") int pageNumber,
+            @RequestParam(required = false, defaultValue="20", name = "pageSize") int pageSize
     ) {
         List<OrderHistoryDTO> orders = orderService.searchOrderHistoryList(
             OrderSearchRequestDTO.builder()

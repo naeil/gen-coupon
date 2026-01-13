@@ -37,7 +37,7 @@ public class StampService {
             StampEntity stamp = new StampEntity(history);
             stampEntities.add(stamp);
         }
-        List<StampEntity> savedStampEntities = stampRepository.saveAll(stampEntities);
 
+        stampRepository.saveAll(stampEntities);
     }
 }
