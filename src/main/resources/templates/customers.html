@@ -146,7 +146,7 @@
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link fw-bold text-secondary" id="coupon-tab" data-bs-toggle="tab" data-bs-target="#couponHistory" type="button" role="tab">
+                                <button class="nav-link fw-bold text-dark" id="coupon-tab" data-bs-toggle="tab" data-bs-target="#couponHistory" type="button" role="tab">
                                     <i class="bi bi-ticket-detailed me-1"></i> 쿠폰 발급 내역
                                 </button>
                             </li>
@@ -370,6 +370,11 @@
     // --- 3. [쿠폰 모달] 로직 (통합 API 사용) ---
     const couponModal = document.getElementById('couponModal');
     couponModal.addEventListener('show.bs.modal', function (event) {
+
+        const stampTabButton = document.getElementById('stamp-tab');
+        const stampTab = bootstrap.Tab.getOrCreateInstance(stampTabButton);
+        stampTab.show();
+
         const button = event.relatedTarget;
         const customerId = button.getAttribute('data-customer-id');
 
