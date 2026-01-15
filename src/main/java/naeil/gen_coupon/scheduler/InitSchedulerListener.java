@@ -19,6 +19,6 @@ public class InitSchedulerListener {
     @EventListener(ApplicationReadyEvent.class)
     public void onReady() {
         log.info("interval : {}", configService.getValue("collect_time"));
-//        scheduler.start(configService.getValue("collect_time"));
+        scheduler.start(configService.getValue("collect_time"));
     }
 }

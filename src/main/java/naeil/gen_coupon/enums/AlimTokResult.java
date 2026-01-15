@@ -44,7 +44,7 @@ public enum AlimTokResult {
     AGENT_DUPLICATE_KEY("q", "메시지 중복 키 체크 (Agent 내부)"),
 
     KAKAO_SEND_NOT_AVAILABLE("G", "카카오 시스템 발송 불가"),
-
+    WAIT("WAIT", "대기중"),
     UNKNOWN("UNKNOWN", "알 수 없는 오류"),
     TIME_OUT("TO", "타임아웃");
 

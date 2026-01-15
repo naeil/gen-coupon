@@ -122,8 +122,7 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
 
         return Arrays.stream(orderHistoryInfos)
                 .map(dto -> {
-                    // 아임웹인 경우
-                    if ("아임웹".equals(dto.getShopName())) {
+                    if(dto.getPayAmt() <= 0 ) {
                         Integer realAmount =
                                 dto.getSales()
                                         - (dto.getShopDiscount()

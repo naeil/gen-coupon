@@ -17,18 +17,16 @@ public class StampEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer stampId;
-
     @ManyToOne
     @JoinColumn(name = "customerId")
     private CustomerEntity customerEntity;
-
     @OneToOne
     @JoinColumn(name = "orderHistoryId")
     private OrderHistoryEntity orderHistoryEntity;
-
     private LocalDate createDate;
-
     private Integer issueId;
+    private String mid; // 알리고 메세지 id
+    private String rslt; // 알리고 발송 결과
 
     public StampEntity (OrderHistoryEntity orderHistory) {
         this.customerEntity = orderHistory.getCustomerEntity();

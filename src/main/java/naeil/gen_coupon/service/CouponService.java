@@ -36,6 +36,7 @@ public class CouponService extends GenericService<CouponIssueEntity, QCouponIssu
     private final StampRepository stampRepository;
     private final CouponIssueRepository couponIssueRepository;
     private final ConfigRepository configRepository;
+    private final MessageService messageService;
     private final ImWebExternal apiClient;
 
     @Transactional
@@ -92,6 +93,7 @@ public class CouponService extends GenericService<CouponIssueEntity, QCouponIssu
             stampRepository.saveAll(stampByIssueId);
         }
         // todo : messageservice 함수 호출
+        messageService.sendCouponAlimTok();
     }
 
     public List<ImWebCouponItemDTO> fetchIssueCouponsFromImweb(String couponCode, Integer needCount, Long usedCount) {

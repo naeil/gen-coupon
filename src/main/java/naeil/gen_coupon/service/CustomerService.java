@@ -1,23 +1,22 @@
 package naeil.gen_coupon.service;
 
+import com.querydsl.core.Tuple;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import naeil.gen_coupon.common.exception.CustomException;
 import naeil.gen_coupon.dto.querydsl.CustomerStampSummary;
-import naeil.gen_coupon.dto.response.*;
-import naeil.gen_coupon.entity.CustomerEntity;
-import naeil.gen_coupon.entity.QCustomerEntity;
-import naeil.gen_coupon.entity.QStampEntity;
-import naeil.gen_coupon.entity.StampEntity;
+import naeil.gen_coupon.dto.response.CouponIssueDTO;
+import naeil.gen_coupon.dto.response.CustomerDTO;
+import naeil.gen_coupon.dto.response.CustomerDetailResponseDTO;
+import naeil.gen_coupon.dto.response.OrderHistoryDTO;
+import naeil.gen_coupon.entity.*;
 import naeil.gen_coupon.repository.CouponIssueRepository;
 import naeil.gen_coupon.repository.CustomerRepository;
 import naeil.gen_coupon.repository.OrderHistoryRepository;
 import naeil.gen_coupon.repository.StampRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.querydsl.core.Tuple;
-import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -84,6 +83,7 @@ public class CustomerService {
 
         QCustomerEntity customer = QCustomerEntity.customerEntity;
         QStampEntity stamp = QStampEntity.stampEntity;
+        QOrderHistoryEntity order = QOrderHistoryEntity.orderHistoryEntity;
 
         // 1️⃣ 전체 주문자 수
         long total = queryFactory
@@ -105,7 +105,22 @@ public class CustomerService {
             stamps.merge(stampCount, 1, Integer::sum);
         }
 
-        return new CustomerStampSummary(stamps, total);
+        List<Tuple> storeRows = queryFactory
+                .select(order.shopEntity.shopName.coalesce("기타 스토어"), order.count())
+                .from(order)
+                .groupBy(order.shopEntity.shopName) // 스토어 이름으로 그룹핑
+                .orderBy(order.count().desc()) // 주문 많은 순으로 정렬 (선택)
+                .fetch();
+
+        // 결과를 Map으로 변환
+        Map<String, Integer> storeStats = new LinkedHashMap<>(); // 순서 보장을 위해 LinkedHashMap 사용
+        for (Tuple row : storeRows) {
+            String shopName = row.get(0, String.class); // 첫 번째 컬럼: 스토어 이름
+            Long count = row.get(1, Long.class);        // 두 번째 컬럼: 카운트
+            storeStats.put(shopName, count.intValue());
+        }
+
+        return new CustomerStampSummary(stamps, total, storeStats);
     }
 }
 
