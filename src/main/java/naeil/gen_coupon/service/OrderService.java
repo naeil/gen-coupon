@@ -59,15 +59,16 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
     @Transactional
     public void createOrderInfo() {
         log.info("save order history method");
+
         String token = playAutoExternal.getPlayToken();
 
         // shop 정보 업데이트
-        shopService.syncShopInfo(token);
-
-        ConfigEntity config = configRepository.findByConfigKey("blocked_suppliers").orElse(null);
+//        shopService.syncShopInfo(token);
+        ConfigEntity periodConfig = configRepository.findByConfigKey("collect_period").orElse(null);
+        ConfigEntity suppliersConfig = configRepository.findByConfigKey("blocked_suppliers").orElse(null);
 
         PlayAutoOrderHistoryResponseDTO[] orderHistoryInfos =
-                playAutoExternal.getOrderInfo(token, config);
+                playAutoExternal.getOrderInfo(token, periodConfig, suppliersConfig);
 
         List<PlayAutoOrderHistoryResponseDTO> filteredOrders = filteredOrders(orderHistoryInfos);
 

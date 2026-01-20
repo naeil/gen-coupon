@@ -65,6 +65,13 @@ public class ConfigService {
                     interval = newValue;
                 }
 
+                if("collect_period".equalsIgnoreCase(key)
+                        && !Objects.equals(currentValue, newValue)) {
+                    log.info("collect period changed");
+                    scheduleTimeChanged = true;
+                    interval = newValue;
+                }
+
                 config.setConfigValue(newValue);
 
             }

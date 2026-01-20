@@ -28,6 +28,7 @@ public class OrderHistoryEntity {
     @JoinColumn(name = "shopId")
     private ShopEntity shopEntity;
 
+    @Column(unique = true)
     private String uniq;
 
     private Integer payAmt;

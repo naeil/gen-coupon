@@ -19,10 +19,38 @@
             <form id="configForm">
 
                 <div class="card shadow-sm mb-4">
+
                     <div class="card-header bg-white">
                         <strong>스케줄러 설정</strong>
                     </div>
                     <div class="card-body">
+                        <div class="row mb-3">
+                            <label class="col-sm-3 col-form-label">
+                                수집 기간
+                            </label>
+
+                            <input type="hidden" name="collect_period" id="collectPeriodFinal" th:value="${configMap['collect_period']}">
+
+                            <div class="col-sm-2">
+                                <select class="form-select" id="periodTypeSelect">
+                                    <option value="now">당일</option>
+                                    <option value="d">일 (Days)</option>
+                                    <option value="w">주 (Weeks)</option>
+                                    <option value="m">월 (Months)</option>
+                                </select>
+                            </div>
+
+                            <div class="col-sm-2">
+                                <input type="number"
+                                       class="form-control"
+                                       id="periodValueInput"
+                                       placeholder="값"
+                                       min="1">
+                            </div>
+                            <div class="col-sm-5 text-muted">
+                                입력한 기간 동안의 데이터를 수집
+                            </div>
+                        </div>
                         <div class="row mb-3">
                             <label class="col-sm-3 col-form-label">
                                 실행 주기 (시간)
@@ -41,6 +69,10 @@
                             </div>
                         </div>
                     </div>
+
+<!--                    <div class="card-body">-->
+<!--                  -->
+<!--                    </div>-->
                 </div>
 
                 <div class="card shadow-sm mb-4">
@@ -208,6 +240,50 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // ==========================================
+    // 🔹 0. [신규] 수집 기간 UI 초기화 및 이벤트 로직
+    // ==========================================
+    const periodFinalInput = document.getElementById('collectPeriodFinal');
+    const periodTypeSelect = document.getElementById('periodTypeSelect');
+    const periodValueInput = document.getElementById('periodValueInput');
+
+    // 1) 초기값 파싱 (DB값 -> UI)
+    const savedPeriod = periodFinalInput.value || 'now'; // 값이 없으면 기본 'now'
+
+    if (savedPeriod === 'now') {
+        periodTypeSelect.value = 'now';
+        periodValueInput.value = '';
+        periodValueInput.disabled = true; // 당일은 입력 불필요
+    } else {
+        // 끝 글자가 d, w, m 중 하나인지 확인
+        const unit = savedPeriod.slice(-1); // 마지막 글자 추출
+        const number = savedPeriod.slice(0, -1); // 숫자 부분 추출
+
+        if (['d', 'w', 'm'].includes(unit)) {
+            periodTypeSelect.value = unit;
+            periodValueInput.value = number;
+        } else {
+            // 형식이 맞지 않거나 숫자만 있는 경우 등 예외 처리 (기본 일 단위로 가정)
+            periodTypeSelect.value = 'd';
+            periodValueInput.value = savedPeriod;
+        }
+    }
+
+    // 2) Select 변경 시 이벤트 (당일 선택 시 입력칸 비활성화)
+    periodTypeSelect.addEventListener('change', function() {
+        if (this.value === 'now') {
+            periodValueInput.value = '';
+            periodValueInput.disabled = true;
+            periodValueInput.placeholder = "-";
+        } else {
+            periodValueInput.disabled = false;
+            periodValueInput.placeholder = "값 입력";
+            // 값이 비어있다면 편의상 1을 넣어줌
+            if(!periodValueInput.value) periodValueInput.value = 1;
+        }
+    });
+</script>
+<script>
+    // ==========================================
     // 🔹 1. 차단 매입처 관리 로직 (추가됨)
     // ==========================================
     const hiddenInput = document.getElementById('blockedSuppliersInput');
@@ -290,6 +366,23 @@
     // ==========================================
     document.getElementById('configForm').addEventListener('submit', function (e) {
         e.preventDefault();
+
+
+        const type = periodTypeSelect.value;
+        const val = periodValueInput.value;
+
+        if (type === 'now') {
+            periodFinalInput.value = 'now';
+        } else {
+            // 유효성 검사: 숫자가 없으면 경고
+            if (!val) {
+                alert("수집 기간 값을 입력해주세요.");
+                periodValueInput.focus();
+                return;
+            }
+            // 예: 숫자 '3' + 단위 'd' => '3d' 로 조합하여 Hidden Input에 저장
+            periodFinalInput.value = val + type;
+        }
 
         const configList = Array.from(
                 document.querySelectorAll('#configForm input[name]')
