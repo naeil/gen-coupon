@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import naeil.gen_coupon.common.external.PlayAutoExternal;
 import naeil.gen_coupon.common.service.GenericService;
 import naeil.gen_coupon.common.util.PredicateBuilderHelper;
-import naeil.gen_coupon.dto.external.PlayAutoOrderHistoryResponseDTO;
+import naeil.gen_coupon.dto.external.playauto.PlayAutoOrderHistoryResponseDTO;
 import naeil.gen_coupon.dto.querydsl.OrderSearchRequestDTO;
 import naeil.gen_coupon.dto.response.CustomerDTO;
 import naeil.gen_coupon.dto.response.OrderHistoryDTO;
@@ -59,29 +59,44 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
     @Transactional
     public void createOrderInfo() {
         log.info("save order history method");
+
         String token = playAutoExternal.getPlayToken();
 
         // shop 정보 업데이트
-        shopService.syncShopInfo(token);
+//        shopService.syncShopInfo(token);
+        ConfigEntity periodConfig = configRepository.findByConfigKey("collect_period").orElse(null);
+        ConfigEntity suppliersConfig = configRepository.findByConfigKey("blocked_suppliers").orElse(null);
 
         PlayAutoOrderHistoryResponseDTO[] orderHistoryInfos =
-                playAutoExternal.getOrderInfo(token);
+                playAutoExternal.getOrderInfo(token, periodConfig, suppliersConfig);
 
         List<PlayAutoOrderHistoryResponseDTO> filteredOrders = filteredOrders(orderHistoryInfos);
 
         List<OrderHistoryEntity> orderHistoryEntities = new ArrayList<>();
         Map<String, ShopEntity> shopMap = new HashMap<>();
+        Map<String, CustomerEntity> customerCache = new HashMap<>();
 
-
-        List<CustomerEntity> existingCustomers = customerRepository.findAll();
         for (PlayAutoOrderHistoryResponseDTO dto : filteredOrders) {
             ShopEntity shop = shopMap.computeIfAbsent(
                     dto.getShopCode(),
                     shopService::getShopEntity
             );
 
+            CustomerEntity customer = customerCache.computeIfAbsent(
+                    dto.getOrderHtel().trim(),
+                    htel -> customerRepository.findByCustomerHtel(htel)
+                            .orElseGet(() ->
+                                    customerRepository.save(
+                                            new CustomerEntity(
+                                                    dto.getOrderName(),
+                                                    dto.getOrderEmail(),
+                                                    dto.getOrderHtel().trim()
+                                            )
+                                    ))
+            );
+
             OrderHistoryEntity order = new OrderHistoryEntity(
-                getCustomInfo(dto, existingCustomers),
+                    customer,
                     shop,
                     dto
             );
@@ -92,24 +107,6 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
         List<OrderHistoryEntity> orderHistories = orderHistoryRepository.saveAll(orderHistoryEntities);
 
         stampService.createStamp(orderHistories);
-
-        // todo : coupon issue 하는 함수 호출, orderHistories 보냄
-    }
-
-    // todo : 주문 내역 관련 조회 메소드
-
-    private CustomerEntity getCustomInfo(PlayAutoOrderHistoryResponseDTO dto, List<CustomerEntity> existingCustomers) {
-    
-        CustomerEntity customer = existingCustomers.stream().filter(c -> c.getCustomerHtel().equals(dto.getOrderHtel())).findFirst().orElseGet(() ->
-                        customerRepository.save(
-                                new CustomerEntity(
-                                        dto.getOrderName(),
-                                        dto.getOrderEmail(),
-                                        dto.getOrderHtel()
-                                )
-                        ));  
-
-        return customer;
     }
 
     private List<PlayAutoOrderHistoryResponseDTO> filteredOrders (PlayAutoOrderHistoryResponseDTO[] orderHistoryInfos) {
@@ -126,8 +123,7 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
 
         return Arrays.stream(orderHistoryInfos)
                 .map(dto -> {
-                    // 아임웹인 경우
-                    if ("아임웹".equals(dto.getShopName())) {
+                    if(dto.getPayAmt() <= 0 ) {
                         Integer realAmount =
                                 dto.getSales()
                                         - (dto.getShopDiscount()
@@ -139,31 +135,9 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
                     return dto;
                 })
                 .filter(dto -> !existUniqList.contains(dto.getUniq()))
-                .filter(dto -> isValidHtel(dto.getOrderHtel()))
+                .filter(dto -> isValidHtel(dto.getOrderHtel().trim()))
                 .filter(dto -> dto.getPayAmt() >= standardAmt)
                 .toList();
-//        return Arrays.stream(orderHistoryInfos)
-//                        .filter(dto -> !existUniqList.contains(dto.getUniq()))
-//                        .filter(dto -> isValidHtel(dto.getOrderHtel()))
-//                        .filter(dto -> {
-//                            // 아임웹
-//                            if ("아임웹".equals(dto.getShopName())) {
-//                                Integer realAmount =
-//                                        dto.getSales()
-//                                                - (dto.getShopDiscount()
-//                                                + dto.getSellerDiscount()
-//                                                + dto.getCouponDiscount()
-//                                                + dto.getPointDiscount()
-//                                        );
-//                                dto.setPayAmt(realAmount);
-//                                return realAmount >= standardAmt;
-//                            }
-//                            // 아임웹 아님
-//                            else {
-//                                return dto.getPayAmt() >= standardAmt;
-//                            }
-//                        })
-//                        .toList();
     }
 
     // 휴대폰 번호 validation check 메소드
@@ -185,9 +159,13 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
     }
 
     public List<OrderHistoryDTO> searchOrderHistoryList(OrderSearchRequestDTO requestDTO) {
+
+        requestDTO.normalize();
+
         List<OrderHistoryEntity> searchedList = searchList(
                 requestDTO,
-                QOrderHistoryEntity.orderHistoryEntity, q -> buildPredicate(requestDTO),
+                QOrderHistoryEntity.orderHistoryEntity,
+                q -> buildPredicate(requestDTO),
                 q -> buildOrderSpecifier(requestDTO, q)
         );
 
@@ -212,6 +190,7 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
             stop = LocalDateTime.parse(condition.getToDate() + " 23:59:59", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         }
 
+        builder.and(PredicateBuilderHelper.eq(path, "shopEntity.shopCode", condition.getShopCode()));
         builder.and(PredicateBuilderHelper.eq(path, "customerEntity.customerId", condition.getCustomerId()));
         builder.and(PredicateBuilderHelper.eq(path, "stampEntity.issueId", condition.getIssueId()));
         builder.and(PredicateBuilderHelper.like(path, "customerEntity.customerName", condition.getCustomerName()));

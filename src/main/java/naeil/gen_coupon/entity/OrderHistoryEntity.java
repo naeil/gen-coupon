@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import naeil.gen_coupon.dto.external.PlayAutoOrderHistoryResponseDTO;
+import naeil.gen_coupon.dto.external.playauto.PlayAutoOrderHistoryResponseDTO;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -28,6 +28,7 @@ public class OrderHistoryEntity {
     @JoinColumn(name = "shopId")
     private ShopEntity shopEntity;
 
+    @Column(unique = true)
     private String uniq;
 
     private Integer payAmt;

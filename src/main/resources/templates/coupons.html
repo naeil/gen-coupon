@@ -9,7 +9,7 @@
         <div th:replace="~{fragments/sidebar :: sidebar('coupons')}"></div>
 
         <!-- 🔹 Main Content -->
-        <main class="col-md-10 content">
+        <main class="col-md-10-5 content">
 
             <!-- Header -->
             <div class="mb-4">
@@ -108,15 +108,15 @@
             </div>
 
             <div class="modal-body">
-                <table class="table table-sm">
+                <table class="table table-sm" style="table-layout: fixed; width: 100%;">
                     <thead>
                         <tr>
-                            <th>주문번호</th>
-                            <th>주문자</th>
-                            <th>상품명</th>
-                            <th>주문금액</th>
-                            <th>주문일</th>
-                            <th>구매 결정일</th>
+                            <th style="width: 12%">주문번호</th>
+                            <th style="width: 7%">주문자</th>
+                            <th style="width: 51%">상품명</th>
+                            <th style="width: 6%">주문금액</th>
+                            <th style="width: 7%">주문일</th>
+                            <th style="width: 7%">구매 결정일</th>
                         </tr>
                     </thead>
                     <tbody id="orderTableBody">
@@ -210,14 +210,20 @@
 
                 data.forEach(order => {
                     tbody.innerHTML += `
-                        <tr>   
-                            <td>${order.uniq}</td>
-                            <td>${order.customerName}</td>
-                            <td>${order.shopSaleName}</td>
-                            <td>${formatAmount(order.payAmt)}원</td>
-                            <td>${formatDate(order.createDate)}</td>
-                            <td>${formatDate(order.confirmDate)}</td>
-                        </tr>
+                  <tr class="align-middle">
+                    <td class="text-truncate" title="${order.uniq}">${order.uniq}</td>
+
+                    <td class="text-truncate">${order.customerName}</td>
+
+                    <td class="text-truncate" title="${order.shopSaleName}">
+                        ${order.shopSaleName}
+                    </td>
+
+                    <td>${formatAmount(order.payAmt)}</td>
+
+                    <td>${formatDate(order.createDate)}</td>
+                    <td>${formatDate(order.confirmDate)}</td>
+                 </tr>
                     `;
                 });
             })

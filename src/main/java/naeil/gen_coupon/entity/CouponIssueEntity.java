@@ -31,7 +31,9 @@ public class CouponIssueEntity {
 
     private String mid; // 알리고 메세지 id
 
-    private String rslt; // 알리고 발송 결과
+    private String rslt;
+
+    private Integer retryCount;
 
     private LocalDateTime createDate;
 
@@ -50,6 +52,10 @@ public class CouponIssueEntity {
 
     public void updateMid(String mid) {
         this.mid = mid;
+    }
+
+    public void increaseRetryCount() {
+        this.retryCount++;
     }
 
     public void updateRslt(String rslt) {

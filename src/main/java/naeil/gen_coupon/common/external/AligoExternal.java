@@ -50,7 +50,6 @@ public class AligoExternal {
         body.add("apikey", apiKey);
         body.add("userid", userId);
         body.add("senderkey", senderKey);
-        body.add("tpl_code", templateCode);
         body.add("sender", sender);
         body.addAll(messageTemplate);
 
@@ -85,7 +84,7 @@ public class AligoExternal {
         String mid = infoNode.path("mid").asText(null);
 
         if (mid == null) {
-            throw new CustomException(500, "mid not found");
+            throw new CustomException(404, "mid not found");
         }
 
         return mid;

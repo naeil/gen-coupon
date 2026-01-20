@@ -15,7 +15,7 @@ public class ConfigEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer configId;
-
+    @Column(unique = true)
     private String configKey;
 
     private String configValue;

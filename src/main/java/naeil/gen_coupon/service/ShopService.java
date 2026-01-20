@@ -1,23 +1,26 @@
 package naeil.gen_coupon.service;
 
-import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import naeil.gen_coupon.common.exception.CustomException;
 import naeil.gen_coupon.common.external.PlayAutoExternal;
-import naeil.gen_coupon.dto.external.PlayAutoShopResponseDTO;
+import naeil.gen_coupon.dto.external.playauto.PlayAutoShopResponseDTO;
+import naeil.gen_coupon.dto.response.ShopDTO;
 import naeil.gen_coupon.entity.ShopEntity;
 import naeil.gen_coupon.repository.ShopRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @Slf4j
-@Transactional
+@Transactional(readOnly = true)
 public class ShopService {
 
     @Autowired
@@ -27,11 +30,17 @@ public class ShopService {
     private ShopRepository shopRepository;
 
     // shop 정보 동기화
+    @CacheEvict(value = "shops", allEntries = true)
+    @Transactional
     public void syncShopInfo(String token) {
 
         PlayAutoShopResponseDTO[] shopInfoList = playAutoExternal.getShopInfo(token);
-
+        Set<String> existShopCodes = shopRepository.findAll()
+                .stream()
+                .map(ShopEntity::getShopCode)
+                .collect(Collectors.toSet());
         List<ShopEntity> shopEntities = new ArrayList<>();
+
         Arrays.stream(shopInfoList)
                 .collect(Collectors.toMap(
                         PlayAutoShopResponseDTO::getShopCode,   // key
@@ -40,22 +49,24 @@ public class ShopService {
                 ))
                 .values()
                 .forEach(dto -> {
-                    if (!shopRepository.existsByShopCode(dto.getShopCode())) {
-                        ShopEntity entity = new ShopEntity(
-                                dto.getShopCode(),
-                                dto.getShopName()
+                    if (!existShopCodes.contains(dto.getShopCode())) {
+                            shopEntities.add(new ShopEntity(
+                                    dto.getShopCode(),
+                                    dto.getShopName()
+                            )
                         );
-                        shopEntities.add(entity);
                     }
                 });
-        try {
-            shopRepository.saveAll(shopEntities);
-        } catch (Exception e) {
-            throw new CustomException(500, "DB error");
-        }
+
+        shopRepository.saveAll(shopEntities);
+    }
+
+    @Cacheable("shops")
+    public List<ShopDTO> getShopList(){
+        return shopRepository.findAll().stream().map(ShopDTO::toDTO).toList();
     }
 
     public ShopEntity getShopEntity(String shopCode) {
-        return shopRepository.findByShopCode(shopCode);
+        return shopRepository.findByShopCode(shopCode).orElse(null);
     }
 }

@@ -1,4 +1,4 @@
-package naeil.gen_coupon.dto.external;
+package naeil.gen_coupon.dto.external.imweb;
 
 import java.util.List;
 

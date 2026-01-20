@@ -7,6 +7,7 @@ import naeil.gen_coupon.service.CouponService;
 import naeil.gen_coupon.service.MessageService;
 import naeil.gen_coupon.service.OrderService;
 import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.ScheduledFuture;
@@ -42,8 +43,6 @@ public class CollectDataScheduler {
         // 스케줄 값 새로 설정 시 기존 스케줄을 종료 후 다시 시작
         stop();
 
-        execute();
-
         scheduledFuture = taskScheduler.scheduleWithFixedDelay(
                 this::execute,
                 interval
@@ -56,6 +55,7 @@ public class CollectDataScheduler {
     public synchronized void stop() {
         if (scheduledFuture != null) {
             scheduledFuture.cancel(false);
+            scheduledFuture = null;
             log.info("Scheduler stopped");
         }
     }
@@ -64,10 +64,21 @@ public class CollectDataScheduler {
         try {
             log.info("Scheduler executing...");
             orderService.createOrderInfo();
-            couponService.generateCoupons();
-            messageService.sendAlimTok();
+            couponService.generateCoupons(); // 만약 generateCoupon 안에서 messageService.sendCouponAlimTok() 호출 시 트랜잭션이 길어질 가능성이 있음
+//            messageService.sendCouponAlimTok();
+
         } catch (Exception e) {
             log.error("Scheduler execution error : {}", e.getMessage());
         }
+    }
+
+    @Scheduled(fixedDelay = 10000)
+    public void checkSendAlimTokResult() {
+        log.info("alimTok result checking scheduler executing");
+        try {
+            messageService.updateCouponSendResult();
+            messageService.updateStampSendResult();
+        } catch (Exception e) {
+            log.error("Delivery Check Scheduler error : {}", e.getMessage());        }
     }
 }

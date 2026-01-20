@@ -1,4 +1,4 @@
-package naeil.gen_coupon.dto.external;
+package naeil.gen_coupon.dto.external.imweb;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

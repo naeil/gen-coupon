@@ -36,7 +36,7 @@ public class ConfigService {
     public String getValue(String key) {
         ConfigEntity config = configRepository.findByConfigKey(key).orElse(null);
         log.info("config : {}", config);
-        return config != null ? config.getConfigValue() : "1m";
+        return config != null ? config.getConfigValue() : "24h";
     }
 
     public List<ConfigResponseDTO> updateConfig(List<ConfigDTO> configDTOList) {
@@ -61,6 +61,13 @@ public class ConfigService {
                 if("collect_time".equalsIgnoreCase(key)
                         && !Objects.equals(currentValue, newValue)) {
                     log.info("collect time changed");
+                    scheduleTimeChanged = true;
+                    interval = newValue;
+                }
+
+                if("collect_period".equalsIgnoreCase(key)
+                        && !Objects.equals(currentValue, newValue)) {
+                    log.info("collect period changed");
                     scheduleTimeChanged = true;
                     interval = newValue;
                 }
