@@ -1,4 +1,4 @@
-INSERT INTO config (config_key, config_value)
+INSERT IGNORE INTO config (config_key, config_value)
 VALUES
 ('minimum_amount', '20000'),
 ('minimum_count', '10'),
@@ -9,6 +9,6 @@ VALUES
 ('blocked_suppliers', null);
 
 
-INSERT INTO shop (shop_code, shop_name)
+INSERT IGNORE INTO shop (shop_code, shop_name)
 VALUES
 ('A000', '직접입력');

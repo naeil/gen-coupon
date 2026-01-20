@@ -83,14 +83,14 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
             );
 
             CustomerEntity customer = customerCache.computeIfAbsent(
-                    dto.getOrderHtel(),
+                    dto.getOrderHtel().trim(),
                     htel -> customerRepository.findByCustomerHtel(htel)
                             .orElseGet(() ->
                                     customerRepository.save(
                                             new CustomerEntity(
                                                     dto.getOrderName(),
                                                     dto.getOrderEmail(),
-                                                    dto.getOrderHtel()
+                                                    dto.getOrderHtel().trim()
                                             )
                                     ))
             );
@@ -135,7 +135,7 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
                     return dto;
                 })
                 .filter(dto -> !existUniqList.contains(dto.getUniq()))
-                .filter(dto -> isValidHtel(dto.getOrderHtel()))
+                .filter(dto -> isValidHtel(dto.getOrderHtel().trim()))
                 .filter(dto -> dto.getPayAmt() >= standardAmt)
                 .toList();
     }
