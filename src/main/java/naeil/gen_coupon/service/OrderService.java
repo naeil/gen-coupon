@@ -63,7 +63,7 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
         String token = playAutoExternal.getPlayToken();
 
         // shop 정보 업데이트
-//        shopService.syncShopInfo(token);
+        shopService.syncShopInfo(token);
         ConfigEntity periodConfig = configRepository.findByConfigKey("collect_period").orElse(null);
         ConfigEntity suppliersConfig = configRepository.findByConfigKey("blocked_suppliers").orElse(null);
 
