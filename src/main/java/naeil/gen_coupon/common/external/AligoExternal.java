@@ -31,9 +31,6 @@ public class AligoExternal {
     @Value("${aligo.sender-key}")
     private String senderKey;
 
-    @Value("${aligo.template-code}")
-    private String templateCode;
-
     @Value("${aligo.sender}")
     private String sender;
 
