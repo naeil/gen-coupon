@@ -72,9 +72,14 @@ public class MessageService {
             List<CustomerSendDTO> receivers = requestsByTemplate.get(tplCode);
 
             MultiValueMap<String, String> aligoParams = genStampAlimTokTemplate(tplCode, receivers);
-            String mid = aligoExternal.sendAlimTok(aligoParams); // 결과값 활용 가능
-            updateStampMid(mid, receivers);
-            log.info("Sent Stamp Alarm - Template: {}, Count: {}", tplCode, receivers.size());
+            try {
+                String mid = aligoExternal.sendAlimTok(aligoParams); // 결과값 활용 가능
+                updateStampMid(mid, receivers);
+                log.info("Sent Stamp Alarm - Template: {}, Count: {}", tplCode, receivers.size());
+            } catch (Exception e) {
+                log.error("alimtok error : {}", e.getMessage());
+            }
+
         }
 
     }
