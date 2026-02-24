@@ -9,31 +9,11 @@
 
         <main class="col-md-10-5 content">
             <div class="mb-4">
-                <h3>주문자 목록</h3>
+                <h3>주문자 현황</h3>
                 <p class="text-muted mb-0">
                     주문자별 쿠폰 발급 현황 및 주문 내역을 조회합니다.
                 </p>
             </div>
-
-            <!-- 통계 영역 -->
-<!--            <div class="row g-3 mb-3">-->
-<!--                <div class="col-lg-9">-->
-<!--                    <div class="card shadow-sm h-100">-->
-<!--                        <div class="card-body py-3">-->
-<!--                            <h6 class="fw-bold mb-2">스탬프 보유 주문자 수 분포</h6>-->
-<!--                            <canvas id="orderUserChart" height="90"></canvas>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--                <div class="col-lg-3">-->
-<!--                    <div class="card shadow-sm h-100 text-center">-->
-<!--                        <div class="card-body py-3 d-flex flex-column justify-content-center">-->
-<!--                            <span class="text-muted mb-1">총 주문자 수</span>-->
-<!--                            <span id="totalOrderUser" class="fs-4 fw-bold">-</span>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--            </div>-->
 
             <div class="row g-3 mb-3 align-items-stretch">
                 <div class="col-md-6">
@@ -63,6 +43,19 @@
             </div>
 
             <div class="card shadow-sm">
+                <div class="card-header bg-white py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="m-0 fw-bold text-dark">주문자 목록</h6>
+
+                        <div class="input-group" style="width: 250px;">
+                            <input type="text" id="searchInput" class="form-control" placeholder="이름으로 검색">
+                            <button class="btn btn-primary px-3" type="button" id="searchBtn">
+                                <i class="bi bi-search"></i> 검색
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card-body p-0">
                     <table class="table table-hover" id="customerTable">
                         <thead class="table-light">
@@ -98,7 +91,7 @@
                                 </button>
                             </td>
                         </tr>
-                        <tr th:if="${customers == null or #lists.isEmpty(customers)}">
+                        <tr id="noDataRow" style="display: none;">
                             <td colspan="5" class="text-center text-muted py-4">
                                 조회된 데이터가 없습니다.
                             </td>
@@ -292,76 +285,152 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         // --- 1. 메인 테이블(주문자 목록) 클라이언트 사이드 페이지네이션 ---
-        const rows = document.querySelectorAll('#customerTable tbody tr[data-index]');
-        const rowsPerPage = 10;
-        const totalRows = rows.length;
-        const totalPages = Math.ceil(totalRows / rowsPerPage);
+        const allRows = Array.from(document.querySelectorAll('#customerTable tbody tr[data-index]'));
+        const noDataRow = document.getElementById('noDataRow');
 
+        // 현재 화면에 보여질 행들 (검색 시 이 배열이 바뀜)
+        let currentFilteredRows = allRows;
+
+        const rowsPerPage = 10;
         let currentPage = 1;
 
-        function renderMainPage(page) {
-            currentPage = page;
-            const start = (page - 1) * rowsPerPage;
-            const end = start + rowsPerPage;
+        function renderMainTable() {
+            const totalRows = currentFilteredRows.length;
+            const totalPages = Math.ceil(totalRows / rowsPerPage) || 1; // 0페이지 방지
 
-            rows.forEach((row, index) => {
-                row.style.display = (index >= start && index < end) ? '' : 'none';
-            });
-            renderMainPagination();
+            // 일단 모든 행을 숨김
+            allRows.forEach(row => row.style.display = 'none');
+
+            // 검색 결과가 0개일 때 처리
+            if (totalRows === 0) {
+                if (noDataRow) noDataRow.style.display = ''; // '결과 없음' 메시지 표시
+            } else {
+                if (noDataRow) noDataRow.style.display = 'none';
+
+                // 현재 페이지에 해당하는 데이터만 표시
+                const start = (currentPage - 1) * rowsPerPage;
+                const end = start + rowsPerPage;
+
+                currentFilteredRows.slice(start, end).forEach(row => {
+                    row.style.display = '';
+                });
+            }
+
+            // 페이지네이션 버튼 업데이트
+            renderMainPagination(totalPages);
         }
 
         function renderMainPagination() {
-            const pagination = document.getElementById('pagination');
-            pagination.innerHTML = '';
+            // 데이터가 없으면 페이징 버튼 생성 안 함
+            if (currentFilteredRows.length === 0) return;
+
             for (let i = 1; i <= totalPages; i++) {
                 const li = document.createElement('li');
                 li.className = 'page-item' + (i === currentPage ? ' active' : '');
+
                 const a = document.createElement('a');
                 a.className = 'page-link';
                 a.href = '#';
                 a.textContent = i;
+
                 a.addEventListener('click', function (e) {
                     e.preventDefault();
-                    renderMainPage(i);
+                    currentPage = i;
+                    renderMainTable(); // 페이지 클릭 시 다시 그리기
                 });
+
                 li.appendChild(a);
                 pagination.appendChild(li);
             }
         }
 
-        if (totalRows > 0) {
-            renderMainPage(1);
-        }
-    });
+        function performSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const keyword = searchInput.value.trim().toLowerCase(); // 소문자로 변환하여 비교
 
+            // 원본 데이터(allRows)에서 필터링
+            currentFilteredRows = allRows.filter(row => {
+                // 첫 번째 td (이름)의 텍스트를 가져옴
+                const nameCell = row.querySelector('td:first-child');
+                const nameText = nameCell ? nameCell.textContent.toLowerCase() : '';
 
-    // --- 2. 공통 테이블 렌더링 함수 ---
-    function renderPaginatedTable({ data, tbodyId, paginationId, pageSize, rowRenderer }) {
-        const tbody = document.getElementById(tbodyId);
-        const pagination = document.getElementById(paginationId);
-
-        let currentPage = 1;
-        const totalPages = Math.ceil(data.length / pageSize);
-
-        function renderPage(page) {
-            currentPage = page;
-            tbody.innerHTML = '';
-
-            const start = (page - 1) * pageSize;
-            const end = start + pageSize;
-
-            // 데이터 슬라이싱해서 렌더링
-            data.slice(start, end).forEach((item, index) => {
-                // index + 1 + start : 전체 데이터 기준 인덱스 (No. 표시에 유용)
-                const realIndex = start + index;
-                tbody.innerHTML += rowRenderer(item, realIndex);
+                // 검색어가 포함되어 있는지 확인
+                return nameText.includes(keyword);
             });
 
-            renderPagination();
+            // 검색 후에는 1페이지로 초기화
+            currentPage = 1;
+            renderMainTable();
+        }
+
+        // 1-5. 이벤트 리스너 등록
+        const searchBtn = document.getElementById('searchBtn');
+        const searchInput = document.getElementById('searchInput');
+
+        if (searchBtn) {
+            searchBtn.addEventListener('click', performSearch);
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function (e) {
+                if (e.key === 'Enter') { // 엔터키 입력 시 검색
+                    performSearch();
+                }
+            });
+        }
+
+        // 1-6. 초기 실행 (전체 목록 보여주기)
+        renderMainTable();
+        });
+
+
+        function renderPaginatedTable({ data, tbodyId, paginationId, pageSize, rowRenderer }) {
+            const tbody = document.getElementById(tbodyId);
+            const pagination = document.getElementById(paginationId);
+
+            // [안전 장치] 요소가 없으면 실행 중단 (에러 방지)
+            if (!tbody || !pagination) {
+                console.error(`요소를 찾을 수 없습니다: ${tbodyId} 또는 ${paginationId}`);
+                return;
+            }
+
+            let currentPage = 1;
+            const totalPages = Math.ceil(data.length / pageSize);
+
+            function renderPage(page) {
+                currentPage = page;
+                tbody.innerHTML = '';
+
+                const start = (page - 1) * pageSize;
+                const end = start + pageSize;
+
+                // 데이터가 없거나 비어있을 경우 처리
+                if (!data || data.length === 0) {
+                     tbody.innerHTML = `
+                        <tr>
+                            <td colspan="10" class="text-center text-muted py-3">
+                                조회된 데이터가 없습니다.
+                            </td>
+                        </tr>
+                    `;
+                    pagination.innerHTML = '';
+                    return;
+                }
+
+                // 데이터 슬라이싱해서 렌더링
+                data.slice(start, end).forEach((item, index) => {
+                    const realIndex = start + index;
+                    tbody.innerHTML += rowRenderer(item, realIndex);
+                });
+
+                renderPagination();
         }
 
         function renderPagination() {
             pagination.innerHTML = '';
+            // 페이지가 1개 이하거나 데이터가 없으면 페이징 숨김 (선택사항)
+            if (totalPages <= 1) return;
+
             for (let i = 1; i <= totalPages; i++) {
                 const li = document.createElement('li');
                 li.className = 'page-item' + (i === currentPage ? ' active' : '');
@@ -378,18 +447,7 @@
             }
         }
 
-        if (!data || data.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="10" class="text-center text-muted py-3">
-                        조회된 데이터가 없습니다.
-                    </td>
-                </tr>
-            `;
-            pagination.innerHTML = '';
-            return;
-        }
-
+        // 초기 실행
         renderPage(1);
     }
 
@@ -540,7 +598,7 @@
             })
             .catch(err => {
                 console.error(err);
-                alert("주문 정보를 불러오는 중 오류가 발생했습니다.");
+                alert("주문 정보를 불러오는 중 오류가 발생했습니다." + err.message);
             });
     });
 

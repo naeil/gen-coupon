@@ -18,36 +18,35 @@ public class CouponIssueEntity {
     @Column(name = "issue_id")
     private Integer issueId;
 
-    @ManyToOne
-    @JoinColumn(name = "customerId")
-    private CustomerEntity customerEntity;
-
     @Column(unique = true)
     private String issuedCouponCode;
-
-    private String imwebCouponCode;
-
-    private String imwebCouponName;
 
     private String mid; // 알리고 메세지 id
 
     private String rslt;
 
-    private Integer retryCount;
+    @Column(nullable = false)
+    private Integer retryCount = 0;
 
     private LocalDateTime createDate;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customerId")
+    private CustomerEntity customerEntity;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "couponId")
+    private CouponEntity couponEntity;
+
     @Builder
     public CouponIssueEntity(CustomerEntity customerEntity, 
-        String issuedCouponCode, 
-        String imwebCouponCode, 
-        String imwebCouponName,
+        String issuedCouponCode,
+        CouponEntity couponEntity,
         LocalDateTime createDate) {
         this.customerEntity = customerEntity;
         this.issuedCouponCode = issuedCouponCode;
-        this.imwebCouponCode = imwebCouponCode;
-        this.imwebCouponName = imwebCouponName;
         this.createDate = createDate;
+        this.couponEntity = couponEntity;
     }
 
     public void updateMid(String mid) {

@@ -3,7 +3,7 @@ package naeil.gen_coupon.service;
 import lombok.extern.slf4j.Slf4j;
 import naeil.gen_coupon.common.external.PlayAutoExternal;
 import naeil.gen_coupon.dto.external.playauto.PlayAutoShopResponseDTO;
-import naeil.gen_coupon.dto.response.ShopDTO;
+import naeil.gen_coupon.dto.response.ShopResponse;
 import naeil.gen_coupon.entity.ShopEntity;
 import naeil.gen_coupon.repository.ShopRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,8 +62,8 @@ public class ShopService {
     }
 
     @Cacheable("shops")
-    public List<ShopDTO> getShopList(){
-        return shopRepository.findAll().stream().map(ShopDTO::toDTO).toList();
+    public List<ShopResponse> getShopList(){
+        return shopRepository.findAll().stream().map(ShopResponse::toDTO).toList();
     }
 
     public ShopEntity getShopEntity(String shopCode) {

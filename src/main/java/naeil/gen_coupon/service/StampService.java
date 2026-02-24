@@ -2,7 +2,7 @@ package naeil.gen_coupon.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import naeil.gen_coupon.dto.response.StampDTO;
+import naeil.gen_coupon.dto.response.StampResponse;
 import naeil.gen_coupon.entity.ConfigEntity;
 import naeil.gen_coupon.entity.CustomerEntity;
 import naeil.gen_coupon.entity.OrderHistoryEntity;
@@ -26,7 +26,7 @@ public class StampService {
     private final ConfigRepository configRepository;
     private final MessageService messageService;
 
-    public List<StampDTO> getStampsByIssueId(Integer issueId) {
+    public List<StampResponse> getStampsByIssueId(Integer issueId) {
         
         List<StampEntity> stamps;
         if(issueId != null) {
@@ -35,7 +35,7 @@ public class StampService {
             stamps = stampRepository.findAll();
         }
 
-        return stamps.stream().map(stamp -> StampDTO.toDTO(stamp)).toList();
+        return stamps.stream().map(stamp -> StampResponse.toDTO(stamp)).toList();
     }
 
     public void createStamp(List<OrderHistoryEntity> orderHistories) {

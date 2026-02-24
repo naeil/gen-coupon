@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import lombok.RequiredArgsConstructor;
-import naeil.gen_coupon.dto.response.CustomerDTO;
+import naeil.gen_coupon.dto.request.CustomerDTO;
 import naeil.gen_coupon.service.CustomerService;
 
 @Controller

@@ -2,21 +2,23 @@ package naeil.gen_coupon.dto.response;
 
 import lombok.Builder;
 import lombok.Data;
+import naeil.gen_coupon.dto.request.OrderHistoryDTO;
 
 import java.util.List;
 
 @Data
 @Builder
-public class CustomerDetailResponseDTO {
+public class CustomerDetailResponse {
 
     private Integer customerId;
     private String customerName;
     private String htel;
+    private Integer totalOrderCount;
 
     private int currentStamp;
     private int maxStamp;
     private int remainStamp;
 
-    private List<CouponIssueDTO> coupons;
+    private List<CouponIssueResponse> coupons;
     private List<OrderHistoryDTO> orderHistories;
 }
