@@ -1,4 +1,4 @@
-package naeil.gen_coupon.dto.response;
+package naeil.gen_coupon.dto.request;
 
 import lombok.Builder;
 import lombok.Data;
@@ -12,6 +12,7 @@ public class CustomerDTO {
     private String customerName;
     private String customerEmail;
     private String customerHtel;
+    private Integer totalOrderCount;
 
     public static CustomerDTO toDTO(CustomerEntity customerEntity) {
         return CustomerDTO.builder()
@@ -19,6 +20,7 @@ public class CustomerDTO {
                 .customerName(customerEntity.getCustomerName())
                 .customerEmail(customerEntity.getCustomerEmail())
                 .customerHtel(customerEntity.getCustomerHtel())
+                .totalOrderCount(customerEntity.getTotalOrderCount())
                 .build();
     }
 }

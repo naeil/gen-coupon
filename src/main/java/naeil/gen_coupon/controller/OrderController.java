@@ -2,7 +2,7 @@ package naeil.gen_coupon.controller;
 
 import lombok.RequiredArgsConstructor;
 import naeil.gen_coupon.dto.querydsl.OrderSearchRequestDTO;
-import naeil.gen_coupon.dto.response.OrderHistoryDTO;
+import naeil.gen_coupon.dto.request.OrderHistoryDTO;
 import naeil.gen_coupon.service.OrderService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -1,7 +1,8 @@
-package naeil.gen_coupon.dto.response;
+package naeil.gen_coupon.dto.request;
 
 import lombok.Builder;
 import lombok.Data;
+import naeil.gen_coupon.dto.response.StampResponse;
 import naeil.gen_coupon.entity.OrderHistoryEntity;
 
 import java.time.LocalDateTime;
@@ -34,7 +35,7 @@ public class OrderHistoryDTO {
                 .shopOrdNoReal(orderHistory.getShopOrdNoReal())
                 .createDate(orderHistory.getCreateDate())
                 .confirmDate(orderHistory.getConfirmDate())
-                .stampDTO(StampDTO.toDTO(orderHistory.getStampEntity()))
+                .stampDTO(StampResponse.toDTO(orderHistory.getStampEntity()))
                 .build();
     }
 }

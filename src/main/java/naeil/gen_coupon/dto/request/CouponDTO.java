@@ -5,13 +5,16 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+@SuperBuilder
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@SuperBuilder
-public class ConfigDTO {
+public class CouponDTO {
+    private Integer couponId;
 
-    private Integer configId;
-    private String configKey;
-    private String configValue;
+    private String masterCouponCode;
+
+    private String masterCouponName;
+
+    private CouponPolicyDTO couponPolicyDTO;
 }

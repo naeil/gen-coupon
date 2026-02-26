@@ -7,8 +7,8 @@ import naeil.gen_coupon.common.service.GenericService;
 import naeil.gen_coupon.common.util.PredicateBuilderHelper;
 import naeil.gen_coupon.dto.external.playauto.PlayAutoOrderHistoryResponseDTO;
 import naeil.gen_coupon.dto.querydsl.OrderSearchRequestDTO;
-import naeil.gen_coupon.dto.response.CustomerDTO;
-import naeil.gen_coupon.dto.response.OrderHistoryDTO;
+import naeil.gen_coupon.dto.request.CustomerDTO;
+import naeil.gen_coupon.dto.request.OrderHistoryDTO;
 import naeil.gen_coupon.entity.ConfigEntity;
 import naeil.gen_coupon.entity.CustomerEntity;
 import naeil.gen_coupon.entity.OrderHistoryEntity;
@@ -82,15 +82,18 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
                     shopService::getShopEntity
             );
 
+            String rawHtel = dto.getOrderHtel();
+            String cleanHtel = rawHtel != null ? cleanHtel(rawHtel) : "";
+
             CustomerEntity customer = customerCache.computeIfAbsent(
-                    dto.getOrderHtel().trim(),
+                    cleanHtel,
                     htel -> customerRepository.findByCustomerHtel(htel)
                             .orElseGet(() ->
                                     customerRepository.save(
                                             new CustomerEntity(
                                                     dto.getOrderName(),
                                                     dto.getOrderEmail(),
-                                                    dto.getOrderHtel().trim()
+                                                    htel
                                             )
                                     ))
             );
@@ -135,7 +138,7 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
                     return dto;
                 })
                 .filter(dto -> !existUniqList.contains(dto.getUniq()))
-                .filter(dto -> isValidHtel(dto.getOrderHtel().trim()))
+                .filter(dto -> isValidHtel(dto.getOrderHtel()))
                 .filter(dto -> dto.getPayAmt() >= standardAmt)
                 .toList();
     }
@@ -147,7 +150,7 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
         }
 
         // 숫자만 남김 (하이픈 제거)
-        String digits = htel.replaceAll("\\D", "");
+        String digits = cleanHtel(htel);
 
         // 최소 길이 방어
         if (digits.length() < 4) {
@@ -156,6 +159,10 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
 
         // 마지막 4자리
         return digits.length() >= 10 && !digits.endsWith("0000");
+    }
+
+    private String cleanHtel(String htel) {
+        return htel.trim().replaceAll("\\D", "");
     }
 
     public List<OrderHistoryDTO> searchOrderHistoryList(OrderSearchRequestDTO requestDTO) {

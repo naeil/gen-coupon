@@ -12,20 +12,16 @@ import naeil.gen_coupon.common.util.PredicateBuilderHelper;
 import naeil.gen_coupon.dto.external.imweb.ImWebCouponDataDTO;
 import naeil.gen_coupon.dto.external.imweb.ImWebCouponItemDTO;
 import naeil.gen_coupon.dto.querydsl.CouponSearchRequestDTO;
-import naeil.gen_coupon.dto.response.CouponIssueDTO;
+import naeil.gen_coupon.dto.request.CouponDTO;
+import naeil.gen_coupon.dto.response.CouponIssueResponse;
 import naeil.gen_coupon.entity.*;
-import naeil.gen_coupon.repository.ConfigRepository;
-import naeil.gen_coupon.repository.CouponIssueRepository;
-import naeil.gen_coupon.repository.StampRepository;
+import naeil.gen_coupon.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,9 +31,16 @@ public class CouponService extends GenericService<CouponIssueEntity, QCouponIssu
     
     private final StampRepository stampRepository;
     private final CouponIssueRepository couponIssueRepository;
+    private final CouponRepository couponRepository;
     private final ConfigRepository configRepository;
-    private final MessageService messageService;
+    private final CouponPolicyRepository couponPolicyRepository;
+//    private final MessageService messageService;
     private final ImWebExternal apiClient;
+
+    @Transactional(readOnly = true)
+    public List<CouponEntity> getMasterCouponInfo(){
+        return couponRepository.findAllByDeletedFalse();
+    }
 
     @Transactional
     public void generateCoupons() {
@@ -92,8 +95,6 @@ public class CouponService extends GenericService<CouponIssueEntity, QCouponIssu
 
             stampRepository.saveAll(stampByIssueId);
         }
-        // todo : messageservice 함수 호출
-//        messageService.sendCouponAlimTok();
     }
 
     public List<ImWebCouponItemDTO> fetchIssueCouponsFromImweb(String couponCode, Integer needCount, Long usedCount) {
@@ -159,8 +160,6 @@ public class CouponService extends GenericService<CouponIssueEntity, QCouponIssu
                 CouponIssueEntity couponIssue = CouponIssueEntity.builder()
                         .customerEntity(customer)
                         .issuedCouponCode(fetchedCoupons.remove(0).getCouponIssueCode())
-                        .imwebCouponCode(couponCode)
-                        .imwebCouponName(couponName)
                         .createDate(LocalDateTime.now())
                         .build();
 
@@ -174,14 +173,14 @@ public class CouponService extends GenericService<CouponIssueEntity, QCouponIssu
     }
 
     @Transactional(readOnly = true)
-    public List<CouponIssueDTO> searchCouponIssueList(CouponSearchRequestDTO requestDTO) {
+    public List<CouponIssueResponse> searchCouponIssueList(CouponSearchRequestDTO requestDTO) {
         List<CouponIssueEntity> searchedList = searchList(
                 requestDTO,
                 QCouponIssueEntity.couponIssueEntity, q -> buildPredicate(requestDTO),
                 q -> buildOrderSpecifier(requestDTO, q)
         );
 
-        return searchedList.stream().map(coupon -> CouponIssueDTO.toDTO(coupon)).toList();
+        return searchedList.stream().map(coupon -> CouponIssueResponse.toDTO(coupon)).toList();
     }
 
     @Override
@@ -222,5 +221,52 @@ public class CouponService extends GenericService<CouponIssueEntity, QCouponIssu
         ImWebCouponDataDTO pageResult = apiClient.fetchCoupons(token, limit, pageNumber);
 
         return pageResult;
+    }
+
+    @Transactional
+    public void updateCoupon(List<CouponDTO> coupons) {
+        log.info("coupon update execute, coupon info : {}", coupons);
+        Set<String> codes = coupons.stream()
+                .map(CouponDTO::getMasterCouponCode)
+                .collect(Collectors.toSet());
+
+        List<CouponEntity> allExistingCoupons = couponRepository.findAll();
+
+        allExistingCoupons.stream()
+               .filter(entity -> !codes.contains(entity.getMasterCouponCode()))
+               .peek(entity -> entity.setDeleted(true))
+               .toList();
+
+        Map<String, CouponEntity> existingMap = allExistingCoupons.stream()
+                .filter(entity -> codes.contains(entity.getMasterCouponCode()))
+                .collect(Collectors.toMap(CouponEntity::getMasterCouponCode, c -> c));
+
+        List<CouponEntity> toSave = new ArrayList<>();
+
+        for(CouponDTO dto : coupons) {
+
+           CouponEntity coupon = existingMap.getOrDefault(dto.getMasterCouponCode(), new CouponEntity());
+
+           if(coupon.getCouponId() == null) {
+               coupon.setMasterCouponCode(dto.getMasterCouponCode());
+           }
+           coupon.setMasterCouponName(dto.getMasterCouponName());
+           coupon.setDeleted(false);
+
+           if(dto.getCouponPolicyDTO() != null) {
+               Integer requiredCount = dto.getCouponPolicyDTO().getRequiredStampCount();
+
+               CouponPolicyEntity policy = couponPolicyRepository.findByRequiredStampCount(requiredCount)
+                       .orElseGet(() -> {
+                                   CouponPolicyEntity newPolicy = new CouponPolicyEntity();
+                                   newPolicy.setRequiredStampCount(requiredCount);
+                                   return couponPolicyRepository.save(newPolicy);
+                               }
+                       );
+               coupon.setCouponPolicyEntity(policy);
+           }
+           toSave.add(coupon);
+        }
+        couponRepository.saveAll(toSave);
     }
 }

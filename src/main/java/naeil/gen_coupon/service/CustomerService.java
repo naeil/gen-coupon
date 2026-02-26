@@ -6,10 +6,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import naeil.gen_coupon.common.exception.CustomException;
 import naeil.gen_coupon.dto.querydsl.CustomerStampSummary;
-import naeil.gen_coupon.dto.response.CouponIssueDTO;
-import naeil.gen_coupon.dto.response.CustomerDTO;
-import naeil.gen_coupon.dto.response.CustomerDetailResponseDTO;
-import naeil.gen_coupon.dto.response.OrderHistoryDTO;
+import naeil.gen_coupon.dto.response.CouponIssueResponse;
+import naeil.gen_coupon.dto.request.CustomerDTO;
+import naeil.gen_coupon.dto.response.CustomerDetailResponse;
+import naeil.gen_coupon.dto.request.OrderHistoryDTO;
 import naeil.gen_coupon.entity.*;
 import naeil.gen_coupon.repository.CouponIssueRepository;
 import naeil.gen_coupon.repository.CustomerRepository;
@@ -42,16 +42,16 @@ public class CustomerService {
         return customers;
     }
 
-    public CustomerDetailResponseDTO getCustomerDetail(Integer customerId) {
+    public CustomerDetailResponse getCustomerDetail(Integer customerId) {
         CustomerEntity customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new CustomException(404, "존재하지 않는 회원입니다."));
 
         String maxStampStr = configService.getValue("minimum_count");
         int maxStamp = (maxStampStr != null) ? Integer.parseInt(maxStampStr) : 10;
 
-        List<CouponIssueDTO> coupons = couponIssueRepository.findAllByCustomerEntity_CustomerIdOrderByCreateDateDesc(customerId)
+        List<CouponIssueResponse> coupons = couponIssueRepository.findAllByCustomerEntity_CustomerIdOrderByCreateDateDesc(customerId)
                 .stream()
-                .map(CouponIssueDTO::toDTO)
+                .map(CouponIssueResponse::toDTO)
                 .toList();
 
         List<StampEntity> stamps = stampRepository.findVerifiedStamps(customerId);
@@ -67,10 +67,11 @@ public class CustomerService {
         int remainStamp = maxStamp - currentStamp;
 
         // 6. DTO 조립 및 반환
-        return CustomerDetailResponseDTO.builder()
+        return CustomerDetailResponse.builder()
                 .customerId(customer.getCustomerId())
                 .customerName(customer.getCustomerName())
                 .htel(customer.getCustomerHtel())
+                .totalOrderCount(customer.getTotalOrderCount())
                 .currentStamp(currentStamp)
                 .maxStamp(maxStamp)
                 .remainStamp(remainStamp)

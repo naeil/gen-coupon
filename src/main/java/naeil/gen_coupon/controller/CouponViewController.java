@@ -1,18 +1,17 @@
 package naeil.gen_coupon.controller;
 
-import java.time.LocalDate;
-import java.util.List;
-
+import lombok.RequiredArgsConstructor;
+import naeil.gen_coupon.dto.querydsl.CouponSearchRequestDTO;
+import naeil.gen_coupon.dto.response.CouponIssueResponse;
+import naeil.gen_coupon.service.CouponService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import lombok.RequiredArgsConstructor;
-import naeil.gen_coupon.dto.querydsl.CouponSearchRequestDTO;
-import naeil.gen_coupon.dto.response.CouponIssueDTO;
-import naeil.gen_coupon.service.CouponService;
+import java.time.LocalDate;
+import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -31,7 +30,7 @@ public class CouponViewController {
             @RequestParam(required = false, defaultValue="20", name = "pageSize") int pageSize,
             Model model
     ) {       
-        List<CouponIssueDTO> coupons = couponService.searchCouponIssueList(
+        List<CouponIssueResponse> coupons = couponService.searchCouponIssueList(
             CouponSearchRequestDTO.builder()
                 .customerId(customerId)
                 .customerName(customerName)

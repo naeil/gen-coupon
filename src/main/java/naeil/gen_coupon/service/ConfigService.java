@@ -4,7 +4,10 @@ import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import naeil.gen_coupon.common.exception.CustomException;
 import naeil.gen_coupon.dto.request.ConfigDTO;
-import naeil.gen_coupon.dto.response.ConfigResponseDTO;
+import naeil.gen_coupon.dto.request.SettingDTO;
+import naeil.gen_coupon.dto.response.ConfigResponse;
+import naeil.gen_coupon.dto.response.CouponResponse;
+import naeil.gen_coupon.dto.response.SettingResponse;
 import naeil.gen_coupon.entity.ConfigEntity;
 import naeil.gen_coupon.repository.ConfigRepository;
 import naeil.gen_coupon.scheduler.CollectDataScheduler;
@@ -26,10 +29,18 @@ public class ConfigService {
     @Autowired
     private CollectDataScheduler scheduler;
 
+    @Autowired
+    private CouponService couponService;
+
     @Transactional
-    public List<ConfigResponseDTO> getConfig() {
-        List<ConfigEntity> configEntities = configRepository.findAll();
-        return configEntities.stream().map(ConfigResponseDTO::toDTO).toList();
+    public SettingResponse getConfig() {
+
+        List<ConfigResponse> configs = configRepository.findAll().stream().map(ConfigResponse::toDTO).toList();
+        List<CouponResponse> coupons = couponService.getMasterCouponInfo().stream().map(CouponResponse::toDTO).toList();
+        return SettingResponse.builder()
+                .configs(configs)
+                .coupons(coupons)
+                .build();
     }
 
     @Transactional
@@ -39,10 +50,10 @@ public class ConfigService {
         return config != null ? config.getConfigValue() : "24h";
     }
 
-    public List<ConfigResponseDTO> updateConfig(List<ConfigDTO> configDTOList) {
+    public List<ConfigResponse> updateConfig(SettingDTO setting) {
 
         boolean scheduleTimeChanged = false;
-        Map<String, String> configMap = configDTOList.stream()
+        Map<String, String> configMap = setting.getConfigs().stream()
             .collect(Collectors.toMap(
                 ConfigDTO::getConfigKey,
                 ConfigDTO::getConfigValue
@@ -75,8 +86,9 @@ public class ConfigService {
                 config.setConfigValue(newValue);
 
             }
+            // todo : 여기서 쿠폰 정보와 정책 업데이트 메소드 호출
             configRepository.saveAll(configs);
-
+            couponService.updateCoupon(setting.getCoupons());
             // 새로운 시간으로 스케줄 재시작
             if(scheduleTimeChanged) {
                 scheduler.start(interval);
@@ -85,6 +97,6 @@ public class ConfigService {
         } catch (Exception e) {
             throw new CustomException(500, e.getMessage());
         }
-        return configRepository.findAll().stream().map(ConfigResponseDTO::toDTO).toList();
+        return configRepository.findAll().stream().map(ConfigResponse::toDTO).toList();
     }
 }

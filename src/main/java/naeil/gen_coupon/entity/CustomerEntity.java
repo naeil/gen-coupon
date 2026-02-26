@@ -27,6 +27,8 @@ public class CustomerEntity {
     @Convert(converter = EncryptConverter.class)
     private String customerHtel;
 
+    private Integer totalOrderCount;
+
     @OneToMany(mappedBy = "customerEntity", cascade = CascadeType.PERSIST)
     private List<OrderHistoryEntity> orderHistoryEntities = new ArrayList<>();
 

@@ -6,13 +6,23 @@ CREATE TABLE `config` (
   `config_value` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`config_id`),
   UNIQUE KEY `UK89i3nngg57qqlo0lkmxee1w9r` (`config_key`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+
+-- `gen-coupon`.coupon_policy definition
+
+CREATE TABLE `coupon_policy` (
+  `coupon_policy_id` int(11) NOT NULL AUTO_INCREMENT,
+  `required_order_count` int(11) DEFAULT NULL,
+  PRIMARY KEY (`coupon_policy_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 
 -- `gen-coupon`.customer definition
 
 CREATE TABLE `customer` (
   `customer_id` int(11) NOT NULL AUTO_INCREMENT,
+  `total_order_count` int(11) DEFAULT NULL,
   `customer_email` varchar(255) DEFAULT NULL,
   `customer_htel` varchar(255) DEFAULT NULL,
   `customer_name` varchar(255) DEFAULT NULL,
@@ -30,24 +40,42 @@ CREATE TABLE `shop` (
   PRIMARY KEY (`shop_id`),
   UNIQUE KEY `UKcl5dh7eypcikrjhemix3a5qu2` (`shop_code`),
   UNIQUE KEY `UKm45jnwnoin0j2qsg09f0cspv1` (`shop_name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+
+-- `gen-coupon`.coupon definition
+
+CREATE TABLE `coupon` (
+  `coupon_id` int(11) NOT NULL AUTO_INCREMENT,
+  `master_coupon_code` varchar(255) DEFAULT NULL,
+  `master_coupon_name` varchar(255) DEFAULT NULL,
+  `deleted` bit(1) NOT NULL,
+  `coupon_policy_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`coupon_id`),
+  KEY `FKjnahg3a5otcynjdmxl7cq8p5k` (`coupon_policy_id`),
+  CONSTRAINT `FKjnahg3a5otcynjdmxl7cq8p5k` FOREIGN KEY (`coupon_policy_id`) REFERENCES `coupon_policy` (`coupon_policy_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 
 -- `gen-coupon`.coupon_issue definition
 
 CREATE TABLE `coupon_issue` (
+  `coupon_policy_id` int(11) DEFAULT NULL,
   `customer_id` int(11) DEFAULT NULL,
   `issue_id` int(11) NOT NULL AUTO_INCREMENT,
   `retry_count` int(11) DEFAULT NULL,
   `create_date` datetime(6) DEFAULT NULL,
-  `imweb_coupon_code` varchar(255) DEFAULT NULL,
-  `imweb_coupon_name` varchar(255) DEFAULT NULL,
   `issued_coupon_code` varchar(255) DEFAULT NULL,
   `mid` varchar(255) DEFAULT NULL,
   `rslt` varchar(255) DEFAULT NULL,
+  `coupon_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`issue_id`),
   UNIQUE KEY `UK3lealojvxy07wfaxktu52jvyh` (`issued_coupon_code`),
+  KEY `FKjpuc600kjx3eb9awp48aqgv11` (`coupon_policy_id`),
   KEY `FKqyfyntl4nn5elyev0ofognv4j` (`customer_id`),
+  KEY `FKaxdtc4pg7dy7rmvkvqxdag9jn` (`coupon_id`),
+  CONSTRAINT `FKaxdtc4pg7dy7rmvkvqxdag9jn` FOREIGN KEY (`coupon_id`) REFERENCES `coupon` (`coupon_id`),
+  CONSTRAINT `FKjpuc600kjx3eb9awp48aqgv11` FOREIGN KEY (`coupon_policy_id`) REFERENCES `coupon_policy` (`coupon_policy_id`),
   CONSTRAINT `FKqyfyntl4nn5elyev0ofognv4j` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 

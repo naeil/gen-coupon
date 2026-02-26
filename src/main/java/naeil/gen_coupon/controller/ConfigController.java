@@ -1,13 +1,11 @@
 package naeil.gen_coupon.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import naeil.gen_coupon.dto.request.ConfigDTO;
+import naeil.gen_coupon.dto.request.SettingDTO;
 import naeil.gen_coupon.service.ConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/config")
@@ -23,10 +21,10 @@ public class ConfigController {
     }
 
     @PutMapping()
-    public ResponseEntity<?> updateConfig(@RequestBody List<ConfigDTO> configDTOList) {
-        configDTOList.forEach(
+    public ResponseEntity<?> updateConfig(@RequestBody SettingDTO setting) {
+        setting.getConfigs().forEach(
                 c -> log.info(c.getConfigKey().toString())
         );
-        return ResponseEntity.ok().body(configService.updateConfig(configDTOList));
+        return ResponseEntity.ok().body(configService.updateConfig(setting));
     }
 }

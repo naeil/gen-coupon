@@ -1,12 +1,10 @@
 INSERT IGNORE INTO config (config_key, config_value)
 VALUES
 ('minimum_amount', '20000'),
-('minimum_count', '10'),
+--('minimum_count', '10'),
 ('collect_period', 'now'),
 ('collect_time', '24h'),
-('imweb_coupon_code', 'c20251224aade8e834f4bc'),
-('imweb_coupon_name', '쿠폰테스트_금액할인'),
-('blocked_suppliers', null);
+('blocked_suppliers', '국민돈까스,[샘플발송]국민돈까스,내일그룹_하이프리,내일그룹_샘플');
 
 
 INSERT IGNORE INTO shop (shop_code, shop_name)

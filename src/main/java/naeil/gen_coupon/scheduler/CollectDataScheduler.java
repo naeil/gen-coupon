@@ -64,7 +64,7 @@ public class CollectDataScheduler {
         try {
             log.info("Scheduler executing...");
             orderService.createOrderInfo();
-            couponService.generateCoupons(); // 만약 generateCoupon 안에서 messageService.sendCouponAlimTok() 호출 시 트랜잭션이 길어질 가능성이 있음
+            couponService.generateCoupons();
             messageService.sendCouponAlimTok();
 
         } catch (Exception e) {
