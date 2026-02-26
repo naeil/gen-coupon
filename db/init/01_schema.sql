@@ -13,7 +13,7 @@ CREATE TABLE `config` (
 
 CREATE TABLE `coupon_policy` (
   `coupon_policy_id` int(11) NOT NULL AUTO_INCREMENT,
-  `required_order_count` int(11) DEFAULT NULL,
+  `required_stamp_count` int(11) DEFAULT NULL,
   PRIMARY KEY (`coupon_policy_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
