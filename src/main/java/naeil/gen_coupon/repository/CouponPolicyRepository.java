@@ -9,5 +9,5 @@ import java.util.Optional;
 @Repository
 public interface CouponPolicyRepository extends JpaRepository<CouponPolicyEntity, Integer> {
 
-    Optional<CouponPolicyEntity> findByRequiredOrderCount(Integer requiredCount);
+    Optional<CouponPolicyEntity> findByRequiredStampCount(Integer requiredCount);
 }

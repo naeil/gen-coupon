@@ -16,5 +16,5 @@ public class CouponPolicyEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer couponPolicyId;
 
-    private Integer requiredOrderCount;
+    private Integer requiredStampCount;
 }

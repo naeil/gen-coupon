@@ -95,8 +95,6 @@ public class CouponService extends GenericService<CouponIssueEntity, QCouponIssu
 
             stampRepository.saveAll(stampByIssueId);
         }
-        // todo : messageservice 함수 호출
-//        messageService.sendCouponAlimTok();
     }
 
     public List<ImWebCouponItemDTO> fetchIssueCouponsFromImweb(String couponCode, Integer needCount, Long usedCount) {
@@ -256,12 +254,12 @@ public class CouponService extends GenericService<CouponIssueEntity, QCouponIssu
            coupon.setDeleted(false);
 
            if(dto.getCouponPolicyDTO() != null) {
-               Integer requiredCount = dto.getCouponPolicyDTO().getRequiredOrderCount();
+               Integer requiredCount = dto.getCouponPolicyDTO().getRequiredStampCount();
 
-               CouponPolicyEntity policy = couponPolicyRepository.findByRequiredOrderCount(requiredCount)
+               CouponPolicyEntity policy = couponPolicyRepository.findByRequiredStampCount(requiredCount)
                        .orElseGet(() -> {
                                    CouponPolicyEntity newPolicy = new CouponPolicyEntity();
-                                   newPolicy.setRequiredOrderCount(requiredCount);
+                                   newPolicy.setRequiredStampCount(requiredCount);
                                    return couponPolicyRepository.save(newPolicy);
                                }
                        );

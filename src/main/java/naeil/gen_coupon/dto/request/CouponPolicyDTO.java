@@ -12,5 +12,5 @@ import lombok.experimental.SuperBuilder;
 public class CouponPolicyDTO {
     private Integer couponPolicyId;
 
-    private Integer requiredOrderCount;
+    private Integer requiredStampCount;
 }

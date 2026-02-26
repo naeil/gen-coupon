@@ -83,7 +83,7 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
             );
 
             String rawHtel = dto.getOrderHtel();
-            String cleanHtel = rawHtel != null ? rawHtel.trim().replaceAll("\\D", "") : "";
+            String cleanHtel = rawHtel != null ? cleanHtel(rawHtel) : "";
 
             CustomerEntity customer = customerCache.computeIfAbsent(
                     cleanHtel,
@@ -150,7 +150,7 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
         }
 
         // 숫자만 남김 (하이픈 제거)
-        String digits = htel.trim().replaceAll("\\D", "");
+        String digits = cleanHtel(htel);
 
         // 최소 길이 방어
         if (digits.length() < 4) {
@@ -159,6 +159,10 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
 
         // 마지막 4자리
         return digits.length() >= 10 && !digits.endsWith("0000");
+    }
+
+    private String cleanHtel(String htel) {
+        return htel.trim().replaceAll("\\D", "");
     }
 
     public List<OrderHistoryDTO> searchOrderHistoryList(OrderSearchRequestDTO requestDTO) {

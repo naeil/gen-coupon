@@ -359,7 +359,7 @@
                     masterCouponName: name,
                     couponPolicyDTO:
                         {
-                            requiredOrderCount: parseInt(count)
+                            requiredStampCount: parseInt(count)
                         }
                 });
             }
@@ -389,8 +389,6 @@
     const initialPolicyDataInput = document.getElementById('initialPolicyData');
     let targetPolicyRow = null; // 쿠폰 모달이 열릴 때 어떤 행을 수정 중인지 기억
 
-    console.log("1. 서버에서 받은 원본 데이터:", initialPolicyDataInput.value);
-
     // 초기 데이터 로드
     let policyList = [];
     try {
@@ -398,16 +396,12 @@
         if (rawData && rawData.trim().length > 0 && rawData !== 'null' && rawData !== '[]') {
             const parsedData = JSON.parse(rawData);
 
-            console.log("2. JSON 파싱된 객체:", parsedData);
-            // 💡 여기서 서버 DTO의 변수명을 화면용 변수명으로 매핑해줍니다!
             policyList = parsedData.map(p => ({
-                // couponPolicyDTO가 있고, 그 안에 requiredOrderCount가 있으면 가져옴
-                count: (p.couponPolicyDTO && p.couponPolicyDTO.requiredOrderCount) ? p.couponPolicyDTO.requiredOrderCount : '',
+                // couponPolicyDTO가 있고, 그 안에 requiredStampCount가 있으면 가져옴
+                count: (p.couponPolicyDTO && p.couponPolicyDTO.requiredStampCount) ? p.couponPolicyDTO.requiredStampCount : '',
                 code: p.masterCouponCode || '',
                 name: p.masterCouponName || ''
             }));
-
-            console.log("변환 성공:", policyList);
         }
     } catch (e) {
         console.error("초기 정책 데이터 파싱 실패:", e);

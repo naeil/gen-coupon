@@ -10,7 +10,7 @@ public class CouponPolicyResponse extends CouponPolicyDTO {
     public static CouponPolicyResponse toDTO(CouponPolicyEntity policy) {
         return CouponPolicyResponse.builder()
                 .couponPolicyId(policy.getCouponPolicyId())
-                .requiredOrderCount(policy.getRequiredOrderCount())
+                .requiredStampCount(policy.getRequiredStampCount())
                 .build();
     }
 

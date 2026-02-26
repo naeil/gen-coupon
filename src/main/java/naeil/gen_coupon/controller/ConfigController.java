@@ -25,7 +25,6 @@ public class ConfigController {
         setting.getConfigs().forEach(
                 c -> log.info(c.getConfigKey().toString())
         );
-        log.info(setting.toString());
         return ResponseEntity.ok().body(configService.updateConfig(setting));
     }
 }

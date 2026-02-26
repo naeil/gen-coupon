@@ -36,7 +36,6 @@ public class ConfigViewController {
 
         ObjectMapper objectMapper = new ObjectMapper();
         String couponJson = objectMapper.writeValueAsString(configList.getCoupons());
-        log.info("couponJson : {}", couponJson);
         model.addAttribute("couponPoliciesJson", couponJson);
         return "settings";
     }
