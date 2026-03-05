@@ -49,6 +49,7 @@ CREATE TABLE `coupon` (
   `coupon_id` int(11) NOT NULL AUTO_INCREMENT,
   `master_coupon_code` varchar(255) DEFAULT NULL,
   `master_coupon_name` varchar(255) DEFAULT NULL,
+  `expired_date` varchar(255) DEFAULT NULL,
   `deleted` bit(1) NOT NULL,
   `coupon_policy_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`coupon_id`),

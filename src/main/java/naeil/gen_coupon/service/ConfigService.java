@@ -86,7 +86,6 @@ public class ConfigService {
                 config.setConfigValue(newValue);
 
             }
-            // todo : 여기서 쿠폰 정보와 정책 업데이트 메소드 호출
             configRepository.saveAll(configs);
             couponService.updateCoupon(setting.getCoupons());
             // 새로운 시간으로 스케줄 재시작

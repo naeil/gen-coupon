@@ -4,10 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import naeil.gen_coupon.enums.TimeUnitType;
 import naeil.gen_coupon.service.CouponService;
-import naeil.gen_coupon.service.MessageService;
 import naeil.gen_coupon.service.OrderService;
 import org.springframework.scheduling.TaskScheduler;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.ScheduledFuture;
@@ -20,7 +18,7 @@ public class CollectDataScheduler {
     private final TaskScheduler taskScheduler;
     private final OrderService orderService;
     private final CouponService couponService;
-    private final MessageService messageService;
+//    private final MessageService messageService;
     private ScheduledFuture<?> scheduledFuture;
 
     public synchronized void start(String configValue) {
@@ -65,20 +63,20 @@ public class CollectDataScheduler {
             log.info("Scheduler executing...");
             orderService.createOrderInfo();
             couponService.generateCoupons();
-            messageService.sendCouponAlimTok();
+//            messageService.sendCouponAlimTok();
 
         } catch (Exception e) {
             log.error("Scheduler execution error : {}", e.getMessage());
         }
     }
 
-    @Scheduled(fixedDelay = 10000)
-    public void checkSendAlimTokResult() {
-        log.info("alimTok result checking scheduler executing");
-        try {
-            messageService.updateCouponSendResult();
-            messageService.updateStampSendResult();
-        } catch (Exception e) {
-            log.error("Delivery Check Scheduler error : {}", e.getMessage());        }
-    }
+//    @Scheduled(fixedDelay = 10000)
+//    public void checkSendAlimTokResult() {
+//        log.info("alimTok result checking scheduler executing");
+//        try {
+//            messageService.updateCouponSendResult();
+//            messageService.updateStampSendResult();
+//        } catch (Exception e) {
+//            log.error("Delivery Check Scheduler error : {}", e.getMessage());        }
+//    }
 }

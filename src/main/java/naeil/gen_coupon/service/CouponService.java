@@ -3,6 +3,8 @@ package naeil.gen_coupon.service;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.PathBuilder;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import naeil.gen_coupon.common.exception.CustomException;
@@ -34,7 +36,6 @@ public class CouponService extends GenericService<CouponIssueEntity, QCouponIssu
     private final CouponRepository couponRepository;
     private final ConfigRepository configRepository;
     private final CouponPolicyRepository couponPolicyRepository;
-//    private final MessageService messageService;
     private final ImWebExternal apiClient;
 
     @Transactional(readOnly = true)
@@ -42,59 +43,107 @@ public class CouponService extends GenericService<CouponIssueEntity, QCouponIssu
         return couponRepository.findAllByDeletedFalse();
     }
 
+    // 현재 stamp total 을 기준으로 각 쿠폰 정책 구간 별 쿠폰 발급(ex. 10개 스탬프 적립 시, 5개 정책 쿠폰과 10개 정책 쿠폰 모두 발급)
     @Transactional
     public void generateCoupons() {
-        // 쿠폰 생성 로직 구현
-        List<StampEntity> stamps = stampRepository.findByIssueIdIsNull();
-        ConfigEntity minimumCountConfig = configRepository.findByConfigKey("minimum_count").orElse(null);
-        Integer standardCount = minimumCountConfig != null ? Integer.parseInt(minimumCountConfig.getConfigValue()) : 10;
+        List<StampEntity> newStamps = stampRepository.findByIssueIdIsNull();
+        if (newStamps.isEmpty()) return;
 
-        Map<CustomerEntity, List<StampEntity>> stampsByOrder = stamps.stream()
-            .collect(Collectors.groupingBy(
-                stamp -> stamp.getCustomerEntity()
-            ))
-            .entrySet()
-            .stream()
-            .filter(entry -> entry.getValue().size() >= standardCount)
-            .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                Map.Entry::getValue
-            ));
+        List<CouponEntity> activeCoupons = couponRepository.findAllByDeletedFalse().stream()
+                .filter(c -> c.getCouponPolicyEntity() != null && c.getCouponPolicyEntity().getRequiredStampCount() != null)
+                .sorted(Comparator.comparingInt(c -> c.getCouponPolicyEntity().getRequiredStampCount()))
+                .toList();
 
-        // 아임웹에서 쿠폰 발급 조회(디비에서 구한 갯수를 토대로)
-        ConfigEntity couponCodeConfig = configRepository.findByConfigKey("imweb_coupon_code").orElseThrow(() -> new CustomException(500, "DB read error"));
-        ConfigEntity couponNameConfig = configRepository.findByConfigKey("imweb_coupon_name").orElseThrow(() -> new CustomException(500, "DB read error"));
-        String couponCode = couponCodeConfig.getConfigValue();
-        String couponName = couponNameConfig.getConfigValue();
+        if (activeCoupons.isEmpty()) return;
 
-        // 필요한 쿠폰 갯수
-        Integer requiredCouponIssueCount = stampsByOrder.values().stream()
-                .mapToInt(stampList -> stampList.size() / standardCount)
-                .sum();
-                
-        // 디비에서 쿠폰 발급 이슈 갯수 조회
-        Long totalCouponCount = couponIssueRepository.count();
+        Map<CustomerEntity, List<StampEntity>> newStampsByCustomer = newStamps.stream()
+                .collect(Collectors.groupingBy(StampEntity::getCustomerEntity));
 
-        // stampsByOrder 맵의 키값을 기준으로 필요한 쿠폰 갯수 계산 후, 모자란 경우 한번 더 조회
-        List<ImWebCouponItemDTO> fetchedCoupons = fetchIssueCouponsFromImweb(couponCode, requiredCouponIssueCount, totalCouponCount);
-        if (fetchedCoupons.size() < requiredCouponIssueCount) {
-            throw new CustomException(500, "발급 가능한 쿠폰 수가 부족합니다.");
+        List<PendingIssueInfo> pendingIssues = new ArrayList<>();
+
+        for (Map.Entry<CustomerEntity, List<StampEntity>> entry : newStampsByCustomer.entrySet()) {
+            CustomerEntity customer = entry.getKey();
+            List<StampEntity> customerNewStamps = entry.getValue();
+
+            int newlyAddedCount = customerNewStamps.size();
+            int currentTotal = customer.getTotalOrderCount();
+            int previousTotal = currentTotal - newlyAddedCount;
+            int prevMilestone = previousTotal;
+            int currentStampIndex = 0;
+
+            for (CouponEntity coupon : activeCoupons) {
+                int requiredCount = coupon.getCouponPolicyEntity().getRequiredStampCount();
+
+                // 누적 스탬프가 정책을 달성했는지 확인 (로직 1의 핵심: 넘었으면 다 준다)
+                if (requiredCount > previousTotal && requiredCount <= currentTotal) {
+
+                    boolean alreadyIssued = couponIssueRepository.existsByCustomerEntityAndCouponEntity(customer, coupon);
+
+                    if (!alreadyIssued) {
+                        // 💡 이 쿠폰이 이번에 발급되는 여러 개 중 '가장 높은 등급'인가?
+                        int stampsNeededForThisCoupon = requiredCount - Math.max(previousTotal, prevMilestone);
+                        List<StampEntity> targetStamps = new ArrayList<>();
+
+                        for (int i = 0; i < stampsNeededForThisCoupon; i++) {
+                            if (currentStampIndex < customerNewStamps.size()) {
+                                targetStamps.add(customerNewStamps.get(currentStampIndex));
+                                currentStampIndex++;
+                            }
+                        }
+                        pendingIssues.add(new PendingIssueInfo(customer, coupon, targetStamps));
+                        prevMilestone = requiredCount;
+                    }
+                }
+            }
         }
-        
-        // 쿠폰 발급 처리
-        Map<Integer, List<StampEntity>> issuedCoupons = issueCoupons(stampsByOrder, fetchedCoupons, couponCode, couponName, standardCount);
 
-        // 스탬프에 발급된 쿠폰 이슈 ID 업데이트
-        for (Map.Entry<Integer, List<StampEntity>> entry : issuedCoupons.entrySet()) {
-            Integer issueId = entry.getKey();
-            List<StampEntity> stampByIssueId = entry.getValue();
+        if (pendingIssues.isEmpty()) return;
 
-            stampByIssueId.forEach(stamp ->
-                stamp.setIssueId(issueId)
+        // --- 여기서부터는 로직 2와 완전히 동일한 '저장 및 마킹' 과정입니다 ---
+        Map<CouponEntity, List<PendingIssueInfo>> issuesByCoupon = pendingIssues.stream()
+                .collect(Collectors.groupingBy(PendingIssueInfo::getCoupon));
+
+        for (Map.Entry<CouponEntity, List<PendingIssueInfo>> entry : issuesByCoupon.entrySet()) {
+            CouponEntity coupon = entry.getKey();
+            List<PendingIssueInfo> issues = entry.getValue();
+            int needCount = issues.size();
+
+            Long usedCount = couponIssueRepository.countByCouponEntity(coupon);
+            if (usedCount == null) usedCount = 0L;
+
+            List<ImWebCouponItemDTO> fetchedCoupons = fetchIssueCouponsFromImweb(
+                    coupon.getMasterCouponCode(), needCount, usedCount
             );
 
-            stampRepository.saveAll(stampByIssueId);
+            if (fetchedCoupons.size() < needCount) {
+                throw new CustomException(500, "Not enough coupon. (coupon: " + coupon.getMasterCouponName() + ")");
+            }
+
+            for (int i = 0; i < needCount; i++) {
+                PendingIssueInfo pending = issues.get(i);
+                String imwebIssueCode = fetchedCoupons.get(i).getCouponIssueCode();
+
+                CouponIssueEntity couponIssue = CouponIssueEntity.builder()
+                        .customerEntity(pending.getCustomer())
+                        .couponEntity(coupon)
+                        .issuedCouponCode(imwebIssueCode)
+                        .createDate(LocalDateTime.now())
+                        .build();
+
+                couponIssue = couponIssueRepository.saveAndFlush(couponIssue);
+
+                List<StampEntity> triggeredStamps = pending.getTargetStamps();
+                for (StampEntity stamp : triggeredStamps) {
+                    stamp.setIssueId(couponIssue.getIssueId());
+                }
+                stampRepository.saveAll(triggeredStamps);
+
+                newStamps.removeAll(triggeredStamps);
+            }
         }
+
+        newStamps.forEach(stamp -> stamp.setIssueId(-1));
+        stampRepository.saveAll(newStamps);
     }
 
     public List<ImWebCouponItemDTO> fetchIssueCouponsFromImweb(String couponCode, Integer needCount, Long usedCount) {
@@ -251,6 +300,7 @@ public class CouponService extends GenericService<CouponIssueEntity, QCouponIssu
                coupon.setMasterCouponCode(dto.getMasterCouponCode());
            }
            coupon.setMasterCouponName(dto.getMasterCouponName());
+           coupon.setExpiredDate(dto.getExpiredDate());
            coupon.setDeleted(false);
 
            if(dto.getCouponPolicyDTO() != null) {
@@ -268,5 +318,13 @@ public class CouponService extends GenericService<CouponIssueEntity, QCouponIssu
            toSave.add(coupon);
         }
         couponRepository.saveAll(toSave);
+    }
+
+    @Getter
+    @AllArgsConstructor
+    private static class PendingIssueInfo {
+        private CustomerEntity customer;
+        private CouponEntity coupon;
+        private List<StampEntity> targetStamps;
     }
 }

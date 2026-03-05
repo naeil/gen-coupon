@@ -1,6 +1,8 @@
 package naeil.gen_coupon.repository;
 
+import naeil.gen_coupon.entity.CouponEntity;
 import naeil.gen_coupon.entity.CouponIssueEntity;
+import naeil.gen_coupon.entity.CustomerEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -24,4 +26,7 @@ public interface CouponIssueRepository extends JpaRepository<CouponIssueEntity, 
     @Query("SELECT DISTINCT c.mid FROM CouponIssueEntity c " +
             "WHERE c.mid IS NOT NULL AND c.rslt IS NULL")
     List<String> findDistinctMidsPendingResult();
-}
+
+    Long countByCouponEntity(CouponEntity coupon);
+
+    boolean existsByCustomerEntityAndCouponEntity(CustomerEntity customer, CouponEntity coupon);}

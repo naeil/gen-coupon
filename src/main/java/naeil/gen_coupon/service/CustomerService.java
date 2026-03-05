@@ -6,18 +6,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import naeil.gen_coupon.common.exception.CustomException;
 import naeil.gen_coupon.dto.querydsl.CustomerStampSummary;
-import naeil.gen_coupon.dto.response.CouponIssueResponse;
 import naeil.gen_coupon.dto.request.CustomerDTO;
-import naeil.gen_coupon.dto.response.CustomerDetailResponse;
 import naeil.gen_coupon.dto.request.OrderHistoryDTO;
+import naeil.gen_coupon.dto.response.CouponIssueResponse;
+import naeil.gen_coupon.dto.response.CouponResponse;
+import naeil.gen_coupon.dto.response.CustomerDetailResponse;
 import naeil.gen_coupon.entity.*;
-import naeil.gen_coupon.repository.CouponIssueRepository;
-import naeil.gen_coupon.repository.CustomerRepository;
-import naeil.gen_coupon.repository.OrderHistoryRepository;
-import naeil.gen_coupon.repository.StampRepository;
+import naeil.gen_coupon.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +31,7 @@ public class CustomerService {
     private final ConfigService configService;
     private final CouponIssueRepository couponIssueRepository;
     private final OrderHistoryRepository orderHistoryRepository;
+    private final CouponRepository couponRepository;
     private final StampRepository stampRepository;
     private final JPAQueryFactory queryFactory;
 
@@ -46,25 +46,33 @@ public class CustomerService {
         CustomerEntity customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new CustomException(404, "존재하지 않는 회원입니다."));
 
-        String maxStampStr = configService.getValue("minimum_count");
-        int maxStamp = (maxStampStr != null) ? Integer.parseInt(maxStampStr) : 10;
+        int currentStamp = customer.getTotalOrderCount();
+        log.info("current stamp: {}", currentStamp);
+        List<CouponEntity> activeCoupons = couponRepository.findAllByDeletedFalse().stream()
+                .filter(c -> c.getCouponPolicyEntity() != null && c.getCouponPolicyEntity().getRequiredStampCount() != null)
+                .sorted(Comparator.comparing(c -> c.getCouponPolicyEntity().getRequiredStampCount()))
+                .toList();
+
+        int maxStamp = activeCoupons.isEmpty() ? 0 :
+                activeCoupons.get(activeCoupons.size() - 1).getCouponPolicyEntity().getRequiredStampCount();
 
         List<CouponIssueResponse> coupons = couponIssueRepository.findAllByCustomerEntity_CustomerIdOrderByCreateDateDesc(customerId)
                 .stream()
                 .map(CouponIssueResponse::toDTO)
                 .toList();
 
-        List<StampEntity> stamps = stampRepository.findVerifiedStamps(customerId);
-
-        List<OrderHistoryDTO> orders = stamps
-                .stream()
-                .map(StampEntity::getOrderHistoryEntity)
-                .map(OrderHistoryDTO::toDTO)
+        List<CouponResponse> couponPolicyList = couponRepository.findAllByDeletedFalse().stream()
+                .map(CouponResponse::toDTO)
                 .toList();
 
-        // 5. 스탬프 현황 계산
-        int currentStamp = stamps.size();
-        int remainStamp = maxStamp - currentStamp;
+        QOrderHistoryEntity qOrder = QOrderHistoryEntity.orderHistoryEntity;
+        List<OrderHistoryDTO> orders = queryFactory.selectFrom(qOrder)
+                .where(qOrder.customerEntity.customerId.eq(customerId))
+                .orderBy(qOrder.createDate.desc())
+                .fetch()
+                .stream()
+                .map(OrderHistoryDTO::toDTO)
+                .toList();
 
         // 6. DTO 조립 및 반환
         return CustomerDetailResponse.builder()
@@ -74,9 +82,9 @@ public class CustomerService {
                 .totalOrderCount(customer.getTotalOrderCount())
                 .currentStamp(currentStamp)
                 .maxStamp(maxStamp)
-                .remainStamp(remainStamp)
                 .coupons(coupons)
                 .orderHistories(orders)
+                .couponPolicyList(couponPolicyList)
                 .build();
     }
 
@@ -96,7 +104,6 @@ public class CustomerService {
             .select(customer.customerId, stamp.stampId.count())
             .from(customer)
             .join(customer.stampEntities, stamp)
-            .where(stamp.issueId.isNull())
             .groupBy(customer.customerId)
             .fetch();
 

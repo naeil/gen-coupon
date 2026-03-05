@@ -22,6 +22,8 @@ public class CouponEntity {
 
     private String masterCouponName;
 
+    private String expiredDate;
+
     private boolean deleted = false;
 
     @OneToMany(mappedBy = "couponEntity")

@@ -21,4 +21,5 @@ public class CustomerDetailResponse {
 
     private List<CouponIssueResponse> coupons;
     private List<OrderHistoryDTO> orderHistories;
+    private List<CouponResponse> couponPolicyList;
 }

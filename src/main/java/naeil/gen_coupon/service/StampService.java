@@ -3,18 +3,15 @@ package naeil.gen_coupon.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import naeil.gen_coupon.dto.response.StampResponse;
-import naeil.gen_coupon.entity.ConfigEntity;
+import naeil.gen_coupon.entity.CouponPolicyEntity;
 import naeil.gen_coupon.entity.CustomerEntity;
 import naeil.gen_coupon.entity.OrderHistoryEntity;
 import naeil.gen_coupon.entity.StampEntity;
-import naeil.gen_coupon.repository.ConfigRepository;
+import naeil.gen_coupon.repository.CouponPolicyRepository;
 import naeil.gen_coupon.repository.StampRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,8 +20,8 @@ import java.util.stream.Collectors;
 public class StampService {
     
     private final StampRepository stampRepository;
-    private final ConfigRepository configRepository;
-    private final MessageService messageService;
+//    private final MessageService messageService;
+    private final CouponPolicyRepository couponPolicyRepository;
 
     public List<StampResponse> getStampsByIssueId(Integer issueId) {
         
@@ -39,6 +36,7 @@ public class StampService {
     }
 
     public void createStamp(List<OrderHistoryEntity> orderHistories) {
+        if(orderHistories.isEmpty()) return;
 
         List<StampEntity> stampEntities = orderHistories.stream()
                 .map(StampEntity::new)
@@ -48,9 +46,7 @@ public class StampService {
 
         List<StampEntity> pendingStamps = stampRepository.findAllPendingNotifications();
 
-        if(pendingStamps.isEmpty()) {
-            return;
-        }
+        if(pendingStamps.isEmpty()) return;
 
         List<Integer> targetCustomerIds = pendingStamps.stream()
                 .map(s -> s.getCustomerEntity().getCustomerId())
@@ -66,24 +62,26 @@ public class StampService {
                         row -> ((Number) row[1]).intValue()              // Value: 스탬프 개수 (Count는 보통 Long 반환)
                 ));
 
-
-        ConfigEntity config = configRepository.findByConfigKey("minimum_count").orElse(null);
-        int standardCount = config != null ? Integer.parseInt(config.getConfigValue()) : 10;
+        Set<Integer> couponThresholds = couponPolicyRepository.findAll().stream()
+                .map(CouponPolicyEntity::getRequiredStampCount)
+                .collect(Collectors.toSet());
 
         Map<Integer, List<StampEntity>> alarmCandidates = new HashMap<>();
 
         for(StampEntity stamp : pendingStamps) {
             CustomerEntity customer = stamp.getCustomerEntity();
-            int currentTotal = (int) totalCountMap.getOrDefault(customer.getCustomerId(), 0);
+            int currentTotal = totalCountMap.getOrDefault(customer.getCustomerId(), 0);
 
-            if(currentTotal < standardCount) {
+            if(!couponThresholds.contains(currentTotal)) {
                 alarmCandidates.computeIfAbsent(customer.getCustomerId(), k -> new ArrayList<>())
                         .add(stamp);
+            } else {
+                log.info("{} 고객 쿠폰 발급 기준({}), 스탬프 알림 생략", customer.getCustomerName(), currentTotal);
             }
         }
 
-        if(!alarmCandidates.isEmpty()) {
-            messageService.sendStampAlimTok(alarmCandidates, totalCountMap);
-        }
+//        if(!alarmCandidates.isEmpty()) {
+//            messageService.sendStampAlimTok(alarmCandidates, totalCountMap);
+//        }
     }
 }

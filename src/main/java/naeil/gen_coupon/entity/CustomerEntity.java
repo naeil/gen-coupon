@@ -27,7 +27,7 @@ public class CustomerEntity {
     @Convert(converter = EncryptConverter.class)
     private String customerHtel;
 
-    private Integer totalOrderCount;
+    private Integer totalOrderCount = 0;
 
     @OneToMany(mappedBy = "customerEntity", cascade = CascadeType.PERSIST)
     private List<OrderHistoryEntity> orderHistoryEntities = new ArrayList<>();
@@ -42,5 +42,12 @@ public class CustomerEntity {
         this.customerName = name;
         this.customerEmail = email;
         this.customerHtel = htel;
+    }
+
+    public void incrementOrderCount() {
+        if (this.totalOrderCount == null) {
+            this.totalOrderCount = 0;
+        }
+        this.totalOrderCount++;
     }
 }

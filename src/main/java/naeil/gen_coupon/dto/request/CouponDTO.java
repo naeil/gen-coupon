@@ -16,5 +16,7 @@ public class CouponDTO {
 
     private String masterCouponName;
 
+    private String expiredDate;
+
     private CouponPolicyDTO couponPolicyDTO;
 }

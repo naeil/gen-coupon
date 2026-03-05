@@ -11,6 +11,7 @@ import naeil.gen_coupon.entity.StampEntity;
 import naeil.gen_coupon.enums.AlimTokTemplate;
 import naeil.gen_coupon.repository.CouponIssueRepository;
 import naeil.gen_coupon.repository.StampRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
@@ -32,6 +33,8 @@ public class MessageService {
     private final AligoExternal aligoExternal;
     private final CouponIssueRepository couponIssueRepository;
     private final StampRepository stampRepository;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     public void sendCouponAlimTok(){
 
@@ -50,38 +53,28 @@ public class MessageService {
     }
 
     public void sendStampAlimTok(Map<Integer, List<StampEntity>> targetMap, Map<Integer, Integer> countMap) {
-        MultiValueMap<String, CustomerSendDTO> requestsByTemplate = new LinkedMultiValueMap<>();
+        List<CustomerSendDTO> receivers = new ArrayList<>();
 
         for (Integer customerId : targetMap.keySet()) {
             List<StampEntity> stamps = targetMap.get(customerId);
-            if (stamps.isEmpty()) continue;
+            if (stamps == null || stamps.isEmpty()) continue;
 
             CustomerEntity customer = stamps.get(0).getCustomerEntity(); // 대표 고객 정보
             int totalCount = countMap.getOrDefault(customerId, 0);
 
-            // 템플릿 찾기
-            AlimTokTemplate stampEnum = AlimTokTemplate.findByCount(totalCount);
-            String tplCode = stampEnum.getTemplateCode();
-
             // 전송용 DTO 생성 (내부 클래스 활용 추천)
-            CustomerSendDTO sendInfo = new CustomerSendDTO(customer, totalCount, stamps);
-            requestsByTemplate.add(tplCode, sendInfo);
+            receivers.add(new CustomerSendDTO(customer, totalCount, stamps));
         }
 
-        for (String tplCode : requestsByTemplate.keySet()) {
-            List<CustomerSendDTO> receivers = requestsByTemplate.get(tplCode);
-
-            MultiValueMap<String, String> aligoParams = genStampAlimTokTemplate(tplCode, receivers);
-            try {
-                String mid = aligoExternal.sendAlimTok(aligoParams); // 결과값 활용 가능
-                updateStampMid(mid, receivers);
-                log.info("Sent Stamp Alarm - Template: {}, Count: {}", tplCode, receivers.size());
-            } catch (Exception e) {
-                log.error("alimtok error : {}", e.getMessage());
-            }
-
+        if(receivers.isEmpty()) return;
+        MultiValueMap<String, String> aligoParams = genStampAlimTokTemplate(receivers);
+        try {
+            String mid = aligoExternal.sendAlimTok(aligoParams); // 결과값 활용 가능
+            updateStampMid(mid, receivers);
+            log.info("Sent Stamp Alarm - TemplateCode: {}, Count: {}", AlimTokTemplate.STAMP_TEMPLATE.getTemplateCode(), receivers.size());
+        } catch (Exception e) {
+            log.error("alimtok error : {}", e.getMessage());
         }
-
     }
 
     private void updateCouponMid(String mid, List<CouponIssueEntity> couponIssueEntities){
@@ -189,54 +182,33 @@ public class MessageService {
         return template;
     }
 
-    private MultiValueMap<String, String> genStampAlimTokTemplate(String tplCode, List<CustomerSendDTO> receivers) {
+    private MultiValueMap<String, String> genStampAlimTokTemplate(List<CustomerSendDTO> receivers) {
+
+        AlimTokTemplate stampTemplate = AlimTokTemplate.STAMP_TEMPLATE;
+        String content = stampTemplate.getContent();
 
         MultiValueMap<String, String> template = new LinkedMultiValueMap<>();
-        template.add("tpl_code", tplCode);
+        template.add("tpl_code", stampTemplate.getTemplateCode());
         int index = 1;
 
         for(CustomerSendDTO receiver : receivers) {
 
             CustomerEntity customer = receiver.getCustomer();
 
-            String message = AlimTokTemplate.STAMP_TEMPLATE_CONTENT.replace("#{고객명}", customer.getCustomerName())
-                    .replace("#{상품명}", "test")
-                    .replace("#{제품}", "test");
+            String message = content
+                    .replace("#{고객명}", customer.getCustomerName())
+                    .replace("#{적립횟수}", "1개")
+                    .replace("#{누적횟수}", customer.getTotalOrderCount().toString()+"개");
 
             template.add("receiver_" + index, customer.getCustomerHtel().replaceAll("\\D", ""));
             template.add("recvname_" + index, customer.getCustomerName());
             template.add("subject_" + index, "제목" + index);
             template.add("message_" + index, message);
-            template.add("button_" + index, buildButtonJson());
+            template.add("button_" + index, stampTemplate.getButtonsJson(objectMapper));
 
             index++;
         }
         return template;
-    }
-
-    private String buildStampMessage(StampEntity stamp) {
-        return AlimTokTemplate.STAMP_TEMPLATE_CONTENT.replace("#{고객명}", stamp.getCustomerEntity().getCustomerName())
-                .replace("#{상품명}", "test")
-                .replace("#{제품}", "test");
-    }
-
-    public String buildButtonJson() {
-        ObjectMapper mapper = new ObjectMapper();
-
-        ObjectNode root = mapper.createObjectNode();
-        ArrayNode buttons = mapper.createArrayNode();
-
-        ObjectNode btn = mapper.createObjectNode();
-        btn.put("name", "확인하기");
-        btn.put("linkType", "WL");
-        btn.put("linkTypeName", "웹링크");
-        btn.put("linkMo", "https://smartstore.naver.com/high_free/products/11726832244");
-        btn.put("linkPc", "https://smartstore.naver.com/high_free/products/11726832244");
-
-        buttons.add(btn);
-        root.set("button", buttons);
-
-        return mapper.writeValueAsString(root);
     }
 
     @Transactional(readOnly = true)

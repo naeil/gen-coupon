@@ -98,6 +98,8 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
                                     ))
             );
 
+            customer.incrementOrderCount();
+
             OrderHistoryEntity order = new OrderHistoryEntity(
                     customer,
                     shop,

@@ -192,6 +192,7 @@
                         <th>쿠폰 코드</th>
                         <th>쿠폰명</th>
                         <th>상태</th>
+                        <th>유효기간</th>
                     </tr>
                     </thead>
                     <tbody id="couponTableBody">
@@ -339,10 +340,12 @@
             const countInput = row.querySelector('.policy-count');
             const codeInput = row.querySelector('.policy-coupon-code');
             const nameInput = row.querySelector('.policy-coupon-name');
+            const periodInput = row.querySelector('.policy-use-period');
 
             const count = countInput.value.trim();
             const code = codeInput.value.trim();
             const name = nameInput.value.trim();
+            const usePeriod = periodInput.value.trim();
 
             // 유효성 체크: 개수나 코드가 비어있으면 표시
             if (!count || !code) {
@@ -357,6 +360,7 @@
                 coupons.push({
                     masterCouponCode: code,
                     masterCouponName: name,
+                    expiredDate: usePeriod,
                     couponPolicyDTO:
                         {
                             requiredStampCount: parseInt(count)
@@ -400,7 +404,8 @@
                 // couponPolicyDTO가 있고, 그 안에 requiredStampCount가 있으면 가져옴
                 count: (p.couponPolicyDTO && p.couponPolicyDTO.requiredStampCount) ? p.couponPolicyDTO.requiredStampCount : '',
                 code: p.masterCouponCode || '',
-                name: p.masterCouponName || ''
+                name: p.masterCouponName || '',
+                usePeriod: p.expiredDate || ''
             }));
         }
     } catch (e) {
@@ -448,6 +453,13 @@
                                value="${policy.code || ''}" placeholder="쿠폰 코드 (자동 입력)" readonly required>
                         <input type="text" class="form-control mb-1 policy-coupon-name bg-light"
                                value="${policy.name || ''}" placeholder="쿠폰 이름" readonly>
+                        <div class="d-flex align-items-center" style="white-space: nowrap; overflow: hidden;">
+                        <span class="text-primary me-1 small">유효기간:</span>
+                        <span class="text-muted small policy-use-period-text">
+                            ${policy.usePeriod || '정보 없음'}
+                        </span>
+                        <input type="hidden" class="policy-use-period" value="${policy.usePeriod || ''}">
+                    </div>
                     </div>
                     <button type="button" class="btn btn-outline-secondary btn-sm flex-shrink-0 btn-search-coupon">
                         <i class="bi bi-search"></i> 쿠폰 찾기
@@ -591,11 +603,13 @@
                     tr.style.cursor = 'pointer';
                     tr.dataset.couponCode = coupon.couponCode;
                     tr.dataset.couponName = coupon.name;
+                    tr.dataset.usePeriod = coupon.use_period
 
                     tr.innerHTML = `
                         <td>${coupon.couponCode}</td>
                         <td>${coupon.name}</td>
                         <td>${coupon.status || '-'}</td>
+                        <td>${coupon.use_period || '_'}</td>
                     `;
                     tbody.appendChild(tr);
                 });
@@ -644,11 +658,15 @@
 
         const code = row.dataset.couponCode;
         const name = row.dataset.couponName;
+        const usePeriod = row.dataset.usePeriod || '정보 없음';
 
         // 선택된 정책 행(targetPolicyRow)에 값 채워넣기
         if (targetPolicyRow) {
             targetPolicyRow.querySelector('.policy-coupon-code').value = code;
             targetPolicyRow.querySelector('.policy-coupon-name').value = name;
+
+            targetPolicyRow.querySelector('.policy-use-period-text').textContent = usePeriod;
+            targetPolicyRow.querySelector('.policy-use-period').value = usePeriod === '정보 없음' ? '' : usePeriod;
             targetPolicyRow = null; // 초기화
         }
 

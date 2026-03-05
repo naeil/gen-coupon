@@ -12,6 +12,7 @@ public class CouponResponse extends CouponDTO {
                 .couponId(couponEntity.getCouponId())
                 .masterCouponCode(couponEntity.getMasterCouponCode())
                 .masterCouponName(couponEntity.getMasterCouponName())
+                .expiredDate(couponEntity.getExpiredDate())
                 .couponPolicyDTO(CouponPolicyResponse.toDTO(couponEntity.getCouponPolicyEntity()))
                 .build();
     }
