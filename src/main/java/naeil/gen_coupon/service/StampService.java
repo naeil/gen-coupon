@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 public class StampService {
     
     private final StampRepository stampRepository;
-//    private final MessageService messageService;
+    private final MessageService messageService;
     private final CouponPolicyRepository couponPolicyRepository;
 
     public List<StampResponse> getStampsByIssueId(Integer issueId) {
@@ -80,8 +80,8 @@ public class StampService {
             }
         }
 
-//        if(!alarmCandidates.isEmpty()) {
-//            messageService.sendStampAlimTok(alarmCandidates, totalCountMap);
-//        }
+        if(!alarmCandidates.isEmpty()) {
+            messageService.sendStampAlimTok(alarmCandidates, totalCountMap);
+        }
     }
 }
