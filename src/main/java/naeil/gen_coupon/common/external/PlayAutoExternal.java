@@ -46,11 +46,9 @@ public class PlayAutoExternal {
 
         Map<String, Object> body = Map.of(
                 "email", email,
-                "password", password
-        );
+                "password", password);
 
-        HttpEntity<Map<String, Object>> request =
-                new HttpEntity<>(body, headers);
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
         String requestUrl = UriComponentsBuilder
                 .fromUriString("https://openapi.playauto.io/api/auth")
@@ -58,7 +56,7 @@ public class PlayAutoExternal {
 
         String token;
         ResponseEntity<JsonNode> response;
-        try{
+        try {
             response = restTemplate.exchange(
                     requestUrl,
                     HttpMethod.POST,
@@ -74,17 +72,18 @@ public class PlayAutoExternal {
             throw new CustomException(502, "Invalid auth response");
         }
 
-        JsonNode error = root.get("error_code");
+        JsonNode error = root.path("error_code");
         log.info("error_code : {}", error);
-        if(error != null && !error.isNull() && !error.asString().isBlank()) {
-            String errorCode = error.asString();
+        if (!error.isMissingNode() && !error.isNull() && !error.asText("").isBlank()) {
+            String errorCode = error.asText();
             throw PlayAutoErrorCode.fromCode(errorCode);
         }
 
-        token = root.get(0).get("token").asString(null);
-        if (root == null || !root.isArray() || root.isEmpty()) {
+        if (!root.isArray() || root.isEmpty()) {
             throw new CustomException(502, "Invalid auth response");
         }
+
+        token = root.get(0).path("token").asText("");
         log.info("token : {}", token);
 
         return token;
@@ -102,12 +101,10 @@ public class PlayAutoExternal {
         String requestUrl = UriComponentsBuilder
                 .fromUriString("https://openapi.playauto.io/api/shops")
                 .queryParam("used", "true")
-                .queryParam("usable_shop","true")
+                .queryParam("usable_shop", "true")
                 .toUriString();
 
         log.info("requestUrl : {}", requestUrl);
-
-        RestTemplate restTemplate = new RestTemplate();
 
         ResponseEntity<String> response;
         ObjectMapper objectMapper = new ObjectMapper();
@@ -117,16 +114,15 @@ public class PlayAutoExternal {
                     requestUrl,
                     HttpMethod.GET,
                     request,
-                    String.class
-            );
+                    String.class);
 
             String responseBody = response.getBody();
 
             JsonNode rootNode = objectMapper.readTree(responseBody);
 
-            if(rootNode.isObject() && rootNode.has("error_code")) {
-                String errorCode = rootNode.get("error_code").asString();
-                String message = rootNode.get("messages").get(0).asString();
+            if (rootNode.isObject() && rootNode.has("error_code")) {
+                String errorCode = rootNode.path("error_code").asText("");
+                String message = rootNode.path("messages").path(0).asText("");
 
                 throw new CustomException(404, String.format("PlayAuto API Error(Code=%s, Messages=%s)",
                         errorCode,
@@ -143,21 +139,23 @@ public class PlayAutoExternal {
         return shipInfos;
     }
 
-    public PlayAutoOrderHistoryResponseDTO[] getOrderInfo(String token, ConfigEntity periodConfig, ConfigEntity suppliersConfig) {
+    public PlayAutoOrderHistoryResponseDTO[] getOrderInfo(String token, ConfigEntity periodConfig,
+            ConfigEntity suppliersConfig) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("x-api-key", apiKey);
         headers.set("Authorization", "Token " + token);
 
         String period = (periodConfig != null && periodConfig.getConfigValue() != null)
-                ? periodConfig.getConfigValue().trim() : "now";
+                ? periodConfig.getConfigValue().trim()
+                : "now";
 
         LocalDate endDate = LocalDate.now();
         LocalDate startDate = endDate;
 
-        if(!"now".equalsIgnoreCase(period) && period.length() > 1) {
+        if (!"now".equalsIgnoreCase(period) && period.length() > 1) {
             try {
-                char unit = period.charAt(period.length() -1);
+                char unit = period.charAt(period.length() - 1);
 
                 String number = period.substring(0, period.length() - 1).trim();
                 int amount = Integer.parseInt(number);
@@ -192,15 +190,14 @@ public class PlayAutoExternal {
         body.put("delay_ship", false);
         body.put("memo_yn", false);
 
-        HttpEntity<Map<String, Object>> request =
-                new HttpEntity<>(body, headers);
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
         String requestUrl = UriComponentsBuilder
                 .fromUriString("https://openapi.playauto.io/api/orders")
                 .toUriString();
 
         ResponseEntity<JsonNode> response;
-        try{
+        try {
             response = restTemplate.exchange(
                     requestUrl,
                     HttpMethod.POST,
@@ -216,7 +213,7 @@ public class PlayAutoExternal {
             return new PlayAutoOrderHistoryResponseDTO[0];
         }
 
-        if(responseBody.isObject() && responseBody.has("error_code")) {
+        if (responseBody.isObject() && responseBody.has("error_code")) {
             String errorCode = responseBody.get("error_code").asString();
             String message = responseBody.get("messages").get(0).asString();
 
@@ -227,7 +224,7 @@ public class PlayAutoExternal {
 
         Set<String> excludedUniqs = new HashSet<>();
         Set<String> blockSuppliers;
-        if(suppliersConfig.getConfigValue() != null && !suppliersConfig.getConfigValue().isBlank()) {
+        if (suppliersConfig.getConfigValue() != null && !suppliersConfig.getConfigValue().isBlank()) {
             blockSuppliers = Arrays.stream(suppliersConfig.getConfigValue().split(","))
                     .map(String::trim)
                     .collect(Collectors.toSet());
@@ -257,11 +254,9 @@ public class PlayAutoExternal {
         }
 
         ObjectMapper objectMapper = new ObjectMapper();
-        PlayAutoOrderHistoryResponseDTO[] orderHistories =
-                objectMapper.treeToValue(
-                        resultsNode,
-                        PlayAutoOrderHistoryResponseDTO[].class
-                );
+        PlayAutoOrderHistoryResponseDTO[] orderHistories = objectMapper.treeToValue(
+                resultsNode,
+                PlayAutoOrderHistoryResponseDTO[].class);
 
         return Arrays.stream(orderHistories)
                 .filter(dto -> !excludedUniqs.contains(dto.getUniq()))

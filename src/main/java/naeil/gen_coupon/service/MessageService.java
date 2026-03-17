@@ -8,8 +8,11 @@ import naeil.gen_coupon.common.external.AligoExternal;
 import naeil.gen_coupon.entity.CouponIssueEntity;
 import naeil.gen_coupon.entity.CustomerEntity;
 import naeil.gen_coupon.entity.StampEntity;
-import naeil.gen_coupon.enums.AlimTokTemplate;
+import naeil.gen_coupon.entity.ConfigEntity;
+import naeil.gen_coupon.entity.MessageTemplateEntity;
+import naeil.gen_coupon.repository.ConfigRepository;
 import naeil.gen_coupon.repository.CouponIssueRepository;
+import naeil.gen_coupon.repository.MessageTemplateRepository;
 import naeil.gen_coupon.repository.StampRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,24 +34,12 @@ public class MessageService {
     private final AligoExternal aligoExternal;
     private final CouponIssueRepository couponIssueRepository;
     private final StampRepository stampRepository;
+    private final ConfigRepository configRepository;
+    private final MessageTemplateRepository messageTemplateRepository;
     @Autowired
     private ObjectMapper objectMapper;
 
-    public void sendCouponAlimTok(){
-
-//        List<CouponIssueEntity> couponIssueEntities = findCouponsToSend();
-//        if (couponIssueEntities.isEmpty()) {
-//            log.info("No coupons to send. Exiting sendAlimTok.");
-//            return;
-//        }
-//
-//        log.info("coupon not send list : {}", couponIssueEntities);
-//
-//        MultiValueMap<String, String> template = genCouponAlimTokTemplate(couponIssueEntities);
-//        String mid = aligoExternal.sendAlimTok(template);
-//
-//        updateCouponMid(mid, couponIssueEntities);
-
+    public void sendCouponAlimTok() {
         // test용 로직
         List<CouponIssueEntity> couponIssueEntities = findCouponsToSend();
 
@@ -64,9 +55,15 @@ public class MessageService {
         log.info("테스트 발송 대상 리스트 : {}", testOnlyList);
 
         MultiValueMap<String, String> template = genCouponAlimTokTemplate(testOnlyList);
-        String mid = aligoExternal.sendAlimTok(template);
+        if (template == null)
+            return;
 
-        updateCouponMid(mid, testOnlyList);
+        try {
+            String mid = aligoExternal.sendAlimTok(template);
+            updateCouponMid(mid, testOnlyList);
+        } catch (Exception e) {
+            log.error("coupon alimtok error : {}", e.getMessage());
+        }
     }
 
     public void sendStampAlimTok(Map<Integer, List<StampEntity>> targetMap, Map<Integer, Integer> countMap) {
@@ -74,7 +71,8 @@ public class MessageService {
 
         for (Integer customerId : targetMap.keySet()) {
             List<StampEntity> stamps = targetMap.get(customerId);
-            if (stamps == null || stamps.isEmpty()) continue;
+            if (stamps == null || stamps.isEmpty())
+                continue;
 
             CustomerEntity customer = stamps.get(0).getCustomerEntity(); // 대표 고객 정보
 
@@ -83,11 +81,18 @@ public class MessageService {
                 continue;
             }
 
+            // 대표 스탬프(0번째)의 주문에서 상품명 추출 - customer와 같은 stamps.get(0) 사용
+            StampEntity representativeStamp = stamps.get(0);
+            String productName = (representativeStamp.getOrderHistoryEntity() != null
+                    && representativeStamp.getOrderHistoryEntity().getShopSaleName() != null)
+                    ? representativeStamp.getOrderHistoryEntity().getShopSaleName()
+                    : "";
+
             int totalCount = countMap.getOrDefault(customerId, 0);
-            receivers.add(new CustomerSendDTO(customer, totalCount, stamps));
+            receivers.add(new CustomerSendDTO(customer, totalCount, stamps, productName));
         }
 
-//        if(receivers.isEmpty()) return;
+        // if(receivers.isEmpty()) return;
 
         if (receivers.isEmpty()) {
             log.info("테스트용 'test' 고객 스탬프 데이터가 없어 발송을 중단합니다.");
@@ -95,29 +100,34 @@ public class MessageService {
         }
 
         MultiValueMap<String, String> aligoParams = genStampAlimTokTemplate(receivers);
+        if (aligoParams == null)
+            return;
+
         try {
             String mid = aligoExternal.sendAlimTok(aligoParams); // 결과값 활용 가능
             updateStampMid(mid, receivers);
-            log.info("Sent Stamp Alarm - TemplateCode: {}, Count: {}", AlimTokTemplate.STAMP_TEMPLATE.getTemplateCode(), receivers.size());
+            log.info("Sent Stamp Alarm - TemplateCode: {}, Count: {}", aligoParams.getFirst("tpl_code"),
+                    receivers.size());
         } catch (Exception e) {
             log.error("alimtok error : {}", e.getMessage());
         }
     }
 
-    private void updateCouponMid(String mid, List<CouponIssueEntity> couponIssueEntities){
-        for(CouponIssueEntity couponIssue : couponIssueEntities) {
+    private void updateCouponMid(String mid, List<CouponIssueEntity> couponIssueEntities) {
+        for (CouponIssueEntity couponIssue : couponIssueEntities) {
             couponIssue.updateMid(mid);
             couponIssue.increaseRetryCount();
         }
         couponIssueRepository.saveAll(couponIssueEntities);
     }
 
-    private void updateStampMid(String mid, List<CustomerSendDTO> dtoList){
+    private void updateStampMid(String mid, List<CustomerSendDTO> dtoList) {
         List<StampEntity> midUpdate = new ArrayList<>();
-        for(CustomerSendDTO customerSendDTO : dtoList) {
-            for(StampEntity stamp : customerSendDTO.getStamps()) {
+        for (CustomerSendDTO customerSendDTO : dtoList) {
+            for (StampEntity stamp : customerSendDTO.getStamps()) {
                 stamp.setMid(mid);
                 stamp.setRslt("WAIT");
+                stamp.increaseRetryCount();
                 midUpdate.add(stamp);
             }
         }
@@ -128,24 +138,22 @@ public class MessageService {
     public void updateCouponSendResult() {
 
         List<String> midList = couponIssueRepository.findDistinctMidsPendingResult();
-        if(midList.isEmpty()) {
+        if (midList.isEmpty()) {
             log.info("coupon alimTok list not fount");
             return;
         }
 
-        for(String mid : midList) {
+        for (String mid : midList) {
             List<Map<String, String>> result = aligoExternal.sendResultWithRetry(mid);
             Map<String, String> rsltMap = result.stream()
                     .collect(Collectors.toMap(
                             r -> r.get("htel").replaceAll("\\D", ""),
                             r -> r.get("rslt"),
-                            (oldVal, newVal) -> newVal
-                    ));
+                            (oldVal, newVal) -> newVal));
 
-            List<CouponIssueEntity> couponIssueEntitiesWithMid =
-                    couponIssueRepository.findAllByMid(mid);
+            List<CouponIssueEntity> couponIssueEntitiesWithMid = couponIssueRepository.findAllByMid(mid);
 
-            for(CouponIssueEntity couponIssue : couponIssueEntitiesWithMid) {
+            for (CouponIssueEntity couponIssue : couponIssueEntitiesWithMid) {
                 String htel = couponIssue.getCustomerEntity().getCustomerHtel().replaceAll("\\D", "");
                 String rslt = rsltMap.get(htel);
                 couponIssue.updateRslt(rslt == null || rslt.isBlank() ? "UNKNOWN" : rslt);
@@ -157,24 +165,22 @@ public class MessageService {
     public void updateStampSendResult() {
 
         List<String> midList = stampRepository.findDistinctMidsPendingResult();
-        if(midList.isEmpty()) {
+        if (midList.isEmpty()) {
             log.info("stamp alimTok list not fount");
             return;
         }
 
-        for(String mid : midList) {
+        for (String mid : midList) {
             List<Map<String, String>> result = aligoExternal.sendResultWithRetry(mid);
             Map<String, String> rsltMap = result.stream()
                     .collect(Collectors.toMap(
                             r -> r.get("htel").replaceAll("\\D", ""),
                             r -> r.get("rslt"),
-                            (oldVal, newVal) -> newVal
-                    ));
+                            (oldVal, newVal) -> newVal));
 
-            List<StampEntity> stampEntitiesWithMid =
-                    stampRepository.findAllByMid(mid);
+            List<StampEntity> stampEntitiesWithMid = stampRepository.findAllByMid(mid);
 
-            for(StampEntity stamp : stampEntitiesWithMid) {
+            for (StampEntity stamp : stampEntitiesWithMid) {
                 String htel = stamp.getCustomerEntity().getCustomerHtel().replaceAll("\\D", "");
                 String rslt = rsltMap.get(htel);
                 stamp.setRslt(rslt == null || rslt.isBlank() ? "UNKNOWN" : rslt);
@@ -184,76 +190,138 @@ public class MessageService {
 
     private MultiValueMap<String, String> genCouponAlimTokTemplate(List<CouponIssueEntity> couponIssueEntities) {
 
-        MultiValueMap<String, String> template = new LinkedMultiValueMap<>();
-        AlimTokTemplate couponTemplate = AlimTokTemplate.COUPON_TEMPLATE;
+        // 쿠폰 템플릿 코드 설정 (없으면 기본값)
+        String tplCode = configRepository.findByConfigKey("coupon_template_id")
+                .map(ConfigEntity::getConfigValue)
+                .filter(val -> !val.isEmpty())
+                .orElse("UF_7523");
 
-        template.add("tpl_code", couponTemplate.getTemplateCode());
+        var templateEntity = getTemplateOrSync(tplCode);
+        if (templateEntity == null) {
+            log.error("Coupon template not found even after sync sync: {}", tplCode);
+            return null;
+        }
+
+        MultiValueMap<String, String> template = new LinkedMultiValueMap<>();
+        template.add("tpl_code", tplCode);
 
         int index = 1;
 
-        for(CouponIssueEntity couponIssue : couponIssueEntities) {
+        for (CouponIssueEntity couponIssue : couponIssueEntities) {
             CustomerEntity customer = couponIssue.getCustomerEntity();
 
-            String message = getCouponMessage(customer, couponIssue, couponTemplate);
+            String message = replaceStandardVariables(templateEntity.getTemplateContent(), customer, couponIssue, "");
 
             template.add("receiver_" + index, customer.getCustomerHtel().replaceAll("\\D", ""));
             template.add("recvname_" + index, customer.getCustomerName());
             template.add("subject_" + index, "[하이프리] 쿠폰 발급 안내");
             template.add("message_" + index, message);
-            template.add("button_" + index, couponTemplate.getButtonsJson(objectMapper));
+            template.add("button_" + index, templateEntity.getButtonsJson());
 
             index++;
         }
         return template;
     }
 
-    private static String getCouponMessage(CustomerEntity customer, CouponIssueEntity couponIssue, AlimTokTemplate couponTemplate) {
+    private String replaceStandardVariables(String content, CustomerEntity customer, CouponIssueEntity couponIssue, String productName) {
+        if (content == null)
+            return "";
 
-        var couponMaster = couponIssue.getCouponEntity();
+        String result = content;
+        result = result.replace("#{고객명}", customer.getCustomerName() != null ? customer.getCustomerName() : "");
 
-        String message = couponTemplate.getContent()
-                .replace("#{고객명}", customer.getCustomerName())
-                .replace("#{쿠폰명}", couponMaster.getMasterCouponName())
-                .replace("#{쿠폰코드}", couponIssue.getIssuedCouponCode())
-                .replace("#{누적횟수}", customer.getTotalOrderCount() + "개")
-                .replace("#{소명예정일}", couponMaster.getExpiredDate() != null ? couponMaster.getExpiredDate() : "정보 없음");
-        return message;
+        if (couponIssue != null) {
+            var couponMaster = couponIssue.getCouponEntity();
+            if (couponMaster != null) {
+                result = result.replace("#{쿠폰명}",
+                        couponMaster.getMasterCouponName() != null ? couponMaster.getMasterCouponName() : "");
+                result = result.replace("#{쿠폰코드}",
+                        couponIssue.getIssuedCouponCode() != null ? couponIssue.getIssuedCouponCode() : "");
+                result = result.replace("#{유효기간}",
+                        couponMaster.getExpiredDate() != null ? couponMaster.getExpiredDate() : "정보 없음");
+            }
+        }
+
+        result = result.replace("#{누적횟수}",
+                (customer.getTotalOrderCount() != null ? customer.getTotalOrderCount() : 0) + "개");
+        result = result.replace("#{적립횟수}", "1개");
+        result = result.replace("#{상품명}", productName != null ? productName : "");
+
+        return result;
     }
 
-
     private MultiValueMap<String, String> genStampAlimTokTemplate(List<CustomerSendDTO> receivers) {
-        MultiValueMap<String, String> template = new LinkedMultiValueMap<>();
-        AlimTokTemplate stampTemplate = AlimTokTemplate.STAMP_TEMPLATE;
+        // 스탬프 템플릿 코드 설정 (없으면 기본값)
+        String tplCode = configRepository.findByConfigKey("stamp_template_id")
+                .map(ConfigEntity::getConfigValue)
+                .filter(val -> !val.isEmpty())
+                .orElse("UF_7501");
 
-        template.add("tpl_code", stampTemplate.getTemplateCode());
+        var templateEntity = getTemplateOrSync(tplCode);
+        if (templateEntity == null) {
+            log.error("Stamp template not found even after sync: {}", tplCode);
+            return null;
+        }
+
+        MultiValueMap<String, String> template = new LinkedMultiValueMap<>();
+        template.add("tpl_code", tplCode);
+
         int index = 1;
 
-        for(CustomerSendDTO receiver : receivers) {
-
+        for (CustomerSendDTO receiver : receivers) {
             CustomerEntity customer = receiver.getCustomer();
 
-            String message = getStampMessage(customer, stampTemplate);
+            // 대표 스탬프에서 이미 추출된 상품명 사용
+            String productName = receiver.getProductName();
+
+            String message = replaceStandardVariables(templateEntity.getTemplateContent(), customer, null, productName);
 
             template.add("receiver_" + index, customer.getCustomerHtel().replaceAll("\\D", ""));
             template.add("recvname_" + index, customer.getCustomerName());
             template.add("subject_" + index, "[하이프리] 스탬프 적립 안내");
             template.add("message_" + index, message);
-            template.add("button_" + index, stampTemplate.getButtonsJson(objectMapper));
+            template.add("button_" + index, templateEntity.getButtonsJson());
 
             index++;
         }
         return template;
     }
 
-    private static String getStampMessage(CustomerEntity customer, AlimTokTemplate stampTemplate) {
+    private MessageTemplateEntity getTemplateOrSync(String tplCode) {
+        return messageTemplateRepository.findByTemplateCode(tplCode)
+                .orElseGet(() -> {
+                    log.info("Template [{}] not found in DB. Syncing from Aligo...", tplCode);
+                    List<Map<String, Object>> aligoTemplates = aligoExternal.getTemplateList();
+                    for (Map<String, Object> aligo : aligoTemplates) {
+                        String code = (String) aligo.get("templtCode");
+                        String name = (String) aligo.get("templtName");
+                        String content = (String) aligo.get("templtContent");
+                        Object buttons = aligo.get("buttons");
 
-        String message = stampTemplate.getContent()
-                .replace("#{고객명}", customer.getCustomerName())
-                .replace("#{적립횟수}", "1개")
-                .replace("#{누적횟수}", customer.getTotalOrderCount().toString()+"개");
-        return message;
+                        String buttonsJson = "[]";
+                        try {
+                            if (buttons != null) {
+                                buttonsJson = objectMapper.writeValueAsString(buttons);
+                            }
+                        } catch (Exception e) {
+                            // Ignore
+                        }
+
+                        MessageTemplateEntity currentTpl = messageTemplateRepository.findByTemplateCode(code)
+                                .orElse(new MessageTemplateEntity(code, name, content, buttonsJson));
+
+                        currentTpl.setTemplateName(name);
+                        currentTpl.setTemplateContent(content);
+                        currentTpl.setButtonsJson(buttonsJson);
+                        messageTemplateRepository.save(currentTpl);
+
+                        if (code.equals(tplCode)) {
+                            return currentTpl;
+                        }
+                    }
+                    return null;
+                });
     }
-
 
     @Transactional(readOnly = true)
     protected List<CouponIssueEntity> findCouponsToSend() {
@@ -266,6 +334,6 @@ public class MessageService {
         private CustomerEntity customer;
         private int totalCount;
         private List<StampEntity> stamps;
+        private String productName; // stamps.get(0) 기준 대표 상품명
     }
 }
-

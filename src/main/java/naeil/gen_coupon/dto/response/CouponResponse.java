@@ -13,6 +13,8 @@ public class CouponResponse extends CouponDTO {
                 .masterCouponCode(couponEntity.getMasterCouponCode())
                 .masterCouponName(couponEntity.getMasterCouponName())
                 .expiredDate(couponEntity.getExpiredDate())
+                .alimTalkTemplateCode(couponEntity.getMessageTemplateEntity() != null ? couponEntity.getMessageTemplateEntity().getTemplateCode() : null)
+                .alimTalkTemplateName(couponEntity.getMessageTemplateEntity() != null ? couponEntity.getMessageTemplateEntity().getTemplateName() : null)
                 .couponPolicyDTO(CouponPolicyResponse.toDTO(couponEntity.getCouponPolicyEntity()))
                 .build();
     }

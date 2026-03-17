@@ -17,7 +17,6 @@ public class CustomerDetailResponse {
 
     private int currentStamp;
     private int maxStamp;
-    private int remainStamp;
 
     private List<CouponIssueResponse> coupons;
     private List<OrderHistoryDTO> orderHistories;

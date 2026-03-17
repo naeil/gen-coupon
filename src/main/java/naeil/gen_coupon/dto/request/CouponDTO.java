@@ -19,4 +19,8 @@ public class CouponDTO {
     private String expiredDate;
 
     private CouponPolicyDTO couponPolicyDTO;
+
+    private String alimTalkTemplateCode;
+
+    private String alimTalkTemplateName;
 }

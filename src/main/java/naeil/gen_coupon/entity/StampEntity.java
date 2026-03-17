@@ -17,20 +17,25 @@ public class StampEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer stampId;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customerId")
     private CustomerEntity customerEntity;
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "orderHistoryId")
     private OrderHistoryEntity orderHistoryEntity;
     private LocalDate createDate;
     private Integer issueId;
     private String mid; // 알리고 메세지 id
     private String rslt; // 알리고 발송 결과
+    private Integer retryCount = 0;
 
-    public StampEntity (OrderHistoryEntity orderHistory) {
+    public void increaseRetryCount() {
+        this.retryCount++;
+    }
+
+    public StampEntity(OrderHistoryEntity orderHistory) {
         this.customerEntity = orderHistory.getCustomerEntity();
-        this.orderHistoryEntity =orderHistory;
+        this.orderHistoryEntity = orderHistory;
         this.createDate = LocalDate.now();
     }
 }

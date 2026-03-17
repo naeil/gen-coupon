@@ -37,7 +37,6 @@ public class AligoExternal {
     @Autowired
     private RestTemplate restTemplate;
 
-
     public String sendAlimTok(MultiValueMap<String, String> messageTemplate) {
 
         HttpHeaders headers = new HttpHeaders();
@@ -52,15 +51,14 @@ public class AligoExternal {
 
         log.info("aligo request body : {}", body);
 
-        HttpEntity<MultiValueMap<String, String>> request =
-                new HttpEntity<>(body, headers);
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 
         String requestUrl = UriComponentsBuilder
                 .fromUriString("https://kakaoapi.aligo.in/akv10/alimtalk/send/")
                 .toUriString();
 
         ResponseEntity<JsonNode> response;
-        try{
+        try {
             response = restTemplate.exchange(
                     requestUrl,
                     HttpMethod.POST,
@@ -97,13 +95,12 @@ public class AligoExternal {
         body.add("userid", userId);
         body.add("mid", mid);
 
-        HttpEntity<MultiValueMap<String, String>> request =
-                new HttpEntity<>(body, headers);
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 
         String requestUrl = "https://kakaoapi.aligo.in/akv10/history/detail/";
 
         ResponseEntity<JsonNode> response;
-        try{
+        try {
             response = restTemplate.exchange(
                     requestUrl,
                     HttpMethod.POST,
@@ -116,15 +113,15 @@ public class AligoExternal {
 
         List<Map<String, String>> result = new ArrayList<>();
 
-        JsonNode root = response.getBody().get("list");
-        if (root == null || !root.isArray() || root.isEmpty()) {
+        JsonNode root = response.getBody().path("list");
+        if (root.isMissingNode() || !root.isArray() || root.isEmpty()) {
             throw new CustomException(500, "external alimTok api error");
         } else {
-            for(JsonNode node : root) {
-                String htel = node.path("phone").asString(null);
-                String rslt = node.path("rslt").asString("UNKNOWN");
+            for (JsonNode node : root) {
+                String htel = node.path("phone").asText(null);
+                String rslt = node.path("rslt").asText("UNKNOWN");
 
-                if(htel != null) {
+                if (htel != null) {
                     Map<String, String> value = new HashMap<>();
                     value.put("htel", htel);
                     value.put("rslt", rslt);
@@ -171,6 +168,70 @@ public class AligoExternal {
         }
 
         return lastResult;
+    }
+
+    public List<Map<String, Object>> getTemplateList() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("apikey", apiKey);
+        body.add("userid", userId);
+        body.add("senderkey", senderKey);
+
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
+
+        String requestUrl = "https://kakaoapi.aligo.in/akv10/template/list/";
+
+        ResponseEntity<JsonNode> response;
+        try {
+            response = restTemplate.exchange(
+                    requestUrl,
+                    HttpMethod.POST,
+                    request,
+                    JsonNode.class);
+        } catch (RestClientException e) {
+            log.error("Aligo getTemplateList error : {}", e.getMessage());
+            throw new CustomException(500, "external aligo template list api error");
+        }
+
+        JsonNode bodyNode = response.getBody();
+        if (bodyNode == null || bodyNode.path("code").asInt(-1) != 0) {
+            log.error("Aligo getTemplateList failed : {}", bodyNode);
+            throw new CustomException(500, "external aligo template list api error");
+        }
+
+        List<Map<String, Object>> templateList = new ArrayList<>();
+        JsonNode listNode = bodyNode.path("list");
+        if (listNode.isArray()) {
+            for (JsonNode node : listNode) {
+                Map<String, Object> template = new HashMap<>();
+                template.put("templtCode", node.path("templtCode").asText(""));
+                template.put("templtName", node.path("templtName").asText(""));
+                template.put("templtContent", node.path("templtContent").asText(""));
+                template.put("status", node.path("status").asText(""));
+                template.put("inspStatus", node.path("inspStatus").asText(""));
+
+                // 버튼 정보 추출 (있을 경우)
+                JsonNode buttons = node.path("buttons");
+                if (buttons.isArray()) {
+                    List<Map<String, String>> buttonList = new ArrayList<>();
+                    for (JsonNode btn : buttons) {
+                        Map<String, String> b = new HashMap<>();
+                        b.put("name", btn.path("name").asText(""));
+                        b.put("linkType", btn.path("linkType").asText(""));
+                        b.put("linkMo", btn.path("linkMo").asText(""));
+                        b.put("linkPc", btn.path("linkPc").asText(""));
+                        buttonList.add(b);
+                    }
+                    template.put("buttons", buttonList);
+                }
+
+                templateList.add(template);
+            }
+        }
+
+        return templateList;
     }
 
     private boolean hasPending(List<Map<String, String>> results) {

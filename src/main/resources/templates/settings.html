@@ -1,444 +1,545 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
 <head th:replace="~{fragments/head :: common-head('설정')}"></head>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 <style>
     /* 🔥 정책 테이블 스타일 추가 */
     .policy-row input[readonly] {
-        background-color: #f8f9fa; /* 읽기 전용 필드 회색 배경 */
+        background-color: #f8f9fa;
+        /* 읽기 전용 필드 회색 배경 */
         cursor: not-allowed;
     }
+
     .table-responsive {
         overflow-x: auto;
+    }
+
+    /* 정책 테이블 내부 요소 레이아웃 조정 */
+    .policy-row .input-group,
+    .policy-row .d-flex {
+        flex-wrap: nowrap; /* 버튼이 옆에 유지되도록 줄바꿈 방지 */
+    }
+
+    .policy-row .btn-sm {
+        align-self: flex-start; /* 상단 정렬 */
+        margin-top: 2px;
+    }
+
+    .template-name-display {
+        min-width: 150px;
+        max-width: 250px;
+        display: block;
+    }
+    
+    .policy-coupon-code, .policy-coupon-name, .policy-template-code {
+        min-width: 180px;
     }
 </style>
 
 <body>
-<div class="container-fluid">
-    <div class="row">
-        <div th:replace="~{fragments/sidebar :: sidebar('settings')}"></div>
+    <div class="container-fluid">
+        <div class="row">
+            <div th:replace="~{fragments/sidebar :: sidebar('settings')}"></div>
 
-        <main class="col-md-10-5 content">
+            <main class="col-md-10-5 content">
 
-            <div class="mb-4">
-                <h3>설정 관리</h3>
-                <p class="text-muted mb-0">
-                    쿠폰 발급 정책 및 스케줄러 설정을 관리합니다.
-                </p>
-            </div>
+                <div class="mb-4">
+                    <h3>설정 관리</h3>
+                    <p class="text-muted mb-0">
+                        쿠폰 발급 정책 및 스케줄러 설정을 관리합니다.
+                    </p>
+                </div>
 
-            <form id="configForm">
+                <form id="configForm">
 
-                <div class="card shadow-sm mb-4">
+                    <div class="card shadow-sm mb-4">
 
-                    <div class="card-header bg-white">
-                        <strong>스케줄러 설정</strong>
-                    </div>
-                    <div class="card-body">
-                        <div class="row mb-3">
-                            <label class="col-sm-3 col-form-label">
-                                수집 기간
-                            </label>
-
-                            <input type="hidden" name="collect_period" id="collectPeriodFinal" th:value="${configMap['collect_period']}">
-
-                            <div class="col-sm-2">
-                                <select class="form-select" id="periodTypeSelect">
-                                    <option value="now">당일</option>
-                                    <option value="d">일 (Days)</option>
-                                    <option value="w">주 (Weeks)</option>
-                                    <option value="m">월 (Months)</option>
-                                </select>
-                            </div>
-
-                            <div class="col-sm-2">
-                                <input type="number"
-                                       class="form-control"
-                                       id="periodValueInput"
-                                       placeholder="값"
-                                       min="1">
-                            </div>
-                            <div class="col-sm-5 text-muted">
-                                입력한 기간 동안의 데이터를 수집
-                            </div>
+                        <div class="card-header bg-white">
+                            <strong>스케줄러 설정</strong>
                         </div>
-                        <div class="row mb-3">
-                            <label class="col-sm-3 col-form-label">
-                                실행 주기 (시간)
-                            </label>
-                            <div class="col-sm-4">
-                                <input type="number"
-                                       class="form-control"
-                                       name="collect_time"
-                                       th:value="${configMap['collect_time'] != null
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <label class="col-sm-3 col-form-label">
+                                    수집 기간
+                                </label>
+
+                                <input type="hidden" name="collect_period" id="collectPeriodFinal"
+                                    th:value="${configMap['collect_period']}">
+
+                                <div class="col-sm-2">
+                                    <select class="form-select" id="periodTypeSelect">
+                                        <option value="now">당일</option>
+                                        <option value="d">일 (Days)</option>
+                                        <option value="w">주 (Weeks)</option>
+                                        <option value="m">월 (Months)</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-sm-2">
+                                    <input type="number" class="form-control" id="periodValueInput" placeholder="값"
+                                        min="1">
+                                </div>
+                                <div class="col-sm-5 text-muted">
+                                    입력한 기간 동안의 데이터를 수집
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <label class="col-sm-3 col-form-label">
+                                    실행 주기 (시간)
+                                </label>
+                                <div class="col-sm-4">
+                                    <input type="number" class="form-control" name="collect_time" th:value="${configMap['collect_time'] != null
                                                     ? #strings.replace(configMap['collect_time'], 'h', '')
-                                                    : ''}"
-                                       required>
-                            </div>
-                            <div class="col-sm-5 text-muted">
-                                예) 12 → 12시간마다 실행
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-white">
-                        <strong>스탬프 적립 금액</strong>
-                    </div>
-                    <div class="card-body">
-                        <div class="row mb-3">
-                            <label class="col-sm-3 col-form-label">
-                                최소 주문 금액
-                            </label>
-                            <div class="col-sm-4">
-                                <input type="number"
-                                       class="form-control"
-                                       name="minimum_amount"
-                                       th:value="${configMap['minimum_amount']}"
-                                       min="0"
-                                       required>
-                            </div>
-                            <div class="col-sm-5 text-muted">
-                                스탬프 적립 기준이 되는 최소 주문 금액
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                        <strong>쿠폰 지급 정책 설정</strong>
-                        <button type="button" class="btn btn-sm btn-outline-primary" id="addPolicyBtn">
-                            <i class="bi bi-plus-lg"></i> 정책 추가
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <p class="text-muted small mb-3">
-                            스탬프 누적 개수에 따라 지급될 쿠폰을 설정합니다. '정책 추가' 버튼을 눌러 여러 개의 규칙을 등록할 수 있습니다.
-                        </p>
-
-                        <div class="table-responsive">
-                            <table class="table table-bordered align-middle" id="policyTable" style="display: none;">
-                                <thead class="table-light text-center">
-                                    <tr>
-                                        <th style="width: 20%; min-width: 120px;">기준 스탬프 수</th>
-                                        <th style="min-width: 300px;">지급할 쿠폰 정보</th>
-                                        <th style="width: 10%; min-width: 80px;">관리</th>
-                                    </tr>
-                                </thead>
-                                    <tbody id="policyTableBody">
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div id="noPolicyMessage" class="text-center text-muted py-4 bg-light rounded">
-                            등록된 정책이 없습니다. 상단의 '정책 추가' 버튼을 눌러 설정해주세요.
-                        </div>
-
-                        <input type="hidden" id="initialPolicyData" th:value="${couponPoliciesJson}">
-
-                    </div>
-                </div>
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-white">
-                        <strong>차단 매입처 관리</strong>
-                    </div>
-                    <div class="card-body">
-                        <input type="hidden" name="blocked_suppliers" id="blockedSuppliersInput" th:value="${configMap['blocked_suppliers']}">
-                        <div class="row mb-3">
-                            <label class="col-sm-3 col-form-label">매입처 키워드 추가</label>
-                            <div class="col-sm-7">
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="keywordInput" placeholder="예) 국민돈까스">
-                                    <button type="button" class="btn btn-outline-primary" id="addKeywordBtn">추가</button>
+                                                    : ''}" required>
+                                </div>
+                                <div class="col-sm-5 text-muted">
+                                    예) 12 → 12시간마다 실행
                                 </div>
                             </div>
                         </div>
-                        <div class="row">
-                            <div class="col-sm-3"></div> <div class="col-sm-9">
-                            <div id="blockedSupplierList" class="mb-2"></div>
-                            <p class="text-muted small mb-0">
-                                키워드를 추가하면 해당 매입처의 주문은 제외됩니다. 삭제하려면 'x'를 클릭하세요.
-                            </p>
+                    </div>
+
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-white">
+                            <strong>스탬프 적립 금액</strong>
                         </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <label class="col-sm-3 col-form-label">
+                                    최소 주문 금액
+                                </label>
+                                <div class="col-sm-4">
+                                    <input type="number" class="form-control" name="minimum_amount"
+                                        th:value="${configMap['minimum_amount']}" min="0" required>
+                                </div>
+                                <div class="col-sm-5 text-muted">
+                                    스탬프 적립 기준이 되는 최소 주문 금액
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <label class="col-sm-3 col-form-label">
+                                    스탬프 알림 템플릿
+                                </label>
+                                <div class="col-sm-9">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex gap-2">
+                                            <input type="text" class="form-control bg-light" id="stampTemplateCodeDisplay"
+                                                   th:value="${configMap['stamp_template_id']}" placeholder="템플릿을 선택해주세요" readonly>
+                                            <button type="button" class="btn btn-outline-secondary flex-shrink-0" id="btnSearchStampTemplate">
+                                                <i class="bi bi-chat-dots"></i> 템플릿 선택
+                                            </button>
+                                        </div>
+                                        <input type="hidden" name="stamp_template_id" id="stampTemplateIdInput" th:value="${configMap['stamp_template_id']}">
+                                        <div class="small text-muted mt-1" id="stampTemplateNameDisplay">
+                                            <th:block th:if="${configMap['stamp_template_name']}">
+                                                <span class="text-primary me-1">메세지 템플릿:</span> [[${configMap['stamp_template_name']}]]
+                                            </th:block>
+                                            <th:block th:unless="${configMap['stamp_template_name']}">
+                                                템플릿을 선택해주세요
+                                            </th:block>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="d-flex justify-content-end">
-                    <button type="submit" class="btn btn-primary px-4">
-                        저장
-                    </button>
-                </div>
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <strong>쿠폰 지급 정책 설정</strong>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="addPolicyBtn">
+                                <i class="bi bi-plus-lg"></i> 정책 추가
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted small mb-3">
+                                스탬프 누적 개수에 따라 지급될 쿠폰을 설정합니다. '정책 추가' 버튼을 눌러 여러 개의 규칙을 등록할 수 있습니다.
+                            </p>
 
-            </form>
+                            <div class="table-responsive">
+                                <table class="table table-bordered align-middle" id="policyTable"
+                                    style="display: none;">
+                                    <thead class="table-light text-center">
+                                        <tr>
+                                            <th style="width: 15%; min-width: 120px;">기준 스탬프 수</th>
+                                            <th style="min-width: 350px;">지급할 쿠폰 정보</th>
+                                            <th style="min-width: 350px;">알림톡 템플릿</th>
+                                            <th style="width: 10%; min-width: 80px;">관리</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="policyTableBody">
+                                    </tbody>
+                                </table>
+                            </div>
 
-        </main>
+                            <div id="noPolicyMessage" class="text-center text-muted py-4 bg-light rounded">
+                                등록된 정책이 없습니다. 상단의 '정책 추가' 버튼을 눌러 설정해주세요.
+                            </div>
+
+                            <input type="hidden" id="initialPolicyData" th:value="${couponPoliciesJson}">
+
+                        </div>
+                    </div>
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-white">
+                            <strong>차단 매입처 관리</strong>
+                        </div>
+                        <div class="card-body">
+                            <input type="hidden" name="blocked_suppliers" id="blockedSuppliersInput"
+                                th:value="${configMap['blocked_suppliers']}">
+                            <div class="row mb-3">
+                                <label class="col-sm-3 col-form-label">매입처 키워드 추가</label>
+                                <div class="col-sm-7">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="keywordInput"
+                                            placeholder="예) 국민돈까스">
+                                        <button type="button" class="btn btn-outline-primary"
+                                            id="addKeywordBtn">추가</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-3"></div>
+                                <div class="col-sm-9">
+                                    <div id="blockedSupplierList" class="mb-2"></div>
+                                    <p class="text-muted small mb-0">
+                                        키워드를 추가하면 해당 매입처의 주문은 제외됩니다. 삭제하려면 'x'를 클릭하세요.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary px-4">
+                            저장
+                        </button>
+                    </div>
+
+                </form>
+
+            </main>
+        </div>
     </div>
-</div>
 
-<div class="modal fade" id="couponListModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">쿠폰 목록</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <table class="table table-sm">
-                    <thead>
-                    <tr>
-                        <th>쿠폰 코드</th>
-                        <th>쿠폰명</th>
-                        <th>상태</th>
-                        <th>유효기간</th>
-                    </tr>
-                    </thead>
-                    <tbody id="couponTableBody">
-                    <tr><td colspan="3" class="text-center text-muted">조회된 데이터가 없습니다.</td></tr>
-                    </tbody>
-                </table>
-                <nav><ul class="pagination justify-content-center mt-3" id="couponPagination"></ul></nav>
+    <div class="modal fade" id="templateListModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">알림톡 템플릿 목록</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0">
+                                <i class="bi bi-search text-muted"></i>
+                            </span>
+                            <input type="text" id="templateSearchInput" class="form-control border-start-0 ps-0" 
+                                   placeholder="템플릿 코드 또는 이름으로 검색...">
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle">
+                            <thead class="table-light">
+                                <tr class="text-secondary small text-uppercase text-center">
+                                    <th style="width: 120px;">템플릿 코드</th>
+                                    <th>템플릿명</th>
+                                    <th style="width: 100px;">상태</th>
+                                </tr>
+                            </thead>
+                            <tbody id="templateTableBody">
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">로딩 중...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <div class="modal fade" id="couponListModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">쿠폰 목록</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-sm table-hover align-middle text-center mb-0">
+                        <thead class="table-light">
+                            <tr class="text-secondary small text-uppercase">
+                                <th class="text-nowrap" style="min-width: 120px;">쿠폰 코드</th>
+                                <th class="text-nowrap">쿠폰명</th>
+                                <th class="text-nowrap" style="width: 100px;">상태</th>
+                                <th class="text-nowrap" style="min-width: 120px;">유효기간</th>
+                            </tr>
+                        </thead>
+                        <tbody id="couponTableBody">
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">조회된 데이터가 없습니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="d-flex justify-content-center p-3 border-top">
+                        <ul class="pagination pagination-sm mb-0" id="couponPagination"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<script>
-    const periodFinalInput = document.getElementById('collectPeriodFinal');
-    const periodTypeSelect = document.getElementById('periodTypeSelect');
-    const periodValueInput = document.getElementById('periodValueInput');
-    const savedPeriod = periodFinalInput.value || 'now';
-    if (savedPeriod === 'now') {
-        periodTypeSelect.value = 'now';
-        periodValueInput.value = '';
-        periodValueInput.disabled = true;
-    } else {
-        const unit = savedPeriod.slice(-1);
-        const number = savedPeriod.slice(0, -1);
-        if (['d', 'w', 'm'].includes(unit)) {
-            periodTypeSelect.value = unit;
-            periodValueInput.value = number;
-        } else {
-            periodTypeSelect.value = 'd';
-            periodValueInput.value = savedPeriod;
-        }
-    }
-    periodTypeSelect.addEventListener('change', function() {
-        if (this.value === 'now') {
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const periodFinalInput = document.getElementById('collectPeriodFinal');
+        const periodTypeSelect = document.getElementById('periodTypeSelect');
+        const periodValueInput = document.getElementById('periodValueInput');
+        const savedPeriod = periodFinalInput.value || 'now';
+        if (savedPeriod === 'now') {
+            periodTypeSelect.value = 'now';
             periodValueInput.value = '';
             periodValueInput.disabled = true;
-            periodValueInput.placeholder = "-";
         } else {
-            periodValueInput.disabled = false;
-            periodValueInput.placeholder = "값 입력";
-            if(!periodValueInput.value) periodValueInput.value = 1;
-        }
-    });
-</script>
-
-<script>
-    const hiddenInput = document.getElementById('blockedSuppliersInput');
-    const keywordInput = document.getElementById('keywordInput');
-    const addKeywordBtn = document.getElementById('addKeywordBtn');
-    const supplierListContainer = document.getElementById('blockedSupplierList');
-    let blockedSuppliers = [];
-    const rawValue = hiddenInput.value;
-    if (rawValue && rawValue.trim().length > 0 && rawValue !== 'null') {
-        blockedSuppliers = rawValue.split(',').map(s => s.trim()).filter(s => s);
-    }
-    function renderBadges() {
-        supplierListContainer.innerHTML = '';
-        blockedSuppliers.forEach((name, index) => {
-            const badge = document.createElement('span');
-            badge.className = 'badge bg-light text-dark border me-1 mb-1';
-            badge.style.fontSize = '0.9em';
-            const closeBtn = document.createElement('span');
-            closeBtn.innerText = ' x';
-            closeBtn.style.cursor = 'pointer';
-            closeBtn.style.marginLeft = '5px';
-            closeBtn.onclick = () => removeSupplier(index);
-            badge.innerText = name;
-            badge.appendChild(closeBtn);
-            supplierListContainer.appendChild(badge);
-        });
-        hiddenInput.value = blockedSuppliers.join(',');
-    }
-    function addSupplier() {
-        const value = keywordInput.value.trim();
-        if (!value) return;
-        if (blockedSuppliers.includes(value)) {
-            alert('이미 등록된 매입처입니다.');
-            return;
-        }
-        blockedSuppliers.push(value);
-        keywordInput.value = '';
-        renderBadges();
-    }
-    window.removeSupplier = function(index) {
-        blockedSuppliers.splice(index, 1);
-        renderBadges();
-    }
-    addKeywordBtn.addEventListener('click', addSupplier);
-    keywordInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            addSupplier();
-        }
-    });
-    renderBadges();
-</script>
-
-<script>
-    // ==========================================
-    // 🔹 1. [핵심] 데이터 생성(Payload) 함수
-    //    화면(DOM)에 입력된 값을 읽어 SettingDTO 구조로 반환합니다.
-    // ==========================================
-    function createSettingPayload() {
-        // [A] 일반 설정 (configs) 리스트 생성
-        const configs = [];
-
-        // 1. 수집 기간 (collect_period) 계산
-        const periodType = document.getElementById('periodTypeSelect').value;
-        const periodVal = document.getElementById('periodValueInput').value;
-        let finalPeriod = '';
-
-        if (periodType === 'now') {
-            finalPeriod = 'now';
-        } else {
-            // 값이 있으면 "3d", "1w" 형태로 조합
-            finalPeriod = periodVal ? (periodVal + periodType) : '';
-        }
-        // *주의: 여기서 빈 값 체크는 submit 시점에 수행하므로, 여기선 있는 그대로 담습니다.
-        configs.push({ configKey: 'collect_period', configValue: finalPeriod });
-
-        // 2. 실행 주기 (collect_time) - 숫자만 있으면 'h' 붙임
-        let timeVal = document.querySelector('input[name="collect_time"]').value;
-        if (timeVal && !timeVal.includes('h')) {
-            timeVal += 'h';
-        }
-        configs.push({ configKey: 'collect_time', configValue: timeVal });
-
-        // 3. 최소 주문 금액 (minimum_amount)
-        const minAmount = document.querySelector('input[name="minimum_amount"]').value;
-        configs.push({ configKey: 'minimum_amount', configValue: minAmount });
-
-        // 4. 차단 매입처 (blocked_suppliers) - 위쪽 스크립트가 hidden input에 넣어둔 값 사용
-        const blocked = document.getElementById('blockedSuppliersInput').value;
-        configs.push({ configKey: 'blocked_suppliers', configValue: blocked });
-
-
-        // [B] 쿠폰 정책 (coupons) 리스트 생성
-        const coupons = [];
-        const rows = document.querySelectorAll('.policy-row'); // 화면에 렌더링된 행들 가져오기
-        let isPolicyValid = true;
-
-        rows.forEach(row => {
-            const countInput = row.querySelector('.policy-count');
-            const codeInput = row.querySelector('.policy-coupon-code');
-            const nameInput = row.querySelector('.policy-coupon-name');
-            const periodInput = row.querySelector('.policy-use-period');
-
-            const count = countInput.value.trim();
-            const code = codeInput.value.trim();
-            const name = nameInput.value.trim();
-            const usePeriod = periodInput.value.trim();
-
-            // 유효성 체크: 개수나 코드가 비어있으면 표시
-            if (!count || !code) {
-                isPolicyValid = false;
-                countInput.classList.add('is-invalid');
-                codeInput.classList.add('is-invalid');
+            const unit = savedPeriod.slice(-1);
+            const number = savedPeriod.slice(0, -1);
+            if (['d', 'w', 'm'].includes(unit)) {
+                periodTypeSelect.value = unit;
+                periodValueInput.value = number;
             } else {
-                countInput.classList.remove('is-invalid');
-                codeInput.classList.remove('is-invalid');
+                periodTypeSelect.value = 'd';
+                periodValueInput.value = savedPeriod;
+            }
+        }
+        periodTypeSelect.addEventListener('change', function () {
+            if (this.value === 'now') {
+                periodValueInput.value = '';
+                periodValueInput.disabled = true;
+                periodValueInput.placeholder = "-";
+            } else {
+                periodValueInput.disabled = false;
+                periodValueInput.placeholder = "값 입력";
+                if (!periodValueInput.value) periodValueInput.value = 1;
+            }
+        });
+    </script>
 
-                // DTO 구조에 맞춰 객체 생성
-                coupons.push({
-                    masterCouponCode: code,
-                    masterCouponName: name,
-                    expiredDate: usePeriod,
-                    couponPolicyDTO:
+    <script>
+        const hiddenInput = document.getElementById('blockedSuppliersInput');
+        const keywordInput = document.getElementById('keywordInput');
+        const addKeywordBtn = document.getElementById('addKeywordBtn');
+        const supplierListContainer = document.getElementById('blockedSupplierList');
+        let blockedSuppliers = [];
+        const rawValue = hiddenInput.value;
+        if (rawValue && rawValue.trim().length > 0 && rawValue !== 'null') {
+            blockedSuppliers = rawValue.split(',').map(s => s.trim()).filter(s => s);
+        }
+        function renderBadges() {
+            supplierListContainer.innerHTML = '';
+            blockedSuppliers.forEach((name, index) => {
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-light text-dark border me-1 mb-1';
+                badge.style.fontSize = '0.9em';
+                const closeBtn = document.createElement('span');
+                closeBtn.innerText = ' x';
+                closeBtn.style.cursor = 'pointer';
+                closeBtn.style.marginLeft = '5px';
+                closeBtn.onclick = () => removeSupplier(index);
+                badge.innerText = name;
+                badge.appendChild(closeBtn);
+                supplierListContainer.appendChild(badge);
+            });
+            hiddenInput.value = blockedSuppliers.join(',');
+        }
+        function addSupplier() {
+            const value = keywordInput.value.trim();
+            if (!value) return;
+            if (blockedSuppliers.includes(value)) {
+                alert('이미 등록된 매입처입니다.');
+                return;
+            }
+            blockedSuppliers.push(value);
+            keywordInput.value = '';
+            renderBadges();
+        }
+        window.removeSupplier = function (index) {
+            blockedSuppliers.splice(index, 1);
+            renderBadges();
+        }
+        addKeywordBtn.addEventListener('click', addSupplier);
+        keywordInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addSupplier();
+            }
+        });
+        renderBadges();
+    </script>
+
+    <script>
+        // ==========================================
+        // 🔹 1. [핵심] 데이터 생성(Payload) 함수
+        //    화면(DOM)에 입력된 값을 읽어 SettingDTO 구조로 반환합니다.
+        // ==========================================
+        function createSettingPayload() {
+            // [A] 일반 설정 (configs) 리스트 생성
+            const configs = [];
+
+            // 1. 수집 기간 (collect_period) 계산
+            const periodType = document.getElementById('periodTypeSelect').value;
+            const periodVal = document.getElementById('periodValueInput').value;
+            let finalPeriod = '';
+
+            if (periodType === 'now') {
+                finalPeriod = 'now';
+            } else {
+                // 값이 있으면 "3d", "1w" 형태로 조합
+                finalPeriod = periodVal ? (periodVal + periodType) : '';
+            }
+            // *주의: 여기서 빈 값 체크는 submit 시점에 수행하므로, 여기선 있는 그대로 담습니다.
+            configs.push({ configKey: 'collect_period', configValue: finalPeriod });
+
+            // 2. 실행 주기 (collect_time) - 숫자만 있으면 'h' 붙임
+            let timeVal = document.querySelector('input[name="collect_time"]').value;
+            if (timeVal && !timeVal.includes('h')) {
+                timeVal += 'h';
+            }
+            configs.push({ configKey: 'collect_time', configValue: timeVal });
+
+            // 3. 최소 주문 금액 (minimum_amount)
+            const minAmount = document.querySelector('input[name="minimum_amount"]').value;
+            configs.push({ configKey: 'minimum_amount', configValue: minAmount });
+
+            // 4. 차단 매입처 (blocked_suppliers) - 위쪽 스크립트가 hidden input에 넣어둔 값 사용
+            const blocked = document.getElementById('blockedSuppliersInput').value;
+            configs.push({ configKey: 'blocked_suppliers', configValue: blocked });
+
+            // 5. 스탬프 템플릿 ID (stamp_template_id)
+            const stampTplId = document.getElementById('stampTemplateIdInput').value;
+            configs.push({ configKey: 'stamp_template_id', configValue: stampTplId });
+
+
+            // [B] 쿠폰 정책 (coupons) 리스트 생성
+            const coupons = [];
+            const rows = document.querySelectorAll('.policy-row'); // 화면에 렌더링된 행들 가져오기
+            let isPolicyValid = true;
+
+            rows.forEach(row => {
+                const countInput = row.querySelector('.policy-count');
+                const codeInput = row.querySelector('.policy-coupon-code');
+                const nameInput = row.querySelector('.policy-coupon-name');
+                const periodInput = row.querySelector('.policy-use-period');
+                const templateInput = row.querySelector('.policy-template-code');
+
+                const count = countInput.value.trim();
+                const code = codeInput.value.trim();
+                const name = nameInput.value.trim();
+                const usePeriod = periodInput.value.trim();
+                const templateCode = templateInput.value.trim();
+
+                // 유효성 체크: 개수나 코드, 또는 템플릿 코드가 비어있는지 확인
+                if (!count || !code || !templateCode) {
+                    isPolicyValid = false;
+                    if (!count) countInput.classList.add('is-invalid');
+                    if (!code) codeInput.classList.add('is-invalid');
+                    if (!templateCode) templateInput.classList.add('is-invalid');
+                } else {
+                    countInput.classList.remove('is-invalid');
+                    codeInput.classList.remove('is-invalid');
+                    templateInput.classList.remove('is-invalid');
+
+                    // DTO 구조에 맞춰 객체 생성
+                    coupons.push({
+                        masterCouponCode: code,
+                        masterCouponName: name,
+                        expiredDate: usePeriod,
+                        alimTalkTemplateCode: templateCode,
+                        alimTalkTemplateName: row.querySelector('.policy-template-name').value,
+                        couponPolicyDTO:
                         {
                             requiredStampCount: parseInt(count)
                         }
+                    });
+                }
+            });
+
+            // 정책 데이터 유효성 실패 시 null 반환 -> 전송 중단
+            if (!isPolicyValid) {
+                alert("모든 정책의 스탬프 개수, 쿠폰 정보, 그리고 메세지 템플릿을 입력해주세요.");
+                return null;
+            }
+
+            // [C] 최종 객체 반환 (SettingDTO 구조)
+            return {
+                configs: configs,
+                coupons: coupons
+            };
+        }
+
+
+        // ==========================================
+        // 🔹 2. 쿠폰 정책 UI 관리 (테이블 렌더링)
+        // ==========================================
+        const policyTable = document.getElementById('policyTable');
+        const policyTableBody = document.getElementById('policyTableBody');
+        const noPolicyMessage = document.getElementById('noPolicyMessage');
+        const addPolicyBtn = document.getElementById('addPolicyBtn');
+        const initialPolicyDataInput = document.getElementById('initialPolicyData');
+        const btnSearchStampTemplate = document.getElementById('btnSearchStampTemplate');
+        let targetPolicyRow = null; // 쿠폰 모달이 열릴 때 어떤 행을 수정 중인지 기억
+        let isStampTemplateTarget = false; // 스탬프 템플릿 선택 중인지 여부
+
+        // 초기 데이터 로드
+        let policyList = [];
+        try {
+            const rawData = initialPolicyDataInput.value;
+            if (rawData && rawData.trim().length > 0 && rawData !== 'null' && rawData !== '[]') {
+                const parsedData = JSON.parse(rawData);
+
+                policyList = parsedData.map(p => ({
+                    // couponPolicyDTO가 있고, 그 안에 requiredStampCount가 있으면 가져옴
+                    count: (p.couponPolicyDTO && p.couponPolicyDTO.requiredStampCount) ? p.couponPolicyDTO.requiredStampCount : '',
+                    code: p.masterCouponCode || '',
+                    name: p.masterCouponName || '',
+                    usePeriod: p.expiredDate || '',
+                    templateCode: p.alimTalkTemplateCode || '',
+                    templateName: p.alimTalkTemplateName || ''
+                }));
+            }
+        } catch (e) {
+            console.error("초기 정책 데이터 파싱 실패:", e);
+            policyList = [];
+        }
+
+        // 초기 렌더링 실행
+        renderPolicies();
+
+        function renderPolicies() {
+            policyTableBody.innerHTML = '';
+            if (policyList.length === 0) {
+                noPolicyMessage.style.display = 'block';
+                policyTable.style.display = 'none';
+            } else {
+                noPolicyMessage.style.display = 'none';
+                policyTable.style.display = 'table';
+                policyList.forEach((policy, index) => {
+                    addPolicyRowHTML(policy, index);
                 });
             }
-        });
-
-        // 정책 데이터 유효성 실패 시 null 반환 -> 전송 중단
-        if (!isPolicyValid) {
-            alert("모든 정책의 스탬프 개수와 쿠폰 정보를 입력해주세요.");
-            return null;
         }
 
-        // [C] 최종 객체 반환 (SettingDTO 구조)
-        return {
-            configs: configs,
-            coupons: coupons
-        };
-    }
+        // 행 추가 (데이터 없이 빈 행 추가 or 기존 데이터로 추가)
+        function addPolicyRowHTML(policy = {}, index = null) {
+            const row = document.createElement('tr');
+            row.className = 'policy-row';
+            // index가 없으면(버튼클릭 추가) 현재 리스트 길이 사용
+            const currIndex = index !== null ? index : document.querySelectorAll('.policy-row').length;
+            row.dataset.index = currIndex;
 
-
-    // ==========================================
-    // 🔹 2. 쿠폰 정책 UI 관리 (테이블 렌더링)
-    // ==========================================
-    const policyTable = document.getElementById('policyTable');
-    const policyTableBody = document.getElementById('policyTableBody');
-    const noPolicyMessage = document.getElementById('noPolicyMessage');
-    const addPolicyBtn = document.getElementById('addPolicyBtn');
-    const initialPolicyDataInput = document.getElementById('initialPolicyData');
-    let targetPolicyRow = null; // 쿠폰 모달이 열릴 때 어떤 행을 수정 중인지 기억
-
-    // 초기 데이터 로드
-    let policyList = [];
-    try {
-        const rawData = initialPolicyDataInput.value;
-        if (rawData && rawData.trim().length > 0 && rawData !== 'null' && rawData !== '[]') {
-            const parsedData = JSON.parse(rawData);
-
-            policyList = parsedData.map(p => ({
-                // couponPolicyDTO가 있고, 그 안에 requiredStampCount가 있으면 가져옴
-                count: (p.couponPolicyDTO && p.couponPolicyDTO.requiredStampCount) ? p.couponPolicyDTO.requiredStampCount : '',
-                code: p.masterCouponCode || '',
-                name: p.masterCouponName || '',
-                usePeriod: p.expiredDate || ''
-            }));
-        }
-    } catch (e) {
-        console.error("초기 정책 데이터 파싱 실패:", e);
-        policyList = [];
-    }
-
-    // 초기 렌더링 실행
-    renderPolicies();
-
-    function renderPolicies() {
-        policyTableBody.innerHTML = '';
-        if (policyList.length === 0) {
-            noPolicyMessage.style.display = 'block';
-            policyTable.style.display = 'none';
-        } else {
-            noPolicyMessage.style.display = 'none';
-            policyTable.style.display = 'table';
-            policyList.forEach((policy, index) => {
-                addPolicyRowHTML(policy, index);
-            });
-        }
-    }
-
-    // 행 추가 (데이터 없이 빈 행 추가 or 기존 데이터로 추가)
-    function addPolicyRowHTML(policy = {}, index = null) {
-        const row = document.createElement('tr');
-        row.className = 'policy-row';
-        // index가 없으면(버튼클릭 추가) 현재 리스트 길이 사용
-        const currIndex = index !== null ? index : document.querySelectorAll('.policy-row').length;
-        row.dataset.index = currIndex;
-
-        row.innerHTML = `
+            row.innerHTML = `
             <td>
                 <div class="input-group">
                     <input type="number" class="form-control text-center policy-count"
@@ -447,23 +548,38 @@
                 </div>
             </td>
             <td>
-                <div class="d-flex gap-2 align-items-center">
+                <div class="d-flex gap-2 align-items-start">
                     <div class="flex-grow-1">
                         <input type="text" class="form-control mb-1 policy-coupon-code bg-light"
                                value="${policy.code || ''}" placeholder="쿠폰 코드 (자동 입력)" readonly required>
                         <input type="text" class="form-control mb-1 policy-coupon-name bg-light"
                                value="${policy.name || ''}" placeholder="쿠폰 이름" readonly>
-                        <div class="d-flex align-items-center" style="white-space: nowrap; overflow: hidden;">
-                        <span class="text-primary me-1 small">유효기간:</span>
-                        <span class="text-muted small policy-use-period-text">
-                            ${policy.usePeriod || '정보 없음'}
-                        </span>
-                        <input type="hidden" class="policy-use-period" value="${policy.usePeriod || ''}">
+                        <div class="small d-flex align-items-center mt-1" style="white-space: nowrap; overflow: hidden;">
+                            <span class="text-primary me-1">유효기간:</span>
+                            <span class="text-muted policy-use-period-text">
+                                ${policy.usePeriod || '정보 없음'}
+                            </span>
+                            <input type="hidden" class="policy-use-period" value="${policy.usePeriod || ''}">
+                        </div>
                     </div>
-                    </div>
-                    <button type="button" class="btn btn-outline-secondary btn-sm flex-shrink-0 btn-search-coupon">
+                    <button type="button" class="btn btn-outline-secondary flex-shrink-0 btn-search-coupon">
                         <i class="bi bi-search"></i> 쿠폰 찾기
                     </button>
+                </div>
+            </td>
+            <td>
+                <div class="flex-grow-1" style="min-width: 0;">
+                    <div class="d-flex gap-2">
+                        <input type="text" class="form-control policy-template-code bg-light"
+                               value="${policy.templateCode || ''}" placeholder="템플릿 코드 (자동 입력)" readonly>
+                        <button type="button" class="btn btn-outline-secondary flex-shrink-0 btn-search-template">
+                            <i class="bi bi-chat-dots"></i> 템플릿 선택
+                        </button>
+                    </div>
+                    <input type="hidden" class="policy-template-name" value="${policy.templateName || ''}">
+                     <div class="small text-muted text-truncate template-name-display mt-1">
+                        ${policy.templateCode ? '<span class="text-primary me-1">메세지 템플릿:</span> ' + (policy.templateName || '연결됨') : '템플릿을 선택해주세요'}
+                    </div>
                 </div>
             </td>
             <td class="text-center">
@@ -473,207 +589,319 @@
             </td>
         `;
 
-        // 이벤트 리스너: 쿠폰 찾기
-        row.querySelector('.btn-search-coupon').addEventListener('click', function() {
-            targetPolicyRow = row; // 현재 작업 중인 행 저장
-            const modal = new bootstrap.Modal(document.getElementById('couponListModal'));
-            modal.show();
-        });
+            // 이벤트 리스너: 쿠폰 찾기
+            row.querySelector('.btn-search-coupon').addEventListener('click', function () {
+                targetPolicyRow = row; // 현재 작업 중인 행 저장
+                const modal = new bootstrap.Modal(document.getElementById('couponListModal'));
+                modal.show();
+            });
 
-        // 이벤트 리스너: 삭제
-        row.querySelector('.btn-remove-policy').addEventListener('click', function() {
-            row.remove(); // DOM에서 바로 제거
-            // 데이터가 하나도 없으면 안내 메시지 표시
-            if (document.querySelectorAll('.policy-row').length === 0) {
-                policyList = []; // 리스트 초기화
-                noPolicyMessage.style.display = 'block';
-                policyTable.style.display = 'none';
-            }
-        });
+            // 이벤트 리스너: 템플릿 찾기
+            row.querySelector('.btn-search-template').addEventListener('click', function () {
+                targetPolicyRow = row;
+                const modal = new bootstrap.Modal(document.getElementById('templateListModal'));
+                modal.show();
+            });
 
-        policyTableBody.appendChild(row);
-    }
-
-    // '정책 추가' 버튼 클릭 시 빈 행 추가
-    addPolicyBtn.addEventListener('click', () => {
-        noPolicyMessage.style.display = 'none';
-        policyTable.style.display = 'table';
-        addPolicyRowHTML({ count: null, code: '', name: '' }, null);
-    });
-
-
-    // ==========================================
-    // 🔹 3. 초기화 및 Dirty Checking (변경 감지)
-    // ==========================================
-    let originalPayloadString = "";
-
-    // 렌더링이 완전히 끝난 후(0.2초 뒤) 초기 상태를 저장합니다.
-    setTimeout(() => {
-        const payload = createSettingPayload();
-        if (payload) {
-            originalPayloadString = JSON.stringify(payload);
-            console.log("초기 데이터 저장됨:", originalPayloadString);
-        }
-    }, 200);
-
-
-    // ==========================================
-    // 🔹 4. 폼 전송 (Submit) 로직
-    // ==========================================
-    document.getElementById('configForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        // 1. 수집 기간 필수값 UI 검증
-        const type = document.getElementById('periodTypeSelect').value;
-        const val = document.getElementById('periodValueInput').value;
-        if (type !== 'now' && !val) {
-            alert("수집 기간 값을 입력해주세요.");
-            document.getElementById('periodValueInput').focus();
-            return;
-        }
-
-        // 2. 현재 데이터 생성 (유효성 검사 포함)
-        const currentPayload = createSettingPayload();
-        if (!currentPayload) return; // 유효성 실패 시 중단
-
-        const currentPayloadString = JSON.stringify(currentPayload);
-
-        // 3. 변경사항 확인
-        if (originalPayloadString === currentPayloadString) {
-            alert("변경된 사항이 없습니다.");
-            return;
-        }
-
-        console.log('전송할 데이터:', currentPayload);
-
-        // 4. 서버 전송
-        fetch('/naeil/api/config', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: currentPayloadString
-        })
-        .then(res => {
-            if(res.ok) {
-                alert('설정이 저장되었습니다.');
-                // 새로고침하여 상태 갱신
-                location.reload();
-            } else {
-                res.text().then(msg => alert('저장 실패: ' + msg));
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            alert('서버 통신 중 오류가 발생했습니다.');
-        });
-    });
-
-
-    // ==========================================
-    // 🔹 5. 쿠폰 모달 로직 (페이지네이션 포함)
-    // ==========================================
-    let currentCouponPage = 1;
-    const couponModalEl = document.getElementById('couponListModal');
-
-    // 모달 열릴 때 1페이지 로드
-    couponModalEl.addEventListener('show.bs.modal', function () {
-        loadCoupons(1);
-    });
-
-    function loadCoupons(page) {
-        currentCouponPage = page;
-        const tbody = document.getElementById('couponTableBody');
-        const pagination = document.getElementById('couponPagination');
-
-        tbody.innerHTML = `<tr><td colspan="3" class="text-center text-muted">로딩 중...</td></tr>`;
-        pagination.innerHTML = '';
-
-        fetch(`/naeil/api/coupons/external?offset=${page}`)
-            .then(res => res.json())
-            .then(data => {
-                tbody.innerHTML = '';
-                if (!data.list || data.list.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="3" class="text-center text-muted">조회된 쿠폰이 없습니다.</td></tr>`;
-                    return;
+            // 이벤트 리스너: 삭제
+            row.querySelector('.btn-remove-policy').addEventListener('click', function () {
+                row.remove(); // DOM에서 바로 제거
+                // 데이터가 하나도 없으면 안내 메시지 표시
+                if (document.querySelectorAll('.policy-row').length === 0) {
+                    policyList = []; // 리스트 초기화
+                    noPolicyMessage.style.display = 'block';
+                    policyTable.style.display = 'none';
                 }
+            });
 
-                // 쿠폰 목록 렌더링
-                data.list.forEach(coupon => {
-                    const tr = document.createElement('tr');
-                    tr.className = 'coupon-row';
-                    tr.style.cursor = 'pointer';
-                    tr.dataset.couponCode = coupon.couponCode;
-                    tr.dataset.couponName = coupon.name;
-                    tr.dataset.usePeriod = coupon.use_period
+            policyTableBody.appendChild(row);
+            return row;
+        }
 
-                    tr.innerHTML = `
+        // 스탬프 템플릿 선택 버튼 이벤트
+        if (btnSearchStampTemplate) {
+            btnSearchStampTemplate.addEventListener('click', function() {
+                isStampTemplateTarget = true;
+                targetPolicyRow = null;
+                const modal = new bootstrap.Modal(document.getElementById('templateListModal'));
+                modal.show();
+            });
+        }
+
+        // '정책 추가' 버튼 클릭 시 빈 행 추가
+        addPolicyBtn.addEventListener('click', () => {
+            noPolicyMessage.style.display = 'none';
+            policyTable.style.display = 'table';
+            addPolicyRowHTML({ count: null, code: '', name: '' }, null);
+        });
+
+
+        // ==========================================
+        // 🔹 3. 초기화 및 Dirty Checking (변경 감지)
+        // ==========================================
+        let originalPayloadString = "";
+
+        // 렌더링이 완전히 끝난 후(0.2초 뒤) 초기 상태를 저장합니다.
+        setTimeout(() => {
+            const payload = createSettingPayload();
+            if (payload) {
+                originalPayloadString = JSON.stringify(payload);
+                console.log("초기 데이터 저장됨:", originalPayloadString);
+            }
+        }, 200);
+
+
+        // ==========================================
+        // 🔹 4. 폼 전송 (Submit) 로직
+        // ==========================================
+        document.getElementById('configForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // 1. 수집 기간 필수값 UI 검증
+            const type = document.getElementById('periodTypeSelect').value;
+            const val = document.getElementById('periodValueInput').value;
+            if (type !== 'now' && !val) {
+                alert("수집 기간 값을 입력해주세요.");
+                document.getElementById('periodValueInput').focus();
+                return;
+            }
+
+            // 2. 현재 데이터 생성 (유효성 검사 포함)
+            const currentPayload = createSettingPayload();
+            if (!currentPayload) return; // 유효성 실패 시 중단
+
+            const currentPayloadString = JSON.stringify(currentPayload);
+
+            // 3. 변경사항 확인
+            if (originalPayloadString === currentPayloadString) {
+                alert("변경된 사항이 없습니다.");
+                return;
+            }
+
+            console.log('전송할 데이터:', currentPayload);
+
+            // 4. 서버 전송
+            fetch('/naeil/api/config', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: currentPayloadString
+            })
+                .then(res => {
+                    if (res.ok) {
+                        alert('설정이 저장되었습니다.');
+                        // 새로고침하여 상태 갱신
+                        location.reload();
+                    } else {
+                        res.text().then(msg => alert('저장 실패: ' + msg));
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('서버 통신 중 오류가 발생했습니다.');
+                });
+        });
+
+
+        // ==========================================
+        // 🔹 5. 쿠폰 모달 로직 (페이지네이션 포함)
+        // ==========================================
+        let currentCouponPage = 1;
+        const couponModalEl = document.getElementById('couponListModal');
+
+        // 모달 열릴 때 1페이지 로드
+        couponModalEl.addEventListener('show.bs.modal', function () {
+            loadCoupons(1);
+        });
+
+        function loadCoupons(page) {
+            currentCouponPage = page;
+            const tbody = document.getElementById('couponTableBody');
+            const pagination = document.getElementById('couponPagination');
+
+            tbody.innerHTML = `<tr><td colspan="3" class="text-center text-muted">로딩 중...</td></tr>`;
+            pagination.innerHTML = '';
+
+            fetch(`/naeil/api/coupons/external?offset=${page}`)
+                .then(res => res.json())
+                .then(data => {
+                    tbody.innerHTML = '';
+                    if (!data.list || data.list.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="3" class="text-center text-muted">조회된 쿠폰이 없습니다.</td></tr>`;
+                        return;
+                    }
+
+                    // 쿠폰 목록 렌더링
+                    data.list.forEach(coupon => {
+                        const tr = document.createElement('tr');
+                        tr.className = 'coupon-row';
+                        tr.style.cursor = 'pointer';
+                        tr.dataset.couponCode = coupon.couponCode;
+                        tr.dataset.couponName = coupon.name;
+                        tr.dataset.usePeriod = coupon.use_period
+
+                        tr.innerHTML = `
                         <td>${coupon.couponCode}</td>
                         <td>${coupon.name}</td>
                         <td>${coupon.status || '-'}</td>
                         <td>${coupon.use_period || '_'}</td>
                     `;
-                    tbody.appendChild(tr);
+                        tbody.appendChild(tr);
+                    });
+
+                    renderCouponPagination(data.pagenation.currentPage, data.pagenation.totalPage);
+                })
+                .catch((e) => {
+                    console.error(e);
+                    tbody.innerHTML = `<tr><td colspan="3" class="text-center text-danger">오류 발생</td></tr>`;
                 });
+        }
 
-                renderCouponPagination(data.pagenation.currentPage, data.pagenation.totalPage);
-            })
-            .catch((e) => {
-                console.error(e);
-                tbody.innerHTML = `<tr><td colspan="3" class="text-center text-danger">오류 발생</td></tr>`;
+        function renderCouponPagination(current, total) {
+            const pagination = document.getElementById('couponPagination');
+            pagination.innerHTML = '';
+
+            // 데이터가 없으면 표시 안 함 (이미 loadCoupons에서 처리되지만 안전장치)
+            const totalToShow = Math.max(1, total);
+
+            // 이전 버튼
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${current === 1 ? 'disabled' : ''}`;
+            prevLi.innerHTML = `<a class="page-link" href="#"> < </a>`;
+            prevLi.onclick = (e) => { e.preventDefault(); if (current > 1) loadCoupons(current - 1); };
+            pagination.appendChild(prevLi);
+
+            // 페이지 번호
+            for (let i = 1; i <= totalToShow; i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === current ? 'active' : ''}`;
+                li.innerHTML = `<a class="page-link" href="#"> ${i} </a>`;
+                li.onclick = (e) => { e.preventDefault(); loadCoupons(i); };
+                pagination.appendChild(li);
+            }
+
+            // 다음 버튼
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${current === totalToShow ? 'disabled' : ''}`;
+            nextLi.innerHTML = `<a class="page-link" href="#"> > </a>`;
+            nextLi.onclick = (e) => { e.preventDefault(); if (current < totalToShow) loadCoupons(current + 1); };
+            pagination.appendChild(nextLi);
+        }
+
+        // 쿠폰 선택 시 (이벤트 위임)
+        document.getElementById('couponTableBody').addEventListener('click', function (e) {
+            const row = e.target.closest('.coupon-row');
+            if (!row) return;
+
+            const code = row.dataset.couponCode;
+            const name = row.dataset.couponName;
+            const usePeriod = row.dataset.usePeriod || '정보 없음';
+
+            // 선택된 정책 행(targetPolicyRow)에 값 채워넣기
+            if (targetPolicyRow) {
+                targetPolicyRow.querySelector('.policy-coupon-code').value = code;
+                targetPolicyRow.querySelector('.policy-coupon-name').value = name;
+
+                targetPolicyRow.querySelector('.policy-use-period-text').textContent = usePeriod;
+                targetPolicyRow.querySelector('.policy-use-period').value = usePeriod === '정보 없음' ? '' : usePeriod;
+                targetPolicyRow = null; // 초기화
+            }
+
+            // 모달 닫기
+            const modal = bootstrap.Modal.getInstance(couponModalEl);
+            modal.hide();
+        });
+
+        // ==========================================
+        // 🔹 6. 알림톡 템플릿 모달 로직
+        // ==========================================
+        const templateModalEl = document.getElementById('templateListModal');
+        let allTemplates = []; // 캐시된 템플릿 목록
+
+        templateModalEl.addEventListener('show.bs.modal', function () {
+            document.getElementById('templateSearchInput').value = ''; // 검색어 초기화
+            loadTemplates();
+        });
+
+        function loadTemplates() {
+            const tbody = document.getElementById('templateTableBody');
+            tbody.innerHTML = `<tr><td colspan="3" class="text-center text-muted">로딩 중...</td></tr>`;
+
+            fetch('/naeil/api/messages/templates')
+                .then(res => res.json())
+                .then(data => {
+                    // 승인된(APR) 템플릿만 필터링하여 저장
+                    allTemplates = data.filter(tpl => tpl.inspStatus === 'APR');
+                    renderTemplateList(allTemplates);
+                })
+                .catch(e => {
+                    console.error(e);
+                    tbody.innerHTML = `<tr><td colspan="3" class="text-center text-danger">템플릿 로드 실패</td></tr>`;
+                });
+        }
+
+        function renderTemplateList(templates) {
+            const tbody = document.getElementById('templateTableBody');
+            tbody.innerHTML = '';
+
+            if (!templates || templates.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="text-center text-muted">조회된 데이터가 없습니다.</td></tr>`;
+                return;
+            }
+
+            templates.forEach(tpl => {
+                const tr = document.createElement('tr');
+                tr.className = 'template-row text-center';
+                tr.style.cursor = 'pointer';
+                tr.dataset.templateCode = tpl.templtCode;
+                tr.dataset.templateName = tpl.templtName;
+
+                tr.innerHTML = `
+                        <td><span class="badge bg-light text-dark border">${tpl.templtCode}</span></td>
+                        <td class="text-start">${tpl.templtName}</td>
+                        <td>
+                            <span class="badge bg-success">승인</span>
+                        </td>
+                    `;
+                tbody.appendChild(tr);
             });
-    }
-
-    function renderCouponPagination(current, total) {
-        const pagination = document.getElementById('couponPagination');
-        pagination.innerHTML = '';
-        if (total <= 1) return;
-
-        // 이전 버튼
-        const prevLi = document.createElement('li');
-        prevLi.className = `page-item ${current === 1 ? 'disabled' : ''}`;
-        prevLi.innerHTML = `<a class="page-link" href="#"> < </a>`;
-        prevLi.onclick = (e) => { e.preventDefault(); if(current > 1) loadCoupons(current - 1); };
-        pagination.appendChild(prevLi);
-
-        // 페이지 번호
-        for (let i = 1; i <= total; i++) {
-            const li = document.createElement('li');
-            li.className = `page-item ${i === current ? 'active' : ''}`;
-            li.innerHTML = `<a class="page-link" href="#"> ${i} </a>`;
-            li.onclick = (e) => { e.preventDefault(); loadCoupons(i); };
-            pagination.appendChild(li);
         }
 
-        // 다음 버튼
-        const nextLi = document.createElement('li');
-        nextLi.className = `page-item ${current === total ? 'disabled' : ''}`;
-        nextLi.innerHTML = `<a class="page-link" href="#"> > </a>`;
-        nextLi.onclick = (e) => { e.preventDefault(); if(current < total) loadCoupons(current + 1); };
-        pagination.appendChild(nextLi);
-    }
+        // 실시간 검색 이벤트
+        document.getElementById('templateSearchInput').addEventListener('input', function (e) {
+            const keyword = e.target.value.trim().toLowerCase();
 
-    // 쿠폰 선택 시 (이벤트 위임)
-    document.getElementById('couponTableBody').addEventListener('click', function (e) {
-        const row = e.target.closest('.coupon-row');
-        if (!row) return;
+            const filtered = allTemplates.filter(tpl => {
+                return tpl.templtCode.toLowerCase().includes(keyword) ||
+                    tpl.templtName.toLowerCase().includes(keyword);
+            });
 
-        const code = row.dataset.couponCode;
-        const name = row.dataset.couponName;
-        const usePeriod = row.dataset.usePeriod || '정보 없음';
+            renderTemplateList(filtered);
+        });
 
-        // 선택된 정책 행(targetPolicyRow)에 값 채워넣기
-        if (targetPolicyRow) {
-            targetPolicyRow.querySelector('.policy-coupon-code').value = code;
-            targetPolicyRow.querySelector('.policy-coupon-name').value = name;
+        // 템플릿 선택
+        document.getElementById('templateTableBody').addEventListener('click', function (e) {
+            const row = e.target.closest('.template-row');
+            if (!row) return;
 
-            targetPolicyRow.querySelector('.policy-use-period-text').textContent = usePeriod;
-            targetPolicyRow.querySelector('.policy-use-period').value = usePeriod === '정보 없음' ? '' : usePeriod;
-            targetPolicyRow = null; // 초기화
-        }
+            const code = row.dataset.templateCode;
+            const name = row.dataset.templateName;
 
-        // 모달 닫기
-        const modal = bootstrap.Modal.getInstance(couponModalEl);
-        modal.hide();
-    });
-</script>
+            if (isStampTemplateTarget) {
+                document.getElementById('stampTemplateCodeDisplay').value = code;
+                document.getElementById('stampTemplateIdInput').value = code;
+                document.getElementById('stampTemplateNameDisplay').innerHTML = `<span class="text-primary me-1">메세지 템플릿:</span> ${name}`;
+                isStampTemplateTarget = false;
+            } else if (targetPolicyRow) {
+                targetPolicyRow.querySelector('.policy-template-code').value = code;
+                targetPolicyRow.querySelector('.policy-template-name').value = name;
+                targetPolicyRow.querySelector('.template-name-display').innerHTML = `<span class="text-primary me-1">메세지 템플릿:</span> ${name}`;
+                targetPolicyRow = null;
+            }
+
+            const modal = bootstrap.Modal.getInstance(templateModalEl);
+            modal.hide();
+        });
+    </script>
 </body>
+
 </html>

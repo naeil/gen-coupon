@@ -63,32 +63,32 @@
             <!-- 🔹 Order Table -->
             <div class="card shadow-sm">
                 <div class="card-body p-0">
-                    <table class="table table-hover" id="orderTable" style="table-layout: fixed; width: 100%;">
+                    <div class="table-responsive">
+                        <table class="table table-hover text-center mb-0" id="orderTable">
                         <thead class="table-light">
                             <tr>
-                                <th style="width: 12%">주문번호</th>
-                                <th style="width: 7%">쇼핑몰</th>
-                                <th style="width: 5%">주문자</th>
-                                <th style="width: 50%">상품명</th>
-                                <th style="width: 6%">주문금액</th>
-                                <th style="width: 10%">주문일</th>
-                                <th style="width: 10%">구매 결정일</th>
-                                <!-- <th class="text-center">상세</th> -->
+                                <th class="text-nowrap ps-3" style="min-width: 130px;">주문번호</th>
+                                <th class="text-nowrap" style="min-width: 100px;">쇼핑몰</th>
+                                <th class="text-nowrap" style="min-width: 80px;">주문자</th>
+                                <th class="text-nowrap" style="min-width: 300px;">상품명</th>
+                                <th class="text-nowrap" style="min-width: 100px;">주문금액</th>
+                                <th class="text-nowrap" style="min-width: 140px;">주문일</th>
+                                <th class="text-nowrap" style="min-width: 140px;">구매 결정일</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr th:each="order, stat : ${orders}"
                                 th:attr="data-index=${stat.index}">
-                                <td th:text="${order.uniq}">ORD-001</td>
-                                <td th:text="${order.shopName}">1</td>
-                                <td th:text="${order.customerName}">이지형</td>
-                                <td class="text-truncate"
-                                    th:text="${order.shopSaleName}"
+                                <td class="ps-3 text-secondary small text-nowrap" th:text="${order.uniq}">ORD-001</td>
+                                <td class="text-nowrap" th:text="${order.shopName}">1</td>
+                                <td class="text-nowrap" th:text="${order.customerName}">이지형</td>
+                                <td class="text-truncate text-start"
+                                    th:text="${#strings.abbreviate(order.shopSaleName, 30)}"
                                     th:title="${order.shopSaleName}">상품
                                 </td>
-                                <td th:text="${#numbers.formatInteger(order.payAmt, 3, 'COMMA')}">50,000</td>
-                                <td th:text="${order.createDate == null ? '-' : #temporals.format(order.createDate, 'yyyy-MM-dd HH:mm')}"></td>
-                                <td th:text="${order.confirmDate == null ? '-' : #temporals.format(order.confirmDate, 'yyyy-MM-dd HH:mm')}"></td>                         
+                                <td class="text-nowrap fw-bold" th:text="${#numbers.formatInteger(order.payAmt, 3, 'COMMA')} + '원'">50,000</td>
+                                <td class="text-nowrap" th:text="${order.createDate == null ? '-' : #temporals.format(order.createDate, 'yyyy-MM-dd')}"></td>
+                                <td class="text-nowrap" th:text="${order.confirmDate == null ? '-' : #temporals.format(order.confirmDate, 'yyyy-MM-dd')}"></td>                         
                                 <!-- <td class="text-center">
                                     <button class="btn btn-sm btn-outline-secondary"
                                             data-bs-toggle="modal"
@@ -106,9 +106,10 @@
                             </tr>
                         </tbody>
                     </table>
-                    <nav>
-                        <ul class="pagination justify-content-center" id="pagination"></ul>
-                    </nav>
+                    </div>
+                    <div class="d-flex justify-content-center p-3 border-top">
+                        <ul class="pagination pagination-sm mb-0" id="pagination"></ul>
+                    </div>
                 </div>
             </div>
 
@@ -142,8 +143,9 @@
         function renderPagination() {
             const pagination = document.getElementById('pagination');
             pagination.innerHTML = '';
-
-            for (let i = 1; i <= totalPages; i++) {
+            
+            const pagesToShow = Math.max(1, totalPages);
+            for (let i = 1; i <= pagesToShow; i++) {
                 const li = document.createElement('li');
                 li.className = 'page-item ' + (i === currentPage ? 'active' : '');
 

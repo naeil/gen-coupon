@@ -20,11 +20,11 @@ public class OrderHistoryEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer orderHistoryId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customerId")
     private CustomerEntity customerEntity;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shopId")
     private ShopEntity shopEntity;
 
@@ -44,8 +44,7 @@ public class OrderHistoryEntity {
     @OneToOne(mappedBy = "orderHistoryEntity")
     private StampEntity stampEntity;
 
-    private static final DateTimeFormatter DATA_FORMAT =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter DATA_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public OrderHistoryEntity(CustomerEntity customer, ShopEntity shop, PlayAutoOrderHistoryResponseDTO dto) {
         this.customerEntity = customer;

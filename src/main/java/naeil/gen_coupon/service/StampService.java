@@ -18,15 +18,15 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class StampService {
-    
+
     private final StampRepository stampRepository;
     private final MessageService messageService;
     private final CouponPolicyRepository couponPolicyRepository;
 
     public List<StampResponse> getStampsByIssueId(Integer issueId) {
-        
+
         List<StampEntity> stamps;
-        if(issueId != null) {
+        if (issueId != null) {
             stamps = stampRepository.findByIssueId(issueId);
         } else {
             stamps = stampRepository.findAll();
@@ -36,7 +36,8 @@ public class StampService {
     }
 
     public void createStamp(List<OrderHistoryEntity> orderHistories) {
-        if(orderHistories.isEmpty()) return;
+        if (orderHistories.isEmpty())
+            return;
 
         List<StampEntity> stampEntities = orderHistories.stream()
                 .map(StampEntity::new)
@@ -46,7 +47,8 @@ public class StampService {
 
         List<StampEntity> pendingStamps = stampRepository.findAllPendingNotifications();
 
-        if(pendingStamps.isEmpty()) return;
+        if (pendingStamps.isEmpty())
+            return;
 
         List<Integer> targetCustomerIds = pendingStamps.stream()
                 .map(s -> s.getCustomerEntity().getCustomerId())
@@ -58,8 +60,8 @@ public class StampService {
         // 4. 사용하기 편하게 Map<고객ID, 개수> 형태로 변환
         Map<Integer, Integer> totalCountMap = countResults.stream()
                 .collect(Collectors.toMap(
-                        row -> (Integer) row[0],             // Key: 고객 ID
-                        row -> ((Number) row[1]).intValue()              // Value: 스탬프 개수 (Count는 보통 Long 반환)
+                        row -> (Integer) row[0], // Key: 고객 ID
+                        row -> ((Number) row[1]).intValue() // Value: 스탬프 개수 (Count는 보통 Long 반환)
                 ));
 
         Set<Integer> couponThresholds = couponPolicyRepository.findAll().stream()
@@ -68,11 +70,11 @@ public class StampService {
 
         Map<Integer, List<StampEntity>> alarmCandidates = new HashMap<>();
 
-        for(StampEntity stamp : pendingStamps) {
+        for (StampEntity stamp : pendingStamps) {
             CustomerEntity customer = stamp.getCustomerEntity();
             int currentTotal = totalCountMap.getOrDefault(customer.getCustomerId(), 0);
 
-            if(!couponThresholds.contains(currentTotal)) {
+            if (!couponThresholds.contains(currentTotal)) {
                 alarmCandidates.computeIfAbsent(customer.getCustomerId(), k -> new ArrayList<>())
                         .add(stamp);
             } else {
@@ -80,8 +82,24 @@ public class StampService {
             }
         }
 
-        if(!alarmCandidates.isEmpty()) {
+        if (!alarmCandidates.isEmpty()) {
             messageService.sendStampAlimTok(alarmCandidates, totalCountMap);
         }
+    }
+
+    public void backfillStamps(List<OrderHistoryEntity> orders) {
+        if (orders == null || orders.isEmpty())
+            return;
+
+        List<StampEntity> newStamps = orders.stream()
+                .map(order -> {
+                    StampEntity stamp = new StampEntity(order);
+                    stamp.setRslt("0"); // Mark as already processed to avoid notifications
+                    return stamp;
+                })
+                .toList();
+
+        stampRepository.saveAll(newStamps);
+        log.info("Backfilled {} stamps for existing orders", newStamps.size());
     }
 }

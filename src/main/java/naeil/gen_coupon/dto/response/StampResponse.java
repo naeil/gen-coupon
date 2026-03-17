@@ -5,8 +5,11 @@ import naeil.gen_coupon.dto.request.StampDTO;
 import naeil.gen_coupon.entity.StampEntity;
 
 @SuperBuilder
-public class StampResponse extends StampDTO{
+public class StampResponse extends StampDTO {
     public static StampResponse toDTO(StampEntity stampEntity) {
+        if (stampEntity == null) {
+            return null;
+        }
         return StampResponse.builder()
                 .stampId(stampEntity.getStampId())
                 .issueId(stampEntity.getIssueId())

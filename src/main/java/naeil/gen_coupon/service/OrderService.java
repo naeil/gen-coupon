@@ -1,10 +1,9 @@
 package naeil.gen_coupon.service;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import naeil.gen_coupon.common.external.PlayAutoExternal;
 import naeil.gen_coupon.common.service.GenericService;
-import naeil.gen_coupon.common.util.PredicateBuilderHelper;
 import naeil.gen_coupon.dto.external.playauto.PlayAutoOrderHistoryResponseDTO;
 import naeil.gen_coupon.dto.querydsl.OrderSearchRequestDTO;
 import naeil.gen_coupon.dto.request.CustomerDTO;
@@ -24,8 +23,6 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.PathBuilder;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -51,7 +48,7 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
     private OrderHistoryRepository orderHistoryRepository;
 
     @Transactional
-    public List<CustomerDTO> getCustomerInfos(){
+    public List<CustomerDTO> getCustomerInfos() {
         List<CustomerEntity> customerEntities = customerRepository.findAll();
         return customerEntities.stream().map(CustomerDTO::toDTO).toList();
     }
@@ -67,8 +64,8 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
         ConfigEntity periodConfig = configRepository.findByConfigKey("collect_period").orElse(null);
         ConfigEntity suppliersConfig = configRepository.findByConfigKey("blocked_suppliers").orElse(null);
 
-        PlayAutoOrderHistoryResponseDTO[] orderHistoryInfos =
-                playAutoExternal.getOrderInfo(token, periodConfig, suppliersConfig);
+        PlayAutoOrderHistoryResponseDTO[] orderHistoryInfos = playAutoExternal.getOrderInfo(token, periodConfig,
+                suppliersConfig);
 
         List<PlayAutoOrderHistoryResponseDTO> filteredOrders = filteredOrders(orderHistoryInfos);
 
@@ -79,8 +76,7 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
         for (PlayAutoOrderHistoryResponseDTO dto : filteredOrders) {
             ShopEntity shop = shopMap.computeIfAbsent(
                     dto.getShopCode(),
-                    shopService::getShopEntity
-            );
+                    shopService::getShopEntity);
 
             String rawHtel = dto.getOrderHtel();
             String cleanHtel = rawHtel != null ? cleanHtel(rawHtel) : "";
@@ -88,33 +84,34 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
             CustomerEntity customer = customerCache.computeIfAbsent(
                     cleanHtel,
                     htel -> customerRepository.findByCustomerHtel(htel)
-                            .orElseGet(() ->
-                                    customerRepository.save(
-                                            new CustomerEntity(
-                                                    dto.getOrderName(),
-                                                    dto.getOrderEmail(),
-                                                    htel
-                                            )
-                                    ))
-            );
+                            .orElseGet(() -> new CustomerEntity(
+                                    dto.getOrderName(),
+                                    dto.getOrderEmail(),
+                                    htel)));
 
             customer.incrementOrderCount();
 
             OrderHistoryEntity order = new OrderHistoryEntity(
                     customer,
                     shop,
-                    dto
-            );
+                    dto);
 
             orderHistoryEntities.add(order);
         }
 
+        // 변경된/신규 고객 정보 일괄 저장
+        customerRepository.saveAll(customerCache.values());
+
         List<OrderHistoryEntity> orderHistories = orderHistoryRepository.saveAll(orderHistoryEntities);
 
         stampService.createStamp(orderHistories);
+
+        // 정합성을 위해 스탬프가 없는 기존 주문들에 대해 백필 수행
+        List<OrderHistoryEntity> missingStamps = orderHistoryRepository.findOrdersWithoutStamps();
+        stampService.backfillStamps(missingStamps);
     }
 
-    private List<PlayAutoOrderHistoryResponseDTO> filteredOrders (PlayAutoOrderHistoryResponseDTO[] orderHistoryInfos) {
+    private List<PlayAutoOrderHistoryResponseDTO> filteredOrders(PlayAutoOrderHistoryResponseDTO[] orderHistoryInfos) {
         log.info("filtering order");
         ConfigEntity config = configRepository.findByConfigKey("minimum_amount").orElse(null);
         Integer standardAmt = config != null ? Integer.parseInt(config.getConfigValue()) : 20000;
@@ -128,10 +125,9 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
 
         return Arrays.stream(orderHistoryInfos)
                 .map(dto -> {
-                    if(dto.getPayAmt() <= 0 ) {
-                        Integer realAmount =
-                                dto.getSales()
-                                        - (dto.getShopDiscount()
+                    if (dto.getPayAmt() <= 0) {
+                        Integer realAmount = dto.getSales()
+                                - (dto.getShopDiscount()
                                         + dto.getSellerDiscount()
                                         + dto.getCouponDiscount()
                                         + dto.getPointDiscount());
@@ -167,6 +163,7 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
         return htel.trim().replaceAll("\\D", "");
     }
 
+    @Transactional(readOnly = true)
     public List<OrderHistoryDTO> searchOrderHistoryList(OrderSearchRequestDTO requestDTO) {
 
         requestDTO.normalize();
@@ -174,9 +171,8 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
         List<OrderHistoryEntity> searchedList = searchList(
                 requestDTO,
                 QOrderHistoryEntity.orderHistoryEntity,
-                q -> buildPredicate(requestDTO),
-                q -> buildOrderSpecifier(requestDTO, q)
-        );
+                q -> buildPredicate(requestDTO, q),
+                q -> buildOrderSpecifier(requestDTO, q));
 
         return searchedList.stream().map(order -> OrderHistoryDTO.toDTO(order)).toList();
     }
@@ -186,24 +182,28 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
         return new PathBuilder<>(OrderHistoryEntity.class, "orderHistoryEntity");
     }
 
-    private BooleanBuilder buildPredicate(OrderSearchRequestDTO condition) {
-        PathBuilder<OrderHistoryEntity> path = getPathBuilder();
+    private BooleanBuilder buildPredicate(OrderSearchRequestDTO condition, QOrderHistoryEntity q) {
         BooleanBuilder builder = new BooleanBuilder();
 
-        LocalDateTime start = null;
-        if(condition.getFromDate() != null) {
-            start = LocalDateTime.parse(condition.getFromDate() + " 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        if (condition.getFromDate() != null) {
+            builder.and(q.createDate.goe(condition.getFromDate().atStartOfDay()));
         }
-        LocalDateTime stop = null;
-        if(condition.getToDate() != null) {
-            stop = LocalDateTime.parse(condition.getToDate() + " 23:59:59", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        if (condition.getToDate() != null) {
+            builder.and(q.createDate.loe(condition.getToDate().atTime(23, 59, 59)));
         }
 
-        builder.and(PredicateBuilderHelper.eq(path, "shopEntity.shopCode", condition.getShopCode()));
-        builder.and(PredicateBuilderHelper.eq(path, "customerEntity.customerId", condition.getCustomerId()));
-        builder.and(PredicateBuilderHelper.eq(path, "stampEntity.issueId", condition.getIssueId()));
-        builder.and(PredicateBuilderHelper.like(path, "customerEntity.customerName", condition.getCustomerName()));
-        builder.and(PredicateBuilderHelper.between(path, "createDate", start, stop));
+        if (condition.getShopCode() != null) {
+            builder.and(q.shopEntity.shopCode.eq(condition.getShopCode()));
+        }
+        if (condition.getCustomerId() != null) {
+            builder.and(q.customerEntity.customerId.eq(condition.getCustomerId()));
+        }
+        if (condition.getIssueId() != null) {
+            builder.and(q.stampEntity.issueId.eq(condition.getIssueId()));
+        }
+        if (condition.getCustomerName() != null) {
+            builder.and(q.customerEntity.customerName.containsIgnoreCase(condition.getCustomerName()));
+        }
 
         return builder;
     }
@@ -213,6 +213,5 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
                 qClass.createDate.desc()
         };
     }
-
 
 }

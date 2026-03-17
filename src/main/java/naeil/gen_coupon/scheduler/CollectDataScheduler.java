@@ -30,9 +30,9 @@ public class CollectDataScheduler {
         String value = "";
         try {
             // test 로 인해 1m default 값 설정 해둠
-             value = (configValue != null && !configValue.isBlank())
-                        ? configValue
-                        : "1m";
+            value = (configValue != null && !configValue.isBlank())
+                    ? configValue
+                    : "1m";
 
             interval = TimeUnitType.toMillis(value);
         } catch (Exception e) {
@@ -45,8 +45,7 @@ public class CollectDataScheduler {
 
         scheduledFuture = taskScheduler.scheduleWithFixedDelay(
                 this::execute,
-                interval
-        );
+                interval);
 
         log.info("Scheduler started. interval={}", value);
 
@@ -79,6 +78,7 @@ public class CollectDataScheduler {
             messageService.updateCouponSendResult();
             messageService.updateStampSendResult();
         } catch (Exception e) {
-            log.error("Delivery Check Scheduler error : {}", e.getMessage());        }
+            log.error("Delivery Check Scheduler error : {}", e.getMessage());
+        }
     }
 }
