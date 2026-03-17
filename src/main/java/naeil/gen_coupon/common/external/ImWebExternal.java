@@ -61,7 +61,7 @@ public class ImWebExternal {
             throw new CustomException(502, "Invalid auth response");
         }
 
-        token = root.path("access_token").asText("");
+        token = root.path("access_token").asString("");
         if (token.isEmpty()) {
             throw new CustomException(502, "Invalid auth response");
         }
@@ -76,7 +76,7 @@ public class ImWebExternal {
         headers.add("Accept", "*/*");
         headers.set("access-token", token);
 
-        HttpEntity request = new HttpEntity(headers);
+        HttpEntity<Void> request = new HttpEntity<>(headers);
         String requestUrl = UriComponentsBuilder
                 .fromUriString(String.format("https://api.imweb.me/v2/shop/coupons/%s/issue-coupons", couponCode))
                 .queryParam("limit", limit)
@@ -105,7 +105,7 @@ public class ImWebExternal {
         headers.add("Accept", "*/*");
         headers.set("access-token", token);
 
-        HttpEntity request = new HttpEntity(headers);
+        HttpEntity<Void> request = new HttpEntity<>(headers);
         String requestUrl = UriComponentsBuilder
                 .fromUriString("https://api.imweb.me/v2/shop/coupons")
                 .queryParam("limit", limit)

@@ -27,20 +27,7 @@ public class MessageTemplateEntity {
     @Column(columnDefinition = "TEXT")
     private String buttonsJson;
 
-    public Integer getTemplateId() { return templateId; }
-    public void setTemplateId(Integer templateId) { this.templateId = templateId; }
 
-    public String getTemplateCode() { return templateCode; }
-    public void setTemplateCode(String templateCode) { this.templateCode = templateCode; }
-
-    public String getTemplateName() { return templateName; }
-    public void setTemplateName(String templateName) { this.templateName = templateName; }
-
-    public String getTemplateContent() { return templateContent; }
-    public void setTemplateContent(String templateContent) { this.templateContent = templateContent; }
-
-    public String getButtonsJson() { return buttonsJson; }
-    public void setButtonsJson(String buttonsJson) { this.buttonsJson = buttonsJson; }
 
     public MessageTemplateEntity(String templateCode, String templateName) {
         this.templateCode = templateCode;

@@ -204,20 +204,19 @@
             .then(response => response.json())
             .then(data => {
                 // 페이징 렌더러 사용
-                renderPaginatedTable({
+                        renderPaginatedTable({
                     data: data || [],
                     tbodyId: 'orderTableBody',
                     paginationId: 'orderPagination',
                     pageSize: 10,
                     rowRenderer: order => {
-                        const truncatedName = order.shopSaleName && order.shopSaleName.length > 20 
-                            ? order.shopSaleName.substring(0, 20) + '...' 
-                            : (order.shopSaleName || '-');
                         return `
                             <tr class="align-middle">
                                 <td class="text-secondary small text-nowrap ps-3" title="${order.uniq}">${order.uniq}</td>
                                 <td class="text-nowrap">${order.customerName}</td>
-                                <td class="text-truncate text-start" title="${order.shopSaleName}">${truncatedName}</td>
+                                <td class="text-start">
+                                    <span class="text-resp-truncate" title="${order.shopSaleName}">${order.shopSaleName || '-'}</span>
+                                </td>
                                 <td class="text-nowrap fw-bold">${formatAmount(order.payAmt)}원</td>
                                 <td class="text-nowrap">${formatDate(order.createDate)}</td>
                                 <td class="text-nowrap">${formatDate(order.confirmDate)}</td>

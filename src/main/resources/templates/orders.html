@@ -70,7 +70,7 @@
                                 <th class="text-nowrap ps-3" style="min-width: 130px;">주문번호</th>
                                 <th class="text-nowrap" style="min-width: 100px;">쇼핑몰</th>
                                 <th class="text-nowrap" style="min-width: 80px;">주문자</th>
-                                <th class="text-nowrap" style="min-width: 300px;">상품명</th>
+                                <th class="text-nowrap">상품명</th>
                                 <th class="text-nowrap" style="min-width: 100px;">주문금액</th>
                                 <th class="text-nowrap" style="min-width: 140px;">주문일</th>
                                 <th class="text-nowrap" style="min-width: 140px;">구매 결정일</th>
@@ -82,9 +82,8 @@
                                 <td class="ps-3 text-secondary small text-nowrap" th:text="${order.uniq}">ORD-001</td>
                                 <td class="text-nowrap" th:text="${order.shopName}">1</td>
                                 <td class="text-nowrap" th:text="${order.customerName}">이지형</td>
-                                <td class="text-truncate text-start"
-                                    th:text="${#strings.abbreviate(order.shopSaleName, 30)}"
-                                    th:title="${order.shopSaleName}">상품
+                                <td class="text-start">
+                                    <span class="text-resp-truncate" th:text="${order.shopSaleName}" th:title="${order.shopSaleName}">상품</span>
                                 </td>
                                 <td class="text-nowrap fw-bold" th:text="${#numbers.formatInteger(order.payAmt, 3, 'COMMA')} + '원'">50,000</td>
                                 <td class="text-nowrap" th:text="${order.createDate == null ? '-' : #temporals.format(order.createDate, 'yyyy-MM-dd')}"></td>

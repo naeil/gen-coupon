@@ -268,7 +268,7 @@
                                     <tr class="text-secondary small text-uppercase">
                                         <th class="ps-3 text-nowrap" style="min-width: 130px;">주문번호</th>
                                         <th class="text-nowrap" style="min-width: 100px;">스토어</th>
-                                        <th class="text-nowrap" style="min-width: 300px;">상품명</th>
+                                        <th class="text-nowrap">상품명</th>
                                         <th class="text-nowrap" style="min-width: 100px;">주문금액</th>
                                         <th class="text-nowrap" style="min-width: 120px;">주문일</th>
                                         <th class="text-nowrap" style="min-width: 120px;">구매 결정일</th>
@@ -469,8 +469,8 @@
                             <td class="text-start ps-4">${order.shopSaleName}</td>
                             <td class="fw-bold text-primary text-nowrap">1</td>
                             <td class="text-start">
-                                <span class="badge border bg-danger-subtle text-danger border-danger-subtle text-wrap text-start" style="max-width: 250px;">
-                                    ${order.rslt || '메시지가 비어있거나 잘못된 동보 전송 수신번호 리스트'}
+                                <span class="badge border bg-danger-subtle text-danger border-danger-subtle text-nowrap text-start">
+                                    ${order.rslt || '메시지 전송 실패'}
                                 </span>
                             </td>
                         </tr>
@@ -489,8 +489,8 @@
                             <td class="text-center fw-bold">${coupon.imwebCouponName}</td>
                             <td class="text-primary font-monospace text-nowrap">${coupon.issuedCouponCode}</td>
                             <td class="text-start">
-                                <span class="badge border ${(coupon.rslt === '알림톡 발송 완료' || !coupon.rslt) ? 'bg-success-subtle text-success border-success-subtle' : 'bg-danger-subtle text-danger border-danger-subtle'} text-wrap text-start" style="max-width: 200px;">
-                                    ${coupon.rslt === '알림톡 발송 완료' ? coupon.rslt : '알림톡 발송 실패 : ' + coupon.rslt}
+                                <span class="badge border ${(coupon.rslt === '알림톡 발송 완료' || !coupon.rslt) ? 'bg-success-subtle text-success border-success-subtle' : 'bg-danger-subtle text-danger border-danger-subtle'} text-nowrap text-start">
+                                    ${coupon.rslt === '알림톡 발송 완료' ? coupon.rslt : '알림톡 발송 실패 : ' + (coupon.rslt || '알 수 없는 오류')}
                                 </span>
                             </td>
                         </tr>
@@ -557,14 +557,13 @@
                         paginationId: 'orderPagination',
                         pageSize: 10,
                         rowRenderer: order => {
-                            const truncatedName = order.shopSaleName && order.shopSaleName.length > 20 
-                                ? order.shopSaleName.substring(0, 20) + '...' 
-                                : (order.shopSaleName || '-');
                             return `
                                 <tr>
                                     <td class="ps-3 text-secondary small text-nowrap">${order.uniq}</td>
                                     <td class="fw-bold text-dark text-nowrap">${order.shopName || '-'}</td>
-                                    <td class="text-start text-truncate" title="${order.shopSaleName}">${truncatedName}</td>
+                                    <td class="text-start">
+                                        <span class="text-resp-truncate" title="${order.shopSaleName}">${order.shopSaleName || '-'}</span>
+                                    </td>
                                     <td class="text-nowrap">${formatAmount(order.payAmt)}원</td>
                                     <td class="text-nowrap">${formatDate(order.createDate)}</td>
                                     <td class="text-nowrap">${formatDate(order.confirmDate)}</td>

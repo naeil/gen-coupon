@@ -76,7 +76,7 @@ public class AligoExternal {
         }
 
         JsonNode infoNode = bodyNode.path("info");
-        String mid = infoNode.path("mid").asText(null);
+        String mid = infoNode.path("mid").asString();
 
         if (mid == null) {
             throw new CustomException(404, "mid not found");
@@ -118,8 +118,8 @@ public class AligoExternal {
             throw new CustomException(500, "external alimTok api error");
         } else {
             for (JsonNode node : root) {
-                String htel = node.path("phone").asText(null);
-                String rslt = node.path("rslt").asText("UNKNOWN");
+                String htel = node.path("phone").asString();
+                String rslt = node.path("rslt").asString("UNKNOWN");
 
                 if (htel != null) {
                     Map<String, String> value = new HashMap<>();
@@ -206,11 +206,11 @@ public class AligoExternal {
         if (listNode.isArray()) {
             for (JsonNode node : listNode) {
                 Map<String, Object> template = new HashMap<>();
-                template.put("templtCode", node.path("templtCode").asText(""));
-                template.put("templtName", node.path("templtName").asText(""));
-                template.put("templtContent", node.path("templtContent").asText(""));
-                template.put("status", node.path("status").asText(""));
-                template.put("inspStatus", node.path("inspStatus").asText(""));
+                template.put("templtCode", node.path("templtCode").asString(""));
+                template.put("templtName", node.path("templtName").asString(""));
+                template.put("templtContent", node.path("templtContent").asString(""));
+                template.put("status", node.path("status").asString(""));
+                template.put("inspStatus", node.path("inspStatus").asString(""));
 
                 // 버튼 정보 추출 (있을 경우)
                 JsonNode buttons = node.path("buttons");
@@ -218,10 +218,10 @@ public class AligoExternal {
                     List<Map<String, String>> buttonList = new ArrayList<>();
                     for (JsonNode btn : buttons) {
                         Map<String, String> b = new HashMap<>();
-                        b.put("name", btn.path("name").asText(""));
-                        b.put("linkType", btn.path("linkType").asText(""));
-                        b.put("linkMo", btn.path("linkMo").asText(""));
-                        b.put("linkPc", btn.path("linkPc").asText(""));
+                        b.put("name", btn.path("name").asString(""));
+                        b.put("linkType", btn.path("linkType").asString(""));
+                        b.put("linkMo", btn.path("linkMo").asString(""));
+                        b.put("linkPc", btn.path("linkPc").asString(""));
                         buttonList.add(b);
                     }
                     template.put("buttons", buttonList);

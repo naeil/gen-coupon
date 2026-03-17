@@ -46,6 +46,30 @@
             width: 87.5%;
           }
         }
+        /* 반응형 상품명 말줄임 */
+        .text-resp-truncate {
+            display: inline-block;
+            max-width: 70ch;  /* 약 35자 (한글 기준) */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+        @media (max-width: 1400px) {
+            .text-resp-truncate {
+                max-width: 40ch;
+            }
+        }
+        @media (max-width: 1200px) {
+            .text-resp-truncate {
+                max-width: 30ch;
+            }
+        }
+        @media (max-width: 768px) {
+            .text-resp-truncate {
+                max-width: 15ch;
+            }
+        }
     </style>
     <script>
         /**

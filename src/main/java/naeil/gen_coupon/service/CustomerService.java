@@ -28,7 +28,6 @@ import java.util.Map;
 public class CustomerService {
 
         private final CustomerRepository customerRepository;
-        private final ConfigService configService;
         private final CouponIssueRepository couponIssueRepository;
         private final OrderHistoryRepository orderHistoryRepository;
         private final CouponRepository couponRepository;

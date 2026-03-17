@@ -193,37 +193,7 @@ public class CouponService extends GenericService<CouponIssueEntity, QCouponIssu
         return mergedResults;
     }
 
-    @Transactional
-    public Map<Integer, List<StampEntity>> issueCoupons(Map<CustomerEntity, List<StampEntity>> stampsByOrder,
-            List<ImWebCouponItemDTO> fetchedCoupons, String couponCode, String couponName, int standardCount) {
 
-        Map<Integer, List<StampEntity>> issuedCoupons = new HashMap<>();
-        for (Map.Entry<CustomerEntity, List<StampEntity>> entry : stampsByOrder.entrySet()) {
-
-            CustomerEntity customer = entry.getKey();
-            List<StampEntity> stamps = entry.getValue();
-
-            int couponCount = stamps.size() / standardCount;
-            for (int i = 0; i < couponCount; i++) {
-
-                List<StampEntity> targetStamps = stamps.subList(
-                        i * standardCount,
-                        (i + 1) * standardCount);
-
-                CouponIssueEntity couponIssue = CouponIssueEntity.builder()
-                        .customerEntity(customer)
-                        .issuedCouponCode(fetchedCoupons.remove(0).getCouponIssueCode())
-                        .createDate(LocalDateTime.now())
-                        .build();
-
-                CouponIssueEntity coupon = couponIssueRepository.saveAndFlush(couponIssue);
-
-                issuedCoupons.put(coupon.getIssueId(), new ArrayList<>(targetStamps));
-            }
-        }
-
-        return issuedCoupons;
-    }
 
     @Transactional(readOnly = true)
     public List<CouponIssueResponse> searchCouponIssueList(CouponSearchRequestDTO requestDTO) {

@@ -43,6 +43,20 @@ CREATE TABLE `shop` (
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 
+-- `gen-coupon`.message_template definition
+-- 알리고 AlimTalk 템플릿을 DB에서 관리하기 위한 테이블
+
+CREATE TABLE `message_template` (
+  `template_id` int(11) NOT NULL AUTO_INCREMENT,
+  `template_code` varchar(255) NOT NULL,
+  `template_name` varchar(255) DEFAULT NULL,
+  `template_content` TEXT DEFAULT NULL,
+  `buttons_json` TEXT DEFAULT NULL,
+  PRIMARY KEY (`template_id`),
+  UNIQUE KEY `UK_message_template_code` (`template_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+
 -- `gen-coupon`.coupon definition
 
 CREATE TABLE `coupon` (
@@ -52,19 +66,21 @@ CREATE TABLE `coupon` (
   `expired_date` varchar(255) DEFAULT NULL,
   `deleted` bit(1) NOT NULL,
   `coupon_policy_id` int(11) DEFAULT NULL,
+  `template_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`coupon_id`),
   KEY `FKjnahg3a5otcynjdmxl7cq8p5k` (`coupon_policy_id`),
-  CONSTRAINT `FKjnahg3a5otcynjdmxl7cq8p5k` FOREIGN KEY (`coupon_policy_id`) REFERENCES `coupon_policy` (`coupon_policy_id`)
+  KEY `FK_coupon_template` (`template_id`),
+  CONSTRAINT `FKjnahg3a5otcynjdmxl7cq8p5k` FOREIGN KEY (`coupon_policy_id`) REFERENCES `coupon_policy` (`coupon_policy_id`),
+  CONSTRAINT `FK_coupon_template` FOREIGN KEY (`template_id`) REFERENCES `message_template` (`template_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 
 -- `gen-coupon`.coupon_issue definition
 
 CREATE TABLE `coupon_issue` (
-  `coupon_policy_id` int(11) DEFAULT NULL,
   `customer_id` int(11) DEFAULT NULL,
   `issue_id` int(11) NOT NULL AUTO_INCREMENT,
-  `retry_count` int(11) DEFAULT NULL,
+  `retry_count` int(11) NOT NULL DEFAULT 0,
   `create_date` datetime(6) DEFAULT NULL,
   `issued_coupon_code` varchar(255) DEFAULT NULL,
   `mid` varchar(255) DEFAULT NULL,
@@ -72,11 +88,9 @@ CREATE TABLE `coupon_issue` (
   `coupon_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`issue_id`),
   UNIQUE KEY `UK3lealojvxy07wfaxktu52jvyh` (`issued_coupon_code`),
-  KEY `FKjpuc600kjx3eb9awp48aqgv11` (`coupon_policy_id`),
   KEY `FKqyfyntl4nn5elyev0ofognv4j` (`customer_id`),
   KEY `FKaxdtc4pg7dy7rmvkvqxdag9jn` (`coupon_id`),
   CONSTRAINT `FKaxdtc4pg7dy7rmvkvqxdag9jn` FOREIGN KEY (`coupon_id`) REFERENCES `coupon` (`coupon_id`),
-  CONSTRAINT `FKjpuc600kjx3eb9awp48aqgv11` FOREIGN KEY (`coupon_policy_id`) REFERENCES `coupon_policy` (`coupon_policy_id`),
   CONSTRAINT `FKqyfyntl4nn5elyev0ofognv4j` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
@@ -112,6 +126,7 @@ CREATE TABLE `stamp` (
   `stamp_id` int(11) NOT NULL AUTO_INCREMENT,
   `mid` varchar(255) DEFAULT NULL,
   `rslt` varchar(255) DEFAULT NULL,
+  `retry_count` int(11) NOT NULL DEFAULT 0,
   PRIMARY KEY (`stamp_id`),
   UNIQUE KEY `UK6bpw6g4wjtp8tsbhwuy71s0ax` (`order_history_id`),
   KEY `FK8lptdtpdf59x4lg151h3qt0o3` (`customer_id`),

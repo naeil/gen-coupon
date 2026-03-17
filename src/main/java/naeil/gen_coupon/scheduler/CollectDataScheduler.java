@@ -10,6 +10,7 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.util.concurrent.ScheduledFuture;
 
 @Component
@@ -45,7 +46,7 @@ public class CollectDataScheduler {
 
         scheduledFuture = taskScheduler.scheduleWithFixedDelay(
                 this::execute,
-                interval);
+                Duration.ofMillis(interval));
 
         log.info("Scheduler started. interval={}", value);
 

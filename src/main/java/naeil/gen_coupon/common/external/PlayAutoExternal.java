@@ -74,8 +74,8 @@ public class PlayAutoExternal {
 
         JsonNode error = root.path("error_code");
         log.info("error_code : {}", error);
-        if (!error.isMissingNode() && !error.isNull() && !error.asText("").isBlank()) {
-            String errorCode = error.asText();
+        if (!error.isMissingNode() && !error.isNull() && !error.asString("").isBlank()) {
+            String errorCode = error.asString();
             throw PlayAutoErrorCode.fromCode(errorCode);
         }
 
@@ -83,7 +83,7 @@ public class PlayAutoExternal {
             throw new CustomException(502, "Invalid auth response");
         }
 
-        token = root.get(0).path("token").asText("");
+        token = root.get(0).path("token").asString("");
         log.info("token : {}", token);
 
         return token;
@@ -97,7 +97,7 @@ public class PlayAutoExternal {
         headers.set("x-api-key", apiKey);
         headers.set("Authorization", "Token " + token);
 
-        HttpEntity request = new HttpEntity(headers);
+        HttpEntity<Void> request = new HttpEntity<>(headers);
         String requestUrl = UriComponentsBuilder
                 .fromUriString("https://openapi.playauto.io/api/shops")
                 .queryParam("used", "true")
@@ -121,8 +121,8 @@ public class PlayAutoExternal {
             JsonNode rootNode = objectMapper.readTree(responseBody);
 
             if (rootNode.isObject() && rootNode.has("error_code")) {
-                String errorCode = rootNode.path("error_code").asText("");
-                String message = rootNode.path("messages").path(0).asText("");
+                String errorCode = rootNode.path("error_code").asString("");
+                String message = rootNode.path("messages").path(0).asString("");
 
                 throw new CustomException(404, String.format("PlayAuto API Error(Code=%s, Messages=%s)",
                         errorCode,
@@ -235,8 +235,8 @@ public class PlayAutoExternal {
 
         if (prodNode != null && prodNode.isArray()) {
             for (JsonNode node : prodNode) {
-                String uniq = node.path("uniq").asText();
-                String suppName = node.path("supp_name").asText(""); // 매입처 이름 가져오기
+                String uniq = node.path("uniq").asString();
+                String suppName = node.path("supp_name").asString(""); // 매입처 이름 가져오기
 
                 // uniq가 유효하고, 매입처가 차단 목록에 포함되어 있다면
                 if (uniq != null && !uniq.isEmpty() && blockSuppliers.contains(suppName)) {
