@@ -78,6 +78,7 @@ public class ConfigService {
         return config != null ? config.getConfigValue() : "24h";
     }
 
+    @Transactional
     public List<ConfigResponse> updateConfig(SettingDTO setting) {
 
         boolean scheduleTimeChanged = false;
@@ -91,7 +92,7 @@ public class ConfigService {
             Map<String, ConfigEntity> existingMap = existingConfigs.stream()
                     .collect(Collectors.toMap(ConfigEntity::getConfigKey, c -> c));
 
-            String interval = "";
+            String newCollectTime = configMap.get("collect_time");
             
             for (Map.Entry<String, String> entry : configMap.entrySet()) {
                 String key = entry.getKey();
@@ -106,19 +107,10 @@ public class ConfigService {
                 String currentValue = config.getConfigValue();
 
                 // 스케줄 시간 값 변경 확인
-                if ("collect_time".equalsIgnoreCase(key)
+                if (("collect_time".equalsIgnoreCase(key) || "collect_period".equalsIgnoreCase(key))
                         && !Objects.equals(currentValue, newValue)) {
-                    log.info("collect time changed");
+                    log.info("Schedule config changed: {} ({} -> {})", key, currentValue, newValue);
                     scheduleTimeChanged = true;
-                    interval = newValue;
-                }
-
-                if ("collect_period".equalsIgnoreCase(key)
-                        && !Objects.equals(currentValue, newValue)) {
-                    log.info("collect period changed");
-                    scheduleTimeChanged = true;
-                    if (interval.isEmpty())
-                        interval = getValue("collect_time");
                 }
 
                 config.setConfigValue(newValue);
@@ -126,12 +118,20 @@ public class ConfigService {
             }
             
             couponService.updateCoupon(setting.getCoupons());
-            // 새로운 시간으로 스케줄 재시작
+
+            // 새로운 시간으로 스케줄 재시작 (collect_time 또는 collect_period 변경 시)
             if (scheduleTimeChanged) {
+                // 이번 업데이트에 collect_time이 포함되어 있으면 그 값을 사용, 없으면 DB에서 조회
+                String interval = (newCollectTime != null && !newCollectTime.isBlank()) 
+                        ? newCollectTime 
+                        : getValue("collect_time");
+                
+                log.info("Restarting scheduler with interval: {}", interval);
                 scheduler.start(interval);
             }
 
         } catch (Exception e) {
+            log.error("Failed to update config", e);
             throw new CustomException(500, e.getMessage());
         }
         return configRepository.findAll().stream().map(ConfigResponse::toDTO).toList();

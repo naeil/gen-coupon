@@ -18,22 +18,32 @@
     /* 정책 테이블 내부 요소 레이아웃 조정 */
     .policy-row .input-group,
     .policy-row .d-flex {
-        flex-wrap: nowrap; /* 버튼이 옆에 유지되도록 줄바꿈 방지 */
+        flex-wrap: wrap; /* 오버플로우 방지를 위해 줄바꿈 허용 */
     }
 
     .policy-row .btn-sm {
-        align-self: flex-start; /* 상단 정렬 */
+        align-self: flex-start;
         margin-top: 2px;
     }
 
     .template-name-display {
-        min-width: 150px;
-        max-width: 250px;
+        min-width: 120px;
+        max-width: 100%;
         display: block;
     }
     
     .policy-coupon-code, .policy-coupon-name, .policy-template-code {
-        min-width: 180px;
+        flex: 1 1 150px; /* 유연한 너비 조정 */
+        min-width: 0;   /* flex 아이템의 최소 너비 제한 해제 */
+    }
+
+    /* 모바일 대응: 버튼들이 아래로 내려갈 때 여백 추가 */
+    @media (max-width: 992px) {
+        .policy-row .btn-search-coupon,
+        .policy-row .btn-search-template {
+            width: 100%;
+            margin-top: 5px;
+        }
     }
 </style>
 
@@ -578,7 +588,7 @@
                     </div>
                     <input type="hidden" class="policy-template-name" value="${policy.templateName || ''}">
                      <div class="small text-muted text-truncate template-name-display mt-1">
-                        ${policy.templateCode ? '<span class="text-primary me-1">메세지 템플릿:</span> ' + (policy.templateName || '연결됨') : '템플릿을 선택해주세요'}
+                        ${policy.templateCode ? '<span class="text-primary me-1">템플릿:</span> ' + (policy.templateName || '연결됨') : '템플릿을 선택해주세요'}
                     </div>
                 </div>
             </td>

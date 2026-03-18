@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import naeil.gen_coupon.common.exception.CustomException;
 import naeil.gen_coupon.common.external.AligoExternal;
 import naeil.gen_coupon.entity.CouponIssueEntity;
 import naeil.gen_coupon.entity.CustomerEntity;
@@ -85,8 +86,8 @@ public class MessageService {
             StampEntity representativeStamp = stamps.get(0);
             String productName = (representativeStamp.getOrderHistoryEntity() != null
                     && representativeStamp.getOrderHistoryEntity().getShopSaleName() != null)
-                    ? representativeStamp.getOrderHistoryEntity().getShopSaleName()
-                    : "";
+                            ? representativeStamp.getOrderHistoryEntity().getShopSaleName()
+                            : "";
 
             int totalCount = countMap.getOrDefault(customerId, 0);
             receivers.add(new CustomerSendDTO(customer, totalCount, stamps, productName));
@@ -194,7 +195,7 @@ public class MessageService {
         String tplCode = configRepository.findByConfigKey("coupon_template_id")
                 .map(ConfigEntity::getConfigValue)
                 .filter(val -> !val.isEmpty())
-                .orElse("UF_7523");
+                .orElseThrow(() -> new CustomException(400, "조회되는 쿠폰 템플릿이 없습니다."));
 
         var templateEntity = getTemplateOrSync(tplCode);
         if (templateEntity == null) {
@@ -223,7 +224,8 @@ public class MessageService {
         return template;
     }
 
-    private String replaceStandardVariables(String content, CustomerEntity customer, CouponIssueEntity couponIssue, String productName) {
+    private String replaceStandardVariables(String content, CustomerEntity customer, CouponIssueEntity couponIssue,
+            String productName) {
         if (content == null)
             return "";
 
@@ -255,7 +257,7 @@ public class MessageService {
         String tplCode = configRepository.findByConfigKey("stamp_template_id")
                 .map(ConfigEntity::getConfigValue)
                 .filter(val -> !val.isEmpty())
-                .orElse("UF_7501");
+                .orElseThrow(() -> new CustomException(400, "조회되는 스탬프 템플릿이 없습니다."));
 
         var templateEntity = getTemplateOrSync(tplCode);
         if (templateEntity == null) {

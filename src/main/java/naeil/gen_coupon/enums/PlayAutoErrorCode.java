@@ -35,7 +35,7 @@ public enum PlayAutoErrorCode {
     SHOP_NOT_FOUND_BY_ID("e1015", "해당 아이디로 조회되는 쇼핑몰 계정이 없습니다.", HttpStatus.NOT_FOUND),
 
     UNSUPPORTED_VERSION("e1016", "지원되지 않는 버전입니다.", HttpStatus.BAD_REQUEST),
-    RESPONSE_SIZE_EXCEEDED("e1017", "응답 데이터가 10MB를 초과하여 조회에 실패했습니다.", HttpStatus.PAYLOAD_TOO_LARGE),
+    RESPONSE_SIZE_EXCEEDED("e1017", "응답 데이터가 10MB를 초과하여 조회에 실패했습니다.", HttpStatus.BAD_REQUEST),
 
     INVALID_TIME_TYPE("e1018", "타입이 올바르지 않습니다. SET, RELEASE 중 하나를 입력해주세요.", HttpStatus.BAD_REQUEST),
     START_DATE_REQUIRED("e1019", "조회 종료일 설정시 조회 시작일은 필수입니다.", HttpStatus.BAD_REQUEST),
@@ -57,7 +57,6 @@ public enum PlayAutoErrorCode {
 
         return new CustomException(
                 errorCode.getHttpStatus().value(),
-                errorCode.getMessage() + " from playauto"
-        );
+                errorCode.getMessage() + " from playauto");
     }
 }
