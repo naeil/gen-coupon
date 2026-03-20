@@ -24,7 +24,7 @@ public interface CouponIssueRepository extends JpaRepository<CouponIssueEntity, 
     List<CouponIssueEntity> findAllByCustomerEntity_CustomerIdOrderByCreateDateDesc(Integer customerId);
 
     @Query("SELECT DISTINCT c.mid FROM CouponIssueEntity c " +
-            "WHERE c.mid IS NOT NULL AND c.rslt IS NULL")
+            "WHERE c.mid IS NOT NULL AND c.rslt = 'WAIT'")
     List<String> findDistinctMidsPendingResult();
 
     Long countByCouponEntity(CouponEntity coupon);

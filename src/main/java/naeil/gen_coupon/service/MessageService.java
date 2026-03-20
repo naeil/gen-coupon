@@ -55,15 +55,26 @@ public class MessageService {
 
         log.info("테스트 발송 대상 리스트 : {}", testOnlyList);
 
-        MultiValueMap<String, String> template = genCouponAlimTokTemplate(testOnlyList);
-        if (template == null)
-            return;
+        // 템플릿 코드별로 그룹화
+        Map<String, List<CouponIssueEntity>> groupedByTemplate = testOnlyList.stream()
+                .filter(c -> c.getCouponEntity() != null && c.getCouponEntity().getMessageTemplateEntity() != null)
+                .collect(Collectors.groupingBy(c -> c.getCouponEntity().getMessageTemplateEntity().getTemplateCode()));
 
-        try {
-            String mid = aligoExternal.sendAlimTok(template);
-            updateCouponMid(mid, testOnlyList);
-        } catch (Exception e) {
-            log.error("coupon alimtok error : {}", e.getMessage());
+        for (Map.Entry<String, List<CouponIssueEntity>> entry : groupedByTemplate.entrySet()) {
+            String tplCode = entry.getKey();
+            List<CouponIssueEntity> group = entry.getValue();
+
+            MultiValueMap<String, String> template = genCouponAlimTokTemplate(group, tplCode);
+            if (template == null)
+                continue;
+
+            try {
+                String mid = aligoExternal.sendAlimTok(template);
+                updateCouponMid(mid, group);
+                log.info("Sent Coupon Alarm - TemplateCode: {}, Count: {}", tplCode, group.size());
+            } catch (Exception e) {
+                log.error("coupon alimtok error (tpl: {}): {}", tplCode, e.getMessage());
+            }
         }
     }
 
@@ -117,6 +128,7 @@ public class MessageService {
     private void updateCouponMid(String mid, List<CouponIssueEntity> couponIssueEntities) {
         for (CouponIssueEntity couponIssue : couponIssueEntities) {
             couponIssue.updateMid(mid);
+            couponIssue.updateRslt("WAIT");
             couponIssue.increaseRetryCount();
         }
         couponIssueRepository.saveAll(couponIssueEntities);
@@ -189,17 +201,15 @@ public class MessageService {
         }
     }
 
-    private MultiValueMap<String, String> genCouponAlimTokTemplate(List<CouponIssueEntity> couponIssueEntities) {
-
-        // 쿠폰 템플릿 코드 설정 (없으면 기본값)
-        String tplCode = configRepository.findByConfigKey("coupon_template_id")
-                .map(ConfigEntity::getConfigValue)
-                .filter(val -> !val.isEmpty())
-                .orElseThrow(() -> new CustomException(400, "조회되는 쿠폰 템플릿이 없습니다."));
+    private MultiValueMap<String, String> genCouponAlimTokTemplate(List<CouponIssueEntity> couponIssueEntities,
+            String tplCode) {
+        if (couponIssueEntities == null || couponIssueEntities.isEmpty()) {
+            return null;
+        }
 
         var templateEntity = getTemplateOrSync(tplCode);
         if (templateEntity == null) {
-            log.error("Coupon template not found even after sync sync: {}", tplCode);
+            log.error("Coupon template not found even after sync: {}", tplCode);
             return null;
         }
 
@@ -211,7 +221,7 @@ public class MessageService {
         for (CouponIssueEntity couponIssue : couponIssueEntities) {
             CustomerEntity customer = couponIssue.getCustomerEntity();
 
-            String message = replaceStandardVariables(templateEntity.getTemplateContent(), customer, couponIssue, "");
+            String message = replaceStandardVariables(templateEntity.getTemplateContent(), customer, couponIssue, "", null);
 
             template.add("receiver_" + index, customer.getCustomerHtel().replaceAll("\\D", ""));
             template.add("recvname_" + index, customer.getCustomerName());
@@ -225,7 +235,7 @@ public class MessageService {
     }
 
     private String replaceStandardVariables(String content, CustomerEntity customer, CouponIssueEntity couponIssue,
-            String productName) {
+            String productName, Integer totalCountOverride) {
         if (content == null)
             return "";
 
@@ -244,8 +254,10 @@ public class MessageService {
             }
         }
 
-        result = result.replace("#{누적횟수}",
-                (customer.getTotalOrderCount() != null ? customer.getTotalOrderCount() : 0) + "개");
+        int displayTotalCount = (totalCountOverride != null) ? totalCountOverride
+                : (customer.getTotalOrderCount() != null ? customer.getTotalOrderCount() : 0);
+
+        result = result.replace("#{누적횟수}", displayTotalCount + "개");
         result = result.replace("#{적립횟수}", "1개");
         result = result.replace("#{상품명}", productName != null ? productName : "");
 
@@ -276,7 +288,8 @@ public class MessageService {
             // 대표 스탬프에서 이미 추출된 상품명 사용
             String productName = receiver.getProductName();
 
-            String message = replaceStandardVariables(templateEntity.getTemplateContent(), customer, null, productName);
+            String message = replaceStandardVariables(templateEntity.getTemplateContent(), customer, null, productName,
+                    receiver.getTotalCount());
 
             template.add("receiver_" + index, customer.getCustomerHtel().replaceAll("\\D", ""));
             template.add("recvname_" + index, customer.getCustomerName());
