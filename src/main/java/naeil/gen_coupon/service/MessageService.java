@@ -44,12 +44,14 @@ public class MessageService {
         // test용 로직
         List<CouponIssueEntity> couponIssueEntities = findCouponsToSend();
 
+        List<String> targetNaList = List.of("test", "test2", "test_재연", "test_한얼");
+
         List<CouponIssueEntity> testOnlyList = couponIssueEntities.stream()
-                .filter(c -> "test".equals(c.getCustomerEntity().getCustomerName()))
+                .filter(c -> targetNaList.contains(c.getCustomerEntity().getCustomerName()))
                 .collect(Collectors.toList());
 
         if (testOnlyList.isEmpty()) {
-            log.info("테스트용 'test' 고객 데이터가 없어 발송을 중단합니다.");
+            log.info("테스트용 고객 데이터가 없어 발송을 중단합니다.");
             return;
         }
 
@@ -59,6 +61,13 @@ public class MessageService {
         Map<String, List<CouponIssueEntity>> groupedByTemplate = testOnlyList.stream()
                 .filter(c -> c.getCouponEntity() != null && c.getCouponEntity().getMessageTemplateEntity() != null)
                 .collect(Collectors.groupingBy(c -> c.getCouponEntity().getMessageTemplateEntity().getTemplateCode()));
+
+        // Map<String, List<CouponIssueEntity>> groupedByTemplate =
+        // couponIssueEntities.stream()
+        // .filter(c -> c.getCouponEntity() != null &&
+        // c.getCouponEntity().getMessageTemplateEntity() != null)
+        // .collect(Collectors.groupingBy(c ->
+        // c.getCouponEntity().getMessageTemplateEntity().getTemplateCode()));
 
         for (Map.Entry<String, List<CouponIssueEntity>> entry : groupedByTemplate.entrySet()) {
             String tplCode = entry.getKey();
@@ -81,6 +90,8 @@ public class MessageService {
     public void sendStampAlimTok(Map<Integer, List<StampEntity>> targetMap, Map<Integer, Integer> countMap) {
         List<CustomerSendDTO> receivers = new ArrayList<>();
 
+        List<String> testTargetNames = List.of("test", "test2", "test_재연", "test_한얼");
+
         for (Integer customerId : targetMap.keySet()) {
             List<StampEntity> stamps = targetMap.get(customerId);
             if (stamps == null || stamps.isEmpty())
@@ -89,7 +100,7 @@ public class MessageService {
             CustomerEntity customer = stamps.get(0).getCustomerEntity(); // 대표 고객 정보
 
             // test 용 로직
-            if (!"test".equals(customer.getCustomerName())) {
+            if (!testTargetNames.contains(customer.getCustomerName())) {
                 continue;
             }
 
@@ -221,7 +232,8 @@ public class MessageService {
         for (CouponIssueEntity couponIssue : couponIssueEntities) {
             CustomerEntity customer = couponIssue.getCustomerEntity();
 
-            String message = replaceStandardVariables(templateEntity.getTemplateContent(), customer, couponIssue, "", null);
+            String message = replaceStandardVariables(templateEntity.getTemplateContent(), customer, couponIssue, "",
+                    null);
 
             template.add("receiver_" + index, customer.getCustomerHtel().replaceAll("\\D", ""));
             template.add("recvname_" + index, customer.getCustomerName());
