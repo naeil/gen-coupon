@@ -10,6 +10,7 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.util.concurrent.ScheduledFuture;
 
 @Component
@@ -24,20 +25,21 @@ public class CollectDataScheduler {
     private ScheduledFuture<?> scheduledFuture;
 
     public synchronized void start(String configValue) {
-        log.info("schedule start");
-        log.info("collect time : {}", configValue);
+        log.info("Attempting to start scheduler with configValue: {}", configValue);
         long interval;
         String value = "";
         try {
             // test 로 인해 1m default 값 설정 해둠
-             value = (configValue != null && !configValue.isBlank())
-                        ? configValue
-                        : "1m";
+            value = (configValue != null && !configValue.isBlank())
+                    ? configValue
+                    : "1m";
 
             interval = TimeUnitType.toMillis(value);
+            log.info("Parsed interval: {}ms", interval);
         } catch (Exception e) {
-            log.error("Invalid schedule config. fall bach to 24h", e);
+            log.error("Invalid schedule config [{}]. falling back to 24h", configValue, e);
             interval = TimeUnitType.toMillis("24h");
+            value = "24h";
         }
 
         // 스케줄 값 새로 설정 시 기존 스케줄을 종료 후 다시 시작
@@ -45,10 +47,9 @@ public class CollectDataScheduler {
 
         scheduledFuture = taskScheduler.scheduleWithFixedDelay(
                 this::execute,
-                interval
-        );
+                Duration.ofMillis(interval));
 
-        log.info("Scheduler started. interval={}", value);
+        log.info("Scheduler successfully started. interval={}", value);
 
     }
 
@@ -79,6 +80,7 @@ public class CollectDataScheduler {
             messageService.updateCouponSendResult();
             messageService.updateStampSendResult();
         } catch (Exception e) {
-            log.error("Delivery Check Scheduler error : {}", e.getMessage());        }
+            log.error("Delivery Check Scheduler error : {}", e.getMessage());
+        }
     }
 }

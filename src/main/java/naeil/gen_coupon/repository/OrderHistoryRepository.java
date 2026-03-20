@@ -11,4 +11,7 @@ public interface OrderHistoryRepository extends JpaRepository<OrderHistoryEntity
 
     @Query("select o.uniq from OrderHistoryEntity o where o.uniq in :uniqList")
     List<String> findExistingUniqs(@Param("uniqList") List<String> uniqList);
+
+    @Query("SELECT o FROM OrderHistoryEntity o LEFT JOIN o.stampEntity s WHERE s IS NULL")
+    List<OrderHistoryEntity> findOrdersWithoutStamps();
 }

@@ -22,6 +22,8 @@ public class CouponEntity {
 
     private String masterCouponName;
 
+    private String expiredDate;
+
     private boolean deleted = false;
 
     @OneToMany(mappedBy = "couponEntity")
@@ -30,5 +32,9 @@ public class CouponEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "couponPolicyId")
     private CouponPolicyEntity couponPolicyEntity;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "templateId")
+    private MessageTemplateEntity messageTemplateEntity;
 
 }

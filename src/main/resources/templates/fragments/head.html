@@ -7,6 +7,8 @@
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
           rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
     <style>
         body {
@@ -44,6 +46,115 @@
             width: 87.5%;
           }
         }
+        /* 반응형 상품명 말줄임 */
+        .text-resp-truncate {
+            display: inline-block;
+            max-width: 70ch;  /* 약 35자 (한글 기준) */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+        @media (max-width: 1400px) {
+            .text-resp-truncate {
+                max-width: 40ch;
+            }
+        }
+        @media (max-width: 1200px) {
+            .text-resp-truncate {
+                max-width: 30ch;
+            }
+        }
+        @media (max-width: 768px) {
+            .text-resp-truncate {
+                max-width: 15ch;
+            }
+        }
     </style>
+    <script>
+        /**
+         * 공통 페이징 테이블 렌더러
+         */
+        function renderPaginatedTable({ data, tbodyId, paginationId, pageSize, rowRenderer }) {
+            const tbody = document.getElementById(tbodyId);
+            const pagination = document.getElementById(paginationId);
+
+            if (!tbody || !pagination) {
+                console.error(`요소를 찾을 수 없습니다: ${tbodyId} 또는 ${paginationId}`);
+                return;
+            }
+
+            let currentPage = 1;
+            const totalPages = Math.ceil(data.length / pageSize);
+
+            function renderPage(page) {
+                currentPage = page;
+                tbody.innerHTML = '';
+
+                const start = (page - 1) * pageSize;
+                const end = start + pageSize;
+
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="15" class="text-center text-muted py-3">
+                                조회된 데이터가 없습니다.
+                            </td>
+                        </tr>
+                    `;
+                    pagination.innerHTML = '';
+                    return;
+                }
+
+                data.slice(start, end).forEach((item, index) => {
+                    const realIndex = start + index;
+                    tbody.innerHTML += rowRenderer(item, realIndex);
+                });
+
+                renderPagination();
+            }
+
+            function renderPagination() {
+                pagination.innerHTML = '';
+                // 데이터가 있을 때만 최소 1페이지 버튼 표시
+                if (data.length === 0) return;
+
+                const pagesToShow = Math.max(1, totalPages);
+                for (let i = 1; i <= pagesToShow; i++) {
+                    const li = document.createElement('li');
+                    li.className = 'page-item' + (i === currentPage ? ' active' : '');
+                    const a = document.createElement('a');
+                    a.className = 'page-link';
+                    a.href = '#';
+                    a.textContent = i;
+                    a.onclick = e => {
+                        e.preventDefault();
+                        renderPage(i);
+                    };
+                    li.appendChild(a);
+                    pagination.appendChild(li);
+                }
+            }
+
+            renderPage(1);
+        }
+
+        /**
+         * 날짜 형식 변환 (yyyy. mm. dd.)
+         */
+        function formatDate(isoDate) {
+            if (!isoDate) return '-';
+            const date = new Date(isoDate);
+            return date.toLocaleDateString('ko-KR');
+        }
+
+        /**
+         * 금액 형식 변환 (1,234)
+         */
+        function formatAmount(amount) {
+            if (amount === null || amount === undefined) return '-';
+            return Number(amount).toLocaleString('ko-KR');
+        }
+    </script>
 </head>
 </html>

@@ -45,7 +45,7 @@ public class ImWebExternal {
 
         String token;
         ResponseEntity<JsonNode> response;
-        try{
+        try {
             response = restTemplate.exchange(
                     requestUrl,
                     HttpMethod.GET,
@@ -57,11 +57,11 @@ public class ImWebExternal {
         }
 
         JsonNode root = response.getBody();
-        if (root == null || root.isEmpty() || root.get("http_code").intValue() != 200 ) {
+        if (root == null || root.isEmpty() || root.path("http_code").asInt(0) != 200) {
             throw new CustomException(502, "Invalid auth response");
         }
 
-        token = root.get("access_token").asString(null);
+        token = root.path("access_token").asString("");
         if (token.isEmpty()) {
             throw new CustomException(502, "Invalid auth response");
         }
@@ -76,7 +76,7 @@ public class ImWebExternal {
         headers.add("Accept", "*/*");
         headers.set("access-token", token);
 
-        HttpEntity request = new HttpEntity(headers);
+        HttpEntity<Void> request = new HttpEntity<>(headers);
         String requestUrl = UriComponentsBuilder
                 .fromUriString(String.format("https://api.imweb.me/v2/shop/coupons/%s/issue-coupons", couponCode))
                 .queryParam("limit", limit)
@@ -85,16 +85,13 @@ public class ImWebExternal {
 
         log.info("requestUrl : {}", requestUrl);
 
-        RestTemplate restTemplate = new RestTemplate();
-
         ResponseEntity<ImWebCouponIssueResponseDTO> response;
         try {
             response = restTemplate.exchange(
                     requestUrl,
                     HttpMethod.GET,
                     request,
-                    ImWebCouponIssueResponseDTO.class
-            );
+                    ImWebCouponIssueResponseDTO.class);
         } catch (RestClientException e) {
             log.error("imweb get issued coupon list error : {}", e.getMessage());
             throw new CustomException(502, "external api error");
@@ -108,7 +105,7 @@ public class ImWebExternal {
         headers.add("Accept", "*/*");
         headers.set("access-token", token);
 
-        HttpEntity request = new HttpEntity(headers);
+        HttpEntity<Void> request = new HttpEntity<>(headers);
         String requestUrl = UriComponentsBuilder
                 .fromUriString("https://api.imweb.me/v2/shop/coupons")
                 .queryParam("limit", limit)
@@ -117,16 +114,13 @@ public class ImWebExternal {
 
         log.info("requestUrl : {}", requestUrl);
 
-        RestTemplate restTemplate = new RestTemplate();
-
         ResponseEntity<ImWebCouponResponseDTO> response;
         try {
             response = restTemplate.exchange(
                     requestUrl,
                     HttpMethod.GET,
                     request,
-                    ImWebCouponResponseDTO.class
-            );
+                    ImWebCouponResponseDTO.class);
         } catch (RestClientException e) {
             log.error("imweb get issued coupon list error : {}", e.getMessage());
             throw new CustomException(502, "external api error");

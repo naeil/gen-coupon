@@ -20,10 +20,14 @@ public class ImWebCouponDTO {
     @JsonProperty("status")
     private String status;
 
+    @JsonProperty("use_period")
+    private String usePeriod;
+
     @Builder
-    ImWebCouponDTO(String couponCode, String couponName, String status) {
+    ImWebCouponDTO(String couponCode, String couponName, String status, String usePeriod) {
         this.couponCode = couponCode;
         this.couponName = couponName;
         this.status = status;
+        this.usePeriod = usePeriod;
     }
 }

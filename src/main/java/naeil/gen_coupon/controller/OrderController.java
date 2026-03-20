@@ -17,33 +17,31 @@ import java.util.List;
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
 public class OrderController {
-    
+
     private final OrderService orderService;
-   
+
     @GetMapping
     public ResponseEntity<?> getOrderHistories(
             @RequestParam(required = false, name = "shopCode") String shopCode,
-            @RequestParam(required = false, name = "customerId") Integer customerId,            
+            @RequestParam(required = false, name = "customerId") Integer customerId,
             @RequestParam(required = false, name = "customerName") String customerName,
-            @RequestParam(required = false, name = "issudId") Integer issueId,            
+            @RequestParam(required = false, name = "issueId") Integer issueId,
             @RequestParam(required = false, name = "fromDate") LocalDate fromDate,
             @RequestParam(required = false, name = "toDate") LocalDate toDate,
-            @RequestParam(required = false, defaultValue="1", name = "pageNumber") int pageNumber,
-            @RequestParam(required = false, defaultValue="20", name = "pageSize") int pageSize
-    ) {
+            @RequestParam(required = false, defaultValue = "1", name = "pageNumber") int pageNumber,
+            @RequestParam(required = false, defaultValue = "20", name = "pageSize") int pageSize) {
         List<OrderHistoryDTO> orders = orderService.searchOrderHistoryList(
-            OrderSearchRequestDTO.builder()
-                .shopCode(shopCode)
-                .customerId(customerId)
-                .customerName(customerName)
-                .issueId(issueId)
-                .fromDate(fromDate)
-                .toDate(toDate)
-                .pageNumber(pageNumber)
-                .pageSize(pageSize)
-                .build()
-        );
-        
+                OrderSearchRequestDTO.builder()
+                        .shopCode(shopCode)
+                        .customerId(customerId)
+                        .customerName(customerName)
+                        .issueId(issueId)
+                        .fromDate(fromDate)
+                        .toDate(toDate)
+                        .pageNumber(pageNumber)
+                        .pageSize(pageSize)
+                        .build());
+
         return ResponseEntity.ok().body(orders);
-    }    
+    }
 }

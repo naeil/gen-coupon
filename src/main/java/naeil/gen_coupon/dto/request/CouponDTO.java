@@ -16,5 +16,11 @@ public class CouponDTO {
 
     private String masterCouponName;
 
+    private String expiredDate;
+
     private CouponPolicyDTO couponPolicyDTO;
+
+    private String alimTalkTemplateCode;
+
+    private String alimTalkTemplateName;
 }

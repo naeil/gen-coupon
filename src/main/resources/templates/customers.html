@@ -1,571 +1,543 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
 <head th:replace="~{fragments/head :: common-head('주문자 목록')}"></head>
 
 <body>
-<div class="container-fluid">
-    <div class="row">
-        <div th:replace="~{fragments/sidebar :: sidebar('customers')}"></div>
+    <div class="container-fluid">
+        <div class="row">
+            <div th:replace="~{fragments/sidebar :: sidebar('customers')}"></div>
 
-        <main class="col-md-10-5 content">
-            <div class="mb-4">
-                <h3>주문자 현황</h3>
-                <p class="text-muted mb-0">
-                    주문자별 쿠폰 발급 현황 및 주문 내역을 조회합니다.
-                </p>
-            </div>
+            <main class="col-md-10-5 content">
+                <div class="mb-4">
+                    <h3>주문자 현황</h3>
+                    <p class="text-muted mb-0">
+                        주문자별 쿠폰 발급 현황 및 주문 내역을 조회합니다.
+                    </p>
+                </div>
 
-            <div class="row g-3 mb-3 align-items-stretch">
-                <div class="col-md-6">
-                    <div class="card shadow-sm h-100">
-                        <div class="card-body py-3 d-flex flex-column">
-                            <h6 class="fw-bold mb-3">스탬프 보유 주문자 수 분포</h6>
-                            <div class="flex-grow-1" style="min-height: 200px; position: relative;">
-                                <canvas id="orderUserChart"></canvas>
+                <div class="row g-3 mb-3 align-items-stretch">
+                    <div class="col-md-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-body py-3 d-flex flex-column">
+                                <h6 class="fw-bold mb-3">스탬프 보유 주문자 수 분포</h6>
+                                <div class="flex-grow-1" style="min-height: 200px; position: relative;">
+                                    <canvas id="orderUserChart"></canvas>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="col-md-6">
-                    <div class="card shadow-sm h-100">
-                        <div class="card-body py-3 d-flex flex-column">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="fw-bold mb-0">전체 스토어별 주문 현황</h6>
-                                <span class="text-muted medium">총 주문자: <span id="totalOrderUser" class="fw-bold text-primary">-</span>명</span>
-                            </div>
-                            <div class="flex-grow-1" style="min-height: 200px; position: relative;">
-                                <canvas id="allStorePieChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card shadow-sm">
-                <div class="card-header bg-white py-2">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="m-0 fw-bold text-dark">주문자 목록</h6>
-
-                        <div class="input-group" style="width: 250px;">
-                            <input type="text" id="searchInput" class="form-control" placeholder="이름으로 검색">
-                            <button class="btn btn-primary px-3" type="button" id="searchBtn">
-                                <i class="bi bi-search"></i> 검색
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card-body p-0">
-                    <table class="table table-hover" id="customerTable">
-                        <thead class="table-light">
-                        <tr>
-                            <th>이름</th>
-                            <th>핸드폰 번호</th>
-                            <th>이메일</th>
-                            <th class="text-center">쿠폰</th>
-                            <th class="text-center">주문</th>
-                        </tr>
-                        </thead>
-                        <tbody id="customerTableBody">
-                        <tr th:each="customer, stat : ${customers}"
-                            th:attr="data-index=${stat.index}">
-                            <td th:text="${customer.customerName}">홍길동</td>
-                            <td th:text="${customer.customerHtel}">010-1111-2222</td>
-                            <td th:text="${customer.customerEmail}">user@email.com</td>
-                            <td class="text-center">
-                                <button class="btn btn-sm btn-outline-primary action-btn"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#couponModal"
-                                        th:attr="data-customer-id=${customer.customerId}">
-                                    쿠폰 보기
-                                </button>
-                            </td>
-
-                            <td class="text-center">
-                                <button class="btn btn-sm btn-outline-secondary action-btn"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#orderModal"
-                                        th:attr="data-customer-id=${customer.customerId}">
-                                    주문 보기
-                                </button>
-                            </td>
-                        </tr>
-                        <tr id="noDataRow" style="display: none;">
-                            <td colspan="5" class="text-center text-muted py-4">
-                                조회된 데이터가 없습니다.
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                    <nav>
-                        <ul class="pagination justify-content-center" id="pagination"></ul>
-                    </nav>
-                </div>
-            </div>
-
-        </main>
-    </div>
-</div>
-
-<div class="modal fade" id="couponModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-half-screen-custom">
-        <div class="modal-content shadow">
-
-            <div class="modal-header bg-white border-bottom">
-                <h5 class="modal-title fw-bold">
-                    회원 정보 : <span class="modal-title fw-bold" id="modalUserName"></span>
-                    <span class="modal-title fw-bold">(<span id="modalUserPhone"></span>)</span>
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-
-            <div class="modal-body bg-light">
-
-                <div class="row g-3 mb-4">
-                    <div class="col-md-8">
-                        <div class="card shadow-sm h-100 border-0">
-                            <div class="card-body">
+                    <div class="col-md-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-body py-3 d-flex flex-column">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <div>
-                                        <i class="bi bi-grid-3x3-gap-fill text-primary me-1"></i>
-                                        <span class="fw-bold fs-5">현재 스탬프 (<span id="currentStamp" class="text-primary">0</span>/<span id="maxStamp">10</span>)</span>
-                                    </div>
-                                    <span class="badge bg-light text-secondary border">
-                                        <span id="remainStamp" class="fw-bold text-danger">0</span>개 더 모으면 쿠폰!
-                                    </span>
+                                    <h6 class="fw-bold mb-0">전체 스토어별 주문 현황</h6>
+                                    <span class="text-muted medium">총 주문자: <span id="totalOrderUser"
+                                            class="fw-bold text-primary">-</span>명</span>
                                 </div>
-
-                                <div class="d-flex gap-2 w-100" id="stampProgressBar" style="height: 40px;">
+                                <div class="flex-grow-1" style="min-height: 200px; position: relative;">
+                                    <canvas id="allStorePieChart"></canvas>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <div class="card shadow-sm h-100 border-0 overflow-hidden position-relative text-white bg-primary bg-gradient">
-                            <div class="card-body d-flex flex-column justify-content-between position-relative" style="z-index: 1;">
-                                <div class="fs-6 opacity-75"><i class="bi bi-ticket-perforated-fill me-1"></i> 보유 쿠폰</div>
-                                <div class="d-flex align-items-end gap-2 mt-2">
-                                    <span class="h1 fw-bold mb-0" id="modalCouponCount">0</span>
-                                    <span class="fs-5 mb-1">장</span>
-                                    <span class="badge bg-white text-primary mb-2 ms-auto">사용가능</span>
-                                </div>
-                            </div>
-                            <i class="bi bi-ticket-perforated position-absolute" style="right: -10px; bottom: -10px; font-size: 5rem; opacity: 0.1; transform: rotate(-15deg);"></i>
                         </div>
                     </div>
                 </div>
 
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-white border-bottom-0 pt-3 px-3">
-                        <ul class="nav nav-tabs card-header-tabs" id="historyTab" role="tablist">
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link active fw-bold text-dark" id="stamp-tab" data-bs-toggle="tab" data-bs-target="#stampHistory" type="button" role="tab">
-                                    <i class="bi bi-clock-history me-1"></i> 스탬프 이력
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="m-0 fw-bold text-dark">주문자 목록</h6>
+
+                            <div class="input-group" style="width: 250px;">
+                                <input type="text" id="searchInput" class="form-control" placeholder="이름으로 검색">
+                                <button class="btn btn-primary px-3" type="button" id="searchBtn">
+                                    <i class="bi bi-search"></i> 검색
                                 </button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link fw-bold text-dark" id="coupon-tab" data-bs-toggle="tab" data-bs-target="#couponHistory" type="button" role="tab">
-                                    <i class="bi bi-ticket-detailed me-1"></i> 쿠폰 발급 내역
-                                </button>
-                            </li>
-                        </ul>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="card-body p-0">
-                        <div class="tab-content" id="historyTabContent">
-
-                            <div class="tab-pane fade show active" id="stampHistory" role="tabpanel">
-                                <div class="table-responsive">
-                                    <table class="table table-hover align-middle text-center mb-0">
-                                        <thead class="table-light text-secondary small text-uppercase">
-                                        <tr>
-                                            <th>No</th>
-                                            <th>날짜</th>
-                                            <th>내용</th>
-                                            <th>적립</th>
-                                            <th>알림톡 발송 결과</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody id="stampHistoryBody">
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="d-flex justify-content-center p-3 border-top">
-                                    <ul class="pagination pagination-sm mb-0" id="stampPagination"></ul>
-                                </div>
-                            </div>
-
-                            <div class="tab-pane fade" id="couponHistory" role="tabpanel">
-                                <div class="table-responsive">
-                                    <table class="table table-hover align-middle text-center mb-0">
-                                        <thead class="table-light text-secondary small text-uppercase">
-                                        <tr>
-                                            <th>발급일</th>
-                                            <th>쿠폰명</th>
-                                            <th>쿠폰 코드</th>
-                                            <th>알림톡 발송 결과</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody id="couponHistoryBody">
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="d-flex justify-content-center p-3 border-top">
-                                    <ul class="pagination pagination-sm mb-0" id="couponPagination"></ul>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="orderModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-custom">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">주문 내역</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body bg-light">
-
-                <div class="row g-3 mb-3">
-                    <div class="col-md-3">
-                        <div class="card shadow-sm border-0 h-100">
-                            <div class="card-body d-flex flex-column justify-content-center align-items-center">
-                                <span class="text-muted small">총 주문 횟수</span>
-                                <h2 class="fw-bold text-primary mb-0"><span id="totalOrderCount">0</span>회</h2>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-9">
-                        <div class="card shadow-sm border-0 h-100">
-                            <div class="card-body">
-                                <span class="text-muted small d-block mb-2">스토어별 주문 현황</span>
-                                <div id="storeSummaryList" class="d-flex flex-wrap gap-2">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card shadow-sm border-0">
-                    <div class="card-body p-0">
-                        <table class="table table-sm table-hover align-middle mb-0">
+                        <table class="table table-hover" id="customerTable">
                             <thead class="table-light">
-                            <tr>
-                                <th class="ps-3">주문번호</th>
-                                <th>스토어</th> <th>상품명</th>
-                                <th>주문금액</th>
-                                <th>주문일</th>
-                                <th>구매 결정일</th>
-                            </tr>
+                                <tr>
+                                    <th>이름</th>
+                                    <th>핸드폰 번호</th>
+                                    <th>이메일</th>
+                                    <th class="text-center">쿠폰</th>
+                                    <th class="text-center">주문</th>
+                                </tr>
                             </thead>
-                            <tbody id="orderTableBody">
+                            <tbody id="customerTableBody">
+                                <tr th:each="customer, stat : ${customers}" th:attr="data-index=${stat.index}">
+                                    <td th:text="${customer.customerName}">홍길동</td>
+                                    <td th:text="${customer.customerHtel}">010-1111-2222</td>
+                                    <td th:text="${customer.customerEmail}">user@email.com</td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-primary action-btn" data-bs-toggle="modal"
+                                            data-bs-target="#couponModal"
+                                            th:attr="data-customer-id=${customer.customerId}">
+                                            쿠폰 보기
+                                        </button>
+                                    </td>
+
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-secondary action-btn"
+                                            data-bs-toggle="modal" data-bs-target="#orderModal"
+                                            th:attr="data-customer-id=${customer.customerId}">
+                                            주문 보기
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr id="noDataRow" style="display: none;">
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        조회된 데이터가 없습니다.
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
+                    <div class="d-flex justify-content-center p-3 border-top">
+                        <ul class="pagination pagination-sm mb-0" id="pagination"></ul>
+                    </div>
                     </div>
                 </div>
 
-                <nav class="mt-3">
-                    <ul class="pagination justify-content-center" id="orderPagination"></ul>
-                </nav>
+            </main>
+        </div>
+    </div>
+
+    <div class="modal fade" id="couponModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable modal-half-screen-custom">
+            <div class="modal-content shadow">
+
+                <div class="modal-header bg-white border-bottom">
+                    <h5 class="modal-title fw-bold">
+                        회원 정보 : <span class="modal-title fw-bold" id="modalUserName"></span>
+                        <span class="modal-title fw-bold">(<span id="modalUserPhone"></span>)</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body bg-light">
+
+                    <div class="row g-3 mb-4 align-items-stretch">
+                        <div class="col-md-8">
+                            <div class="card shadow-sm h-100 border-0">
+                                <div class="card-body d-flex flex-column h-100">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div>
+                                            <i class="bi bi-grid-3x3-gap-fill text-primary me-1"></i>
+                                            <span class="fw-bold fs-5">현재 스탬프 (<span id="currentStamp"
+                                                    class="text-primary">0</span>/<span id="maxStamp">10</span>)</span>
+                                        </div>
+                                        <span class="badge bg-light text-secondary border">
+                                            <span id="remainStamp" class="fw-bold text-danger">0</span>개 더 모으면 쿠폰!
+                                        </span>
+                                    </div>
+                                    <!-- 프로그레스 바 영역: padding 추가로 마커 잘림 방지 -->
+                                    <div class="w-100 mt-auto mb-auto" id="stampProgressBar" style="min-height: 120px;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div
+                                class="card shadow-sm border-0 overflow-hidden position-relative text-white bg-primary bg-gradient h-100">
+                                <div class="card-body d-flex flex-column position-relative py-3 h-100" style="z-index: 1;">
+                                    <div class="fs-6 opacity-75 mb-2">
+                                        <i class="bi bi-ticket-perforated-fill me-1"></i> 보유 쿠폰
+                                    </div>
+                                    <div class="d-flex align-items-end gap-2 mt-auto">
+                                        <span class="h1 fw-bold mb-0" id="modalCouponCount">0</span>
+                                        <span class="fs-5 mb-1">장</span>
+                                        <span class="badge bg-white text-primary mb-2 ms-auto border-0">사용가능</span>
+                                    </div>
+                                </div>
+                                <i class="bi bi-ticket-perforated position-absolute"
+                                    style="right: 15px; bottom: 10px; font-size: 4rem; opacity: 0.1; transform: rotate(-15deg);"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-white border-bottom-0 pt-3 px-3">
+                            <ul class="nav nav-tabs card-header-tabs" id="historyTab" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active fw-bold text-dark" id="stamp-tab"
+                                        data-bs-toggle="tab" data-bs-target="#stampHistory" type="button" role="tab">
+                                        <i class="bi bi-clock-history me-1"></i> 스탬프 이력
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link fw-bold text-dark" id="coupon-tab" data-bs-toggle="tab"
+                                        data-bs-target="#couponHistory" type="button" role="tab">
+                                        <i class="bi bi-ticket-detailed me-1"></i> 쿠폰 발급 내역
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="card-body p-0">
+                            <div class="tab-content" id="historyTabContent">
+
+                                <div class="tab-pane fade show active" id="stampHistory" role="tabpanel">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle text-center mb-0">
+                                            <thead class="table-light text-secondary small text-uppercase">
+                                                <tr>
+                                                    <th class="text-nowrap" style="width: 50px;">No</th>
+                                                    <th class="text-nowrap" style="min-width: 110px;">날짜</th>
+                                                    <th class="text-nowrap">내용</th>
+                                                    <th class="text-nowrap" style="width: 70px;">적립</th>
+                                                    <th class="text-nowrap">알림톡 발송 결과</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="stampHistoryBody">
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="d-flex justify-content-center p-3 border-top">
+                                        <ul class="pagination pagination-sm mb-0" id="stampPagination"></ul>
+                                    </div>
+                                </div>
+
+                                <div class="tab-pane fade" id="couponHistory" role="tabpanel">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle text-center mb-0">
+                                            <thead class="table-light text-secondary small text-uppercase">
+                                                <tr>
+                                                    <th class="text-nowrap" style="min-width: 110px;">발급일</th>
+                                                    <th class="text-nowrap">쿠폰명</th>
+                                                    <th class="text-nowrap" style="min-width: 120px;">쿠폰 코드</th>
+                                                    <th class="text-nowrap">알림톡 발송 결과</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="couponHistoryBody">
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="d-flex justify-content-center p-3 border-top">
+                                        <ul class="pagination pagination-sm mb-0" id="couponPagination"></ul>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // --- 1. 메인 테이블(주문자 목록) 클라이언트 사이드 페이지네이션 ---
-        const allRows = Array.from(document.querySelectorAll('#customerTable tbody tr[data-index]'));
-        const noDataRow = document.getElementById('noDataRow');
+    <div class="modal fade" id="orderModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-custom">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">주문 내역</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-light">
 
-        // 현재 화면에 보여질 행들 (검색 시 이 배열이 바뀜)
-        let currentFilteredRows = allRows;
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-3">
+                            <div class="card shadow-sm border-0 h-100">
+                                <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                                    <span class="text-muted small">총 주문 횟수</span>
+                                    <h2 class="fw-bold text-primary mb-0"><span id="totalOrderCount">0</span>회</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="card shadow-sm border-0 h-100">
+                                <div class="card-body">
+                                    <span class="text-muted small d-block mb-2">스토어별 주문 현황</span>
+                                    <div id="storeSummaryList" class="d-flex flex-wrap gap-2">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-        const rowsPerPage = 10;
-        let currentPage = 1;
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body p-0">
+                            <table class="table table-sm table-hover align-middle text-center mb-0">
+                                <thead class="table-light">
+                                    <tr class="text-secondary small text-uppercase">
+                                        <th class="ps-3 text-nowrap" style="min-width: 130px;">주문번호</th>
+                                        <th class="text-nowrap" style="min-width: 100px;">스토어</th>
+                                        <th class="text-nowrap">상품명</th>
+                                        <th class="text-nowrap" style="min-width: 100px;">주문금액</th>
+                                        <th class="text-nowrap" style="min-width: 120px;">주문일</th>
+                                        <th class="text-nowrap" style="min-width: 120px;">구매 결정일</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="orderTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
-        function renderMainTable() {
-            const totalRows = currentFilteredRows.length;
-            const totalPages = Math.ceil(totalRows / rowsPerPage) || 1; // 0페이지 방지
+                    <div class="d-flex justify-content-center p-3 border-top">
+                        <ul class="pagination pagination-sm mb-0" id="orderPagination"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-            // 일단 모든 행을 숨김
-            allRows.forEach(row => row.style.display = 'none');
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // --- 1. 메인 테이블(주문자 목록) 클라이언트 사이드 페이지네이션 ---
+            const allRows = Array.from(document.querySelectorAll('#customerTable tbody tr[data-index]'));
+            const noDataRow = document.getElementById('noDataRow');
 
-            // 검색 결과가 0개일 때 처리
-            if (totalRows === 0) {
-                if (noDataRow) noDataRow.style.display = ''; // '결과 없음' 메시지 표시
-            } else {
-                if (noDataRow) noDataRow.style.display = 'none';
+            // 현재 화면에 보여질 행들 (검색 시 이 배열이 바뀜)
+            let currentFilteredRows = allRows;
 
-                // 현재 페이지에 해당하는 데이터만 표시
-                const start = (currentPage - 1) * rowsPerPage;
-                const end = start + rowsPerPage;
-
-                currentFilteredRows.slice(start, end).forEach(row => {
-                    row.style.display = '';
-                });
-            }
-
-            // 페이지네이션 버튼 업데이트
-            renderMainPagination(totalPages);
-        }
-
-        function renderMainPagination() {
-            // 데이터가 없으면 페이징 버튼 생성 안 함
-            if (currentFilteredRows.length === 0) return;
-
-            for (let i = 1; i <= totalPages; i++) {
-                const li = document.createElement('li');
-                li.className = 'page-item' + (i === currentPage ? ' active' : '');
-
-                const a = document.createElement('a');
-                a.className = 'page-link';
-                a.href = '#';
-                a.textContent = i;
-
-                a.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    currentPage = i;
-                    renderMainTable(); // 페이지 클릭 시 다시 그리기
-                });
-
-                li.appendChild(a);
-                pagination.appendChild(li);
-            }
-        }
-
-        function performSearch() {
-            const searchInput = document.getElementById('searchInput');
-            const keyword = searchInput.value.trim().toLowerCase(); // 소문자로 변환하여 비교
-
-            // 원본 데이터(allRows)에서 필터링
-            currentFilteredRows = allRows.filter(row => {
-                // 첫 번째 td (이름)의 텍스트를 가져옴
-                const nameCell = row.querySelector('td:first-child');
-                const nameText = nameCell ? nameCell.textContent.toLowerCase() : '';
-
-                // 검색어가 포함되어 있는지 확인
-                return nameText.includes(keyword);
-            });
-
-            // 검색 후에는 1페이지로 초기화
-            currentPage = 1;
-            renderMainTable();
-        }
-
-        // 1-5. 이벤트 리스너 등록
-        const searchBtn = document.getElementById('searchBtn');
-        const searchInput = document.getElementById('searchInput');
-
-        if (searchBtn) {
-            searchBtn.addEventListener('click', performSearch);
-        }
-
-        if (searchInput) {
-            searchInput.addEventListener('keyup', function (e) {
-                if (e.key === 'Enter') { // 엔터키 입력 시 검색
-                    performSearch();
-                }
-            });
-        }
-
-        // 1-6. 초기 실행 (전체 목록 보여주기)
-        renderMainTable();
-        });
-
-
-        function renderPaginatedTable({ data, tbodyId, paginationId, pageSize, rowRenderer }) {
-            const tbody = document.getElementById(tbodyId);
-            const pagination = document.getElementById(paginationId);
-
-            // [안전 장치] 요소가 없으면 실행 중단 (에러 방지)
-            if (!tbody || !pagination) {
-                console.error(`요소를 찾을 수 없습니다: ${tbodyId} 또는 ${paginationId}`);
-                return;
-            }
-
+            const rowsPerPage = 10;
             let currentPage = 1;
-            const totalPages = Math.ceil(data.length / pageSize);
 
-            function renderPage(page) {
-                currentPage = page;
-                tbody.innerHTML = '';
+            function renderMainTable() {
+                const totalRows = currentFilteredRows.length;
+                const totalPages = Math.ceil(totalRows / rowsPerPage) || 1; // 0페이지 방지
 
-                const start = (page - 1) * pageSize;
-                const end = start + pageSize;
+                // 일단 모든 행을 숨김
+                allRows.forEach(row => row.style.display = 'none');
 
-                // 데이터가 없거나 비어있을 경우 처리
-                if (!data || data.length === 0) {
-                     tbody.innerHTML = `
-                        <tr>
-                            <td colspan="10" class="text-center text-muted py-3">
-                                조회된 데이터가 없습니다.
-                            </td>
-                        </tr>
-                    `;
+                // 검색 결과가 0개일 때 처리
+                if (totalRows === 0) {
+                    if (noDataRow) noDataRow.style.display = ''; // '결과 없음' 메시지 표시
+                } else {
+                    if (noDataRow) noDataRow.style.display = 'none';
+
+                    // 현재 페이지에 해당하는 데이터만 표시
+                    const start = (currentPage - 1) * rowsPerPage;
+                    const end = start + rowsPerPage;
+
+                    currentFilteredRows.slice(start, end).forEach(row => {
+                        row.style.display = '';
+                    });
+                }
+
+                // 페이지네이션 버튼 업데이트
+                renderMainPagination(totalPages);
+            }
+
+            function renderMainPagination(totalPages) {
+                // 데이터가 없을 때만 숨김
+                if (currentFilteredRows.length === 0) {
                     pagination.innerHTML = '';
                     return;
                 }
 
-                // 데이터 슬라이싱해서 렌더링
-                data.slice(start, end).forEach((item, index) => {
-                    const realIndex = start + index;
-                    tbody.innerHTML += rowRenderer(item, realIndex);
-                });
+                const pagesToShow = Math.max(1, totalPages);
+                for (let i = 1; i <= pagesToShow; i++) {
+                    const li = document.createElement('li');
+                    li.className = 'page-item' + (i === currentPage ? ' active' : '');
 
-                renderPagination();
-        }
+                    const a = document.createElement('a');
+                    a.className = 'page-link';
+                    a.href = '#';
+                    a.textContent = i;
 
-        function renderPagination() {
-            pagination.innerHTML = '';
-            // 페이지가 1개 이하거나 데이터가 없으면 페이징 숨김 (선택사항)
-            if (totalPages <= 1) return;
+                    a.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        currentPage = i;
+                        renderMainTable(); // 페이지 클릭 시 다시 그리기
+                    });
 
-            for (let i = 1; i <= totalPages; i++) {
-                const li = document.createElement('li');
-                li.className = 'page-item' + (i === currentPage ? ' active' : '');
-                const a = document.createElement('a');
-                a.className = 'page-link';
-                a.href = '#';
-                a.textContent = i;
-                a.onclick = e => {
-                    e.preventDefault();
-                    renderPage(i);
-                };
-                li.appendChild(a);
-                pagination.appendChild(li);
+                    li.appendChild(a);
+                    pagination.appendChild(li);
+                }
             }
-        }
 
-        // 초기 실행
-        renderPage(1);
-    }
+            function performSearch() {
+                const searchInput = document.getElementById('searchInput');
+                const keyword = searchInput.value.trim().toLowerCase(); // 소문자로 변환하여 비교
+
+                // 원본 데이터(allRows)에서 필터링
+                currentFilteredRows = allRows.filter(row => {
+                    // 첫 번째 td (이름)의 텍스트를 가져옴
+                    const nameCell = row.querySelector('td:first-child');
+                    const nameText = nameCell ? nameCell.textContent.toLowerCase() : '';
+
+                    // 검색어가 포함되어 있는지 확인
+                    return nameText.includes(keyword);
+                });
+
+                // 검색 후에는 1페이지로 초기화
+                currentPage = 1;
+                renderMainTable();
+            }
+
+            // 1-5. 이벤트 리스너 등록
+            const searchBtn = document.getElementById('searchBtn');
+            const searchInput = document.getElementById('searchInput');
+
+            if (searchBtn) {
+                searchBtn.addEventListener('click', performSearch);
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('keyup', function (e) {
+                    if (e.key === 'Enter') { // 엔터키 입력 시 검색
+                        performSearch();
+                    }
+                });
+            }
+
+            // 1-6. 초기 실행 (전체 목록 보여주기)
+            renderMainTable();
+        });
 
 
-    // --- 3. [쿠폰 모달] 로직 (통합 API 사용) ---
-    const couponModal = document.getElementById('couponModal');
-    couponModal.addEventListener('show.bs.modal', function (event) {
 
-        const stampTabButton = document.getElementById('stamp-tab');
-        const stampTab = bootstrap.Tab.getOrCreateInstance(stampTabButton);
-        stampTab.show();
 
-        const button = event.relatedTarget;
-        const customerId = button.getAttribute('data-customer-id');
+        // --- 3. [쿠폰 모달] 로직 (통합 API 사용) ---
+        const couponModal = document.getElementById('couponModal');
+        couponModal.addEventListener('show.bs.modal', function (event) {
 
-        // 통합 API 호출
-        fetch(`/naeil/api/customers/${customerId}/detail`)
-            .then(res => {
-                if (!res.ok) throw new Error('API Error');
-                return res.json();
-            })
-            .then(data => {
-                // A. 헤더 정보 및 요약 카드 업데이트
-                document.getElementById('modalUserName').textContent = data.customerName;
+            const stampTabButton = document.getElementById('stamp-tab');
+            const stampTab = bootstrap.Tab.getOrCreateInstance(stampTabButton);
+            stampTab.show();
 
-                // DTO 필드명이 'htel'이므로 data.htel 사용 (기존: customerPhone)
-                document.getElementById('modalUserPhone').textContent = data.htel || '-';
+            const button = event.relatedTarget;
+            const customerId = button.getAttribute('data-customer-id');
 
-                document.getElementById('currentStamp').textContent = data.currentStamp;
-                document.getElementById('maxStamp').textContent = data.maxStamp;
-                document.getElementById('remainStamp').textContent = data.remainStamp;
-                document.getElementById('modalCouponCount').textContent = data.coupons ? data.coupons.length : 0;
+            // 통합 API 호출
+            fetch(`/naeil/api/customers/${customerId}/detail`)
+                .then(res => {
+                    if (!res.ok) throw new Error('API Error');
+                    return res.json();
+                })
+                .then(data => {
+                    console.log("Customer data loaded:", data);
+                    // A. 헤더 정보 및 요약 카드 업데이트
+                    document.getElementById('modalUserName').textContent = data.customerName;
 
-                // B. 스탬프 프로그레스 바 그리기
-                drawStampProgressBar(data.currentStamp, data.maxStamp);
+                    // DTO 필드명이 'htel'이므로 data.htel 사용 (기존: customerPhone)
+                    document.getElementById('modalUserPhone').textContent = data.htel || '-';
 
-                // C. [탭 1] 스탬프 이력 (DTO 필드명: orderHistories)
-                renderPaginatedTable({
-                    data: data.orderHistories || [],
-                    tbodyId: 'stampHistoryBody',
-                    paginationId: 'stampPagination',
-                    pageSize: 5,
-                    rowRenderer: (order, index) => `
+                    // 현재 스탬프 계산: orderHistories 항목을 모두 뒤져 발급된 스탬프 개수 합산
+                    let calculatedCurrentStamp = 0;
+                    if (data.orderHistories && Array.isArray(data.orderHistories)) {
+                        data.orderHistories.forEach(order => {
+                            if (order.stampDTO && Array.isArray(order.stampDTO)) {
+                                calculatedCurrentStamp += order.stampDTO.length;
+                            }
+                        });
+                    }
+
+                    // 만약 서버에서 준 currentStamp 값이 더 크다면 (예: 통합 로직), 그 값 우선
+                    const finalCurrentStamp = Math.max(calculatedCurrentStamp, data.currentStamp || 0);
+
+                    document.getElementById('currentStamp').textContent = finalCurrentStamp;
+                    document.getElementById('maxStamp').textContent = data.maxStamp;
+
+                    // 다음 마일스톤 찾기
+                    const milestones = (data.couponPolicyList || [])
+                        .map(p => p.couponPolicyDTO ? p.couponPolicyDTO.requiredStampCount : 0)
+                        .filter(count => count > finalCurrentStamp)
+                        .sort((a, b) => a - b);
+
+                    const nextMilestone = milestones.length > 0 ? milestones[0] : data.maxStamp;
+                    document.getElementById('remainStamp').textContent = Math.max(0, nextMilestone - finalCurrentStamp);
+
+                    document.getElementById('modalCouponCount').textContent = data.coupons ? data.coupons.length : 0;
+
+                    // B. 스탬프 프로그레스 바 그리기
+                    try {
+                        drawStampProgressBar(finalCurrentStamp, data.maxStamp, data.couponPolicyList);
+                    } catch (e) {
+                        console.error("Progress bar error:", e);
+                    }
+
+                    // C. [탭 1] 스탬프 이력 (DTO 필드명: orderHistories)
+                    renderPaginatedTable({
+                        data: data.orderHistories || [],
+                        tbodyId: 'stampHistoryBody',
+                        paginationId: 'stampPagination',
+                        pageSize: 5,
+                        rowRenderer: (order, index) => `
                         <tr>
-                            <td class="text-muted">${index + 1}</td>
-                            <td>${formatDate(order.createDate)}</td>
+                            <td class="text-muted text-nowrap">${index + 1}</td>
+                            <td class="text-nowrap">${formatDate(order.createDate)}</td>
                             <td class="text-start ps-4">${order.shopSaleName}</td>
-                            <td class="fw-bold text-primary">1</td>
-                            <td>
-                                <span class="badge border bg-danger-subtle text-danger border-danger-subtle">
-                                    메시지가 비어있거나 잘못된 동보 전송 수신번호 리스트
+                            <td class="fw-bold text-primary text-nowrap">1</td>
+                            <td class="text-start">
+                                <span class="badge border bg-danger-subtle text-danger border-danger-subtle text-nowrap text-start">
+                                    ${order.rslt || '메시지 전송 실패'}
                                 </span>
                             </td>
                         </tr>
                     `
-                });
+                    });
 
-                // D. [탭 2] 쿠폰 목록
-                renderPaginatedTable({
-                    data: data.coupons || [],
-                    tbodyId: 'couponHistoryBody',
-                    paginationId: 'couponPagination',
-                    pageSize: 5,
-                    rowRenderer: coupon => `
+                    // D. [탭 2] 쿠폰 목록
+                    renderPaginatedTable({
+                        data: data.coupons || [],
+                        tbodyId: 'couponHistoryBody',
+                        paginationId: 'couponPagination',
+                        pageSize: 5,
+                        rowRenderer: coupon => `
                         <tr>
-                            <td class="text-muted">${formatDate(coupon.createDate)}</td>
+                            <td class="text-muted text-nowrap">${formatDate(coupon.createDate)}</td>
                             <td class="text-center fw-bold">${coupon.imwebCouponName}</td>
-                            <td class="text-primary font-monospace">${coupon.issuedCouponCode}</td>
-                            <td>
-                                <span class="badge border ${ (coupon.rslt === '알림톡 발송 완료' || !coupon.rslt) ? 'bg-success-subtle text-success border-success-subtle' : 'bg-danger-subtle text-danger border-danger-subtle' }">
-                                    ${coupon.rslt === '알림톡 발송 완료' ? coupon.rslt : '알림톡 발송 실패 : ' + coupon.rslt}
+                            <td class="text-primary font-monospace text-nowrap">${coupon.issuedCouponCode}</td>
+                            <td class="text-start">
+                                <span class="badge border ${(coupon.rslt === '알림톡 발송 완료' || !coupon.rslt) ? 'bg-success-subtle text-success border-success-subtle' : 'bg-danger-subtle text-danger border-danger-subtle'} text-nowrap text-start">
+                                    ${coupon.rslt === '알림톡 발송 완료' ? coupon.rslt : '알림톡 발송 실패 : ' + (coupon.rslt || '알 수 없는 오류')}
                                 </span>
                             </td>
                         </tr>
                     `
+                    });
+                })
+                .catch(err => {
+                    console.error("Fetch/Render error:", err);
+                    alert("데이터 로딩 중 오류가 발생했습니다: " + err.message);
                 });
-            })
-            .catch(err => {
-                console.error(err);
-                alert("상세 정보를 불러오지 못했습니다.");
-            });
-    });
+        });
 
-    // --- 4. [주문 모달] 로직 수정됨 ---
-    const orderModal = document.getElementById('orderModal');
-    orderModal.addEventListener('show.bs.modal', function (event) {
-        const customerId = event.relatedTarget.getAttribute('data-customer-id');
+        // --- 4. [주문 모달] 로직 수정됨 ---
+        const orderModal = document.getElementById('orderModal');
+        orderModal.addEventListener('show.bs.modal', function (event) {
+            const customerId = event.relatedTarget.getAttribute('data-customer-id');
 
-        fetch(`/naeil/api/orders?customerId=${customerId}`)
-            .then(res => res.json())
-            .then(data => {
+            fetch(`/naeil/api/orders?customerId=${customerId}`)
+                .then(res => res.json())
+                .then(data => {
 
-                // ---------------------------------------------
-                // [추가된 로직] 요약 정보 계산 및 렌더링
-                // ---------------------------------------------
+                    // ---------------------------------------------
+                    // [추가된 로직] 요약 정보 계산 및 렌더링
+                    // ---------------------------------------------
 
-                // 1. 총 주문 횟수 계산
-                const totalCount = data.length;
-                document.getElementById('totalOrderCount').textContent = totalCount;
+                    // 1. 총 주문 횟수 계산
+                    const totalCount = data.length;
+                    document.getElementById('totalOrderCount').textContent = totalCount;
 
-                // 2. 스토어별 주문 횟수 집계 (reduce 사용)
-                // 주의: order 객체 안에 'shopName'이라는 필드가 있다고 가정했습니다.
-                // DTO에 shopName이 없다면 해당 필드명으로 바꿔주세요.
-                const storeStats = data.reduce((acc, order) => {
-                    // shopName이 없으면 '기타'로 분류
-                    const name = order.shopName || '스토어 정보 없음';
-                    acc[name] = (acc[name] || 0) + 1;
-                    return acc;
-                }, {});
+                    // 2. 스토어별 주문 횟수 집계 (reduce 사용)
+                    // 주의: order 객체 안에 'shopName'이라는 필드가 있다고 가정했습니다.
+                    // DTO에 shopName이 없다면 해당 필드명으로 바꿔주세요.
+                    const storeStats = data.reduce((acc, order) => {
+                        // shopName이 없으면 '기타'로 분류
+                        const name = order.shopName || '스토어 정보 없음';
+                        acc[name] = (acc[name] || 0) + 1;
+                        return acc;
+                    }, {});
 
-                // 3. 스토어 뱃지 렌더링
-                const storeContainer = document.getElementById('storeSummaryList');
+                    // 3. 스토어 뱃지 렌더링
+                    const storeContainer = document.getElementById('storeSummaryList');
 
-                if (totalCount === 0) {
-                    storeContainer.innerHTML = '<span class="text-muted small">주문 내역이 없습니다.</span>';
-                } else {
-                    storeContainer.innerHTML = Object.entries(storeStats)
-                        .map(([name, count]) => `
+                    if (totalCount === 0) {
+                        storeContainer.innerHTML = '<span class="text-muted small">주문 내역이 없습니다.</span>';
+                    } else {
+                        storeContainer.innerHTML = Object.entries(storeStats)
+                            .map(([name, count]) => `
                             <div class="d-inline-flex align-items-center border rounded-3 px-3 py-2 bg-white shadow-sm">
 
                                 <span class="fw-bold text-secondary me-2">${name}</span>
@@ -574,223 +546,255 @@
 
                             </div>
                         `).join('');
-                }
+                    }
 
-                // ---------------------------------------------
-                // [기존 로직] 테이블 렌더링
-                // ---------------------------------------------
-                renderPaginatedTable({
-                    data,
-                    tbodyId: 'orderTableBody',
-                    paginationId: 'orderPagination',
-                    pageSize: 10,
-                    rowRenderer: order => `
-                        <tr>
-                            <td class="ps-3 text-secondary small">${order.uniq}</td>
-                            <td class="fw-bold text-dark">${order.shopName || '-'}</td>
-                            <td>${order.shopSaleName}</td>
-                            <td>${formatAmount(order.payAmt)}원</td>
-                            <td>${formatDate(order.createDate)}</td>
-                            <td>${formatDate(order.confirmDate)}</td>
-                        </tr>
-                    `
+                    // ---------------------------------------------
+                    // [기존 로직] 테이블 렌더링
+                    // ---------------------------------------------
+                    renderPaginatedTable({
+                        data,
+                        tbodyId: 'orderTableBody',
+                        paginationId: 'orderPagination',
+                        pageSize: 10,
+                        rowRenderer: order => {
+                            return `
+                                <tr>
+                                    <td class="ps-3 text-secondary small text-nowrap">${order.uniq}</td>
+                                    <td class="fw-bold text-dark text-nowrap">${order.shopName || '-'}</td>
+                                    <td class="text-start">
+                                        <span class="text-resp-truncate" title="${order.shopSaleName}">${order.shopSaleName || '-'}</span>
+                                    </td>
+                                    <td class="text-nowrap">${formatAmount(order.payAmt)}원</td>
+                                    <td class="text-nowrap">${formatDate(order.createDate)}</td>
+                                    <td class="text-nowrap">${formatDate(order.confirmDate)}</td>
+                                </tr>
+                            `;
+                        }
+                    });
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("주문 정보를 불러오는 중 오류가 발생했습니다." + err.message);
                 });
-            })
-            .catch(err => {
-                console.error(err);
-                alert("주문 정보를 불러오는 중 오류가 발생했습니다." + err.message);
-            });
-    });
-
-    // --- 5. 유틸리티 함수들 ---
-
-    // 스탬프 바 그리기 함수 (누락되었던 부분 추가)
-    function drawStampProgressBar(current, max) {
-        const container = document.getElementById('stampProgressBar');
-        container.innerHTML = ''; // 초기화
-
-        for (let i = 1; i <= max; i++) {
-            const div = document.createElement('div');
-            // 스타일 설정
-            div.className = 'flex-fill rounded-1 transition-all border';
-            div.style.height = '100%';
-            div.style.transition = 'background-color 0.3s';
-
-            // 칸 사이 간격 (마지막 칸 제외)
-            if (i < max) {
-                div.style.marginRight = '4px';
-            }
-
-            if (i <= current) {
-                // 채워진 칸
-                div.classList.add('bg-primary', 'border-primary');
-            } else {
-                // 빈 칸
-                div.classList.add('bg-light', 'border-light-subtle');
-            }
-            container.appendChild(div);
-        }
-    }
-
-    function formatDate(isoDate) {
-        if (!isoDate) return '-';
-        const date = new Date(isoDate);
-        return date.toLocaleDateString('ko-KR');
-    }
-
-    function formatAmount(amount) {
-        if (amount === null || amount === undefined) return '-';
-        return Number(amount).toLocaleString('ko-KR');
-    }
-</script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        fetch('/naeil/api/customers/summary')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('통계 데이터 조회 실패');
-                }
-                return response.json();
-            })
-            .then(data => {
-                renderSummary(data);
-            })
-            .catch(err => {
-                console.error(err);
-            });
         });
 
-    function renderSummary(data) {
-        // 1️⃣ 총 주문자 수 세팅
-        document.getElementById('totalOrderUser').innerText = data.total + '명';
+        // --- 5. 유틸리티 함수들 ---
 
-        // 2️⃣ stamps 데이터 가공
-        const labels = Object.keys(data.stamps)
-            .sort((a, b) => Number(a) - Number(b))
-            .map(k => `${k}개`);
+        function drawStampProgressBar(current, max, couponPolicyList = []) {
+            const container = document.getElementById('stampProgressBar');
+            container.innerHTML = '';
+            
+            // 컨테이너 스타일 (타임라인 레이아웃)
+            container.className = 'w-100 position-relative d-flex justify-content-between align-items-center';
+            container.style.padding = '40px 10px 50px 10px';
+            container.style.minHeight = '120px';
 
-        const values = Object.keys(data.stamps)
-            .sort((a, b) => Number(a) - Number(b))
-            .map(k => data.stamps[k]);
+            // 중앙 연결선
+            const line = document.createElement('div');
+            line.style.position = 'absolute';
+            line.style.top = '50%';
+            line.style.left = '0';
+            line.style.width = '100%';
+            line.style.height = '2px';
+            line.style.backgroundColor = '#e2efff';
+            line.style.zIndex = '1';
+            container.appendChild(line);
 
-        // 3️⃣ 그래프 렌더링
-        renderChart(labels, values);
-    }
+            // milestones 추출
+            const milestones = (couponPolicyList || [])
+                .map(p => p.couponPolicyDTO ? p.couponPolicyDTO.requiredStampCount : 0)
+                .filter(count => count > 0);
 
-    function renderChart(labels, values) {
-        const ctx = document.getElementById('orderUserChart');
+            for (let i = 1; i <= max; i++) {
+                const nodeContainer = document.createElement('div');
+                nodeContainer.className = 'position-relative d-flex flex-column align-items-center';
+                nodeContainer.style.zIndex = '2';
+                nodeContainer.style.flex = '1';
 
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: values,
-                    borderRadius: 6,
-                    barThickness: 16,
-                    backgroundColor: '#2f80ed'
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: ctx => `${ctx.raw}명`
-                        }
+                const isEarned = i <= current;
+                const isMilestone = milestones.includes(i);
+
+                // 원형 노드
+                const circle = document.createElement('div');
+                circle.className = 'rounded-circle d-flex align-items-center justify-content-center transition-all shadow-sm';
+                circle.style.width = '48px';
+                circle.style.height = '48px';
+                circle.style.border = '2px solid #3b82f6';
+                circle.style.backgroundColor = isEarned ? '#3b82f6' : '#ffffff';
+
+                if (isEarned) {
+                    circle.innerHTML = '<i class="bi bi-check2 text-white fs-4"></i>';
+                } else {
+                    if (isMilestone) {
+                        circle.style.borderStyle = 'dashed';
+                        circle.innerHTML = '<i class="bi bi-gift text-primary fs-5"></i>';
+                    } else {
+                        circle.style.borderColor = '#e2efff';
+                        // 비어있는 상태는 아무것도 안 넣음
                     }
+                }
+
+                nodeContainer.appendChild(circle);
+
+                // "현재 X개" 말풍선 마커 (현재 위치에만 표시)
+                if (i === current && current > 0) {
+                    const marker = document.createElement('div');
+                    marker.className = 'position-absolute bg-primary text-white rounded-3 px-3 py-1 shadow fw-bold';
+                    marker.style.top = '60px';
+                    marker.style.whiteSpace = 'nowrap';
+                    marker.style.fontSize = '0.85rem';
+                    marker.innerHTML = `현재 ${current}개`;
+
+                    // 말풍선 꼬리
+                    const arrow = document.createElement('div');
+                    arrow.style.position = 'absolute';
+                    arrow.style.top = '-6px';
+                    arrow.style.left = '50%';
+                    arrow.style.transform = 'translateX(-50%)';
+                    arrow.style.borderLeft = '6px solid transparent';
+                    arrow.style.borderRight = '6px solid transparent';
+                    arrow.style.borderBottom = '6px solid #3b82f6';
+                    marker.appendChild(arrow);
+
+                    nodeContainer.appendChild(marker);
+                }
+
+                container.appendChild(nodeContainer);
+            }
+        }
+
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/naeil/api/customers/summary')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('통계 데이터 조회 실패');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    renderSummary(data);
+                })
+                .catch(err => {
+                    console.error(err);
+                });
+        });
+
+        function renderChart(labels, values) {
+            const ctx = document.getElementById('orderUserChart');
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        borderRadius: 6,
+                        barThickness: 16,
+                        backgroundColor: '#2f80ed'
+                    }]
                 },
-                scales: {
-                    x: {
-                        ticks: {
-                            callback: value => value + '명'
-                        },
-                        grid: {
-                            color: '#eee'
-                        }
-                    },
-                    y: {
-                        grid: { display: false }
-                    }
-                }
-            }
-        });
-    }
-
-        function renderSummary(data) {
-        // 1️⃣ 총 주문자 수 세팅 (위치가 바뀌었으므로 ID 확인 필요)
-        const totalUserEl = document.getElementById('totalOrderUser');
-        if (totalUserEl) totalUserEl.innerText = data.total;
-
-        // 2️⃣ [기존] 바 차트 데이터 가공 및 렌더링
-        if (data.stamps) {
-            const labels = Object.keys(data.stamps)
-                .sort((a, b) => Number(a) - Number(b))
-                .map(k => `${k}개`);
-            const values = Object.keys(data.stamps)
-                .sort((a, b) => Number(a) - Number(b))
-                .map(k => data.stamps[k]);
-            renderChart(labels, values);
-        }
-
-        // 3️⃣ ✅ [신규] 전체 스토어 도넛 차트 렌더링
-        // data.storeStats가 존재한다고 가정 (예: { '네이버': 100, '쿠팡': 50 })
-        if (data.storeStats) {
-            renderAllStoreDonutChart(data.storeStats);
-        }
-    }
-
-    // ✅ [신규] 전체 스토어 도넛 차트 렌더링 함수
-    function renderAllStoreDonutChart(storeStats) {
-        const ctx = document.getElementById('allStorePieChart').getContext('2d');
-
-        const labels = Object.keys(storeStats);
-        const values = Object.values(storeStats);
-        const totalOrders = values.reduce((a, b) => a + b, 0);
-
-        // 색상 자동 생성
-        const backgroundColors = labels.map((_, i) =>
-            `hsl(${(i * 360) / labels.length}, 65%, 55%)`
-        );
-
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: values,
-                    backgroundColor: backgroundColors,
-                    borderWidth: 2,
-                    borderColor: '#ffffff',
-                    hoverOffset: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: { boxWidth: 12, font: { size: 11 } }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const value = context.raw;
-                                // 전체 주문 건수 대비 비율 계산
-                                const percentage = totalOrders > 0 ? Math.round((value / totalOrders) * 100) : 0;
-                                return `${context.label}: ${value}건 (${percentage}%)`;
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => `${ctx.raw}명`
                             }
                         }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                callback: value => value + '명'
+                            },
+                            grid: {
+                                color: '#eee'
+                            }
+                        },
+                        y: {
+                            grid: { display: false }
+                        }
                     }
-                },
-                cutout: '55%'
+                }
+            });
+        }
+
+        function renderSummary(data) {
+
+            const totalUserEl = document.getElementById('totalOrderUser');
+            if (totalUserEl) totalUserEl.innerText = (data.total || 0);
+
+            if (data.stamps && Object.keys(data.stamps).length > 0) {
+                const labels = Object.keys(data.stamps)
+                    .sort((a, b) => Number(a) - Number(b))
+                    .map(k => `${k}개`);
+                const values = Object.keys(data.stamps)
+                    .sort((a, b) => Number(a) - Number(b))
+                    .map(k => data.stamps[k]);
+                renderChart(labels, values);
             }
-        });
-    }
-</script>
+
+            if (data.storeStats && Object.keys(data.storeStats).length > 0) {
+                renderAllStoreDonutChart(data.storeStats);
+            }
+        }
+
+        function renderAllStoreDonutChart(storeStats) {
+            const ctx = document.getElementById('allStorePieChart').getContext('2d');
+
+            const labels = Object.keys(storeStats);
+            const values = Object.values(storeStats);
+            const totalOrders = values.reduce((a, b) => a + b, 0);
+
+            // 색상 자동 생성
+            const backgroundColors = labels.map((_, i) =>
+                `hsl(${(i * 360) / labels.length}, 65%, 55%)`
+            );
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: backgroundColors,
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { boxWidth: 12, font: { size: 11 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const value = context.raw;
+                                    // 전체 주문 건수 대비 비율 계산
+                                    const percentage = totalOrders > 0 ? Math.round((value / totalOrders) * 100) : 0;
+                                    return `${context.label}: ${value}건 (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '55%'
+                }
+            });
+        }
+    </script>
 </body>
+
 </html>
