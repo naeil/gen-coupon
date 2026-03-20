@@ -68,17 +68,29 @@ public class StampService {
                 .map(CouponPolicyEntity::getRequiredStampCount)
                 .collect(Collectors.toSet());
 
+        Map<Integer, List<StampEntity>> pendingByCustomer = pendingStamps.stream()
+                .collect(Collectors.groupingBy(s -> s.getCustomerEntity().getCustomerId()));
+
         Map<Integer, List<StampEntity>> alarmCandidates = new HashMap<>();
 
-        for (StampEntity stamp : pendingStamps) {
-            CustomerEntity customer = stamp.getCustomerEntity();
-            int currentTotal = totalCountMap.getOrDefault(customer.getCustomerId(), 0);
+        for (Map.Entry<Integer, List<StampEntity>> entry : pendingByCustomer.entrySet()) {
+            Integer customerId = entry.getKey();
+            List<StampEntity> customerPendingStamps = entry.getValue();
+            CustomerEntity customer = customerPendingStamps.get(0).getCustomerEntity();
 
-            if (!couponThresholds.contains(currentTotal)) {
-                alarmCandidates.computeIfAbsent(customer.getCustomerId(), k -> new ArrayList<>())
-                        .add(stamp);
+            int currentTotal = totalCountMap.getOrDefault(customerId, 0);
+            int newlyAddedCount = customerPendingStamps.size();
+            int previousTotal = currentTotal - newlyAddedCount;
+
+            // 해당 구간(이전 총합 ~ 현재 총합) 사이에 쿠폰 발급 기준이 하나라도 있는지 확인
+            boolean reachedMilestone = couponThresholds.stream()
+                    .anyMatch(t -> t > previousTotal && t <= currentTotal);
+
+            if (!reachedMilestone) {
+                alarmCandidates.put(customerId, customerPendingStamps);
             } else {
-                log.info("{} 고객 쿠폰 발급 기준({}), 스탬프 알림 생략", customer.getCustomerName(), currentTotal);
+                log.info("{} 고객 쿠폰 발급 기준 통과({} -> {}), 스탬프 알림 생략",
+                        customer.getCustomerName(), previousTotal, currentTotal);
             }
         }
 
@@ -94,6 +106,8 @@ public class StampService {
         List<StampEntity> newStamps = orders.stream()
                 .map(order -> {
                     StampEntity stamp = new StampEntity(order);
+                    // 백필 시에도 정합성을 위해 고객의 누적 주문 횟수 증가
+                    order.getCustomerEntity().incrementOrderCount();
                     stamp.setRslt("0"); // Mark as already processed to avoid notifications
                     return stamp;
                 })
