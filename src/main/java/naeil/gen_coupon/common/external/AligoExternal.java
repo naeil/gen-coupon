@@ -10,7 +10,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 import tools.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
@@ -49,18 +48,22 @@ public class AligoExternal {
         body.add("sender", sender);
         body.addAll(messageTemplate);
 
-        log.info("aligo request body : {}", body);
+        log.info("===== Aligo Request Details =====");
+        log.info("URL: https://kakaoapi.aligo.in/akv10/alimtalk/send/");
+        log.info("Template Code: {}", messageTemplate.getFirst("tpl_code"));
+        messageTemplate.forEach((key, values) -> {
+            if (key.startsWith("receiver_") || key.startsWith("message_") || key.startsWith("subject_") || key.startsWith("button_") || key.startsWith("recvname_") || key.equals("image")) {
+                log.info("Param: {} = {}", key, values);
+            }
+        });
+        log.info("================================");
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
-
-        String requestUrl = UriComponentsBuilder
-                .fromUriString("https://kakaoapi.aligo.in/akv10/alimtalk/send/")
-                .toUriString();
 
         ResponseEntity<JsonNode> response;
         try {
             response = restTemplate.exchange(
-                    requestUrl,
+                    "https://kakaoapi.aligo.in/akv10/alimtalk/send/",
                     HttpMethod.POST,
                     request,
                     JsonNode.class);
@@ -76,9 +79,9 @@ public class AligoExternal {
         }
 
         JsonNode infoNode = bodyNode.path("info");
-        String mid = infoNode.path("mid").asString();
+        String mid = infoNode.path("mid").asText();
 
-        if (mid == null) {
+        if (mid == null || mid.isEmpty()) {
             throw new CustomException(404, "mid not found");
         }
 
@@ -113,13 +116,16 @@ public class AligoExternal {
 
         List<Map<String, String>> result = new ArrayList<>();
 
+        log.info("Aligo Detail Check Response: {}", response.getBody());
         JsonNode root = response.getBody().path("list");
         if (root.isMissingNode() || !root.isArray() || root.isEmpty()) {
             throw new CustomException(500, "external alimTok api error");
         } else {
             for (JsonNode node : root) {
-                String htel = node.path("phone").asString();
-                String rslt = node.path("rslt").asString("UNKNOWN");
+                String htel = node.path("phone").asText();
+                String rslt = node.path("rslt").asText();
+
+                log.info("Recipient Detail - HTEL: {}, RSLT: {}", htel, rslt);
 
                 if (htel != null) {
                     Map<String, String> value = new HashMap<>();
@@ -206,11 +212,12 @@ public class AligoExternal {
         if (listNode.isArray()) {
             for (JsonNode node : listNode) {
                 Map<String, Object> template = new HashMap<>();
-                template.put("templtCode", node.path("templtCode").asString(""));
-                template.put("templtName", node.path("templtName").asString(""));
-                template.put("templtContent", node.path("templtContent").asString(""));
-                template.put("status", node.path("status").asString(""));
-                template.put("inspStatus", node.path("inspStatus").asString(""));
+                template.put("templtCode", node.path("templtCode").asText());
+                template.put("templtName", node.path("templtName").asText());
+                template.put("templtContent", node.path("templtContent").asText());
+                template.put("buttons", node.path("buttons").toString());
+                template.put("status", node.path("status").asText());
+                template.put("inspStatus", node.path("inspStatus").asText());
 
                 // 버튼 정보 추출 (있을 경우)
                 JsonNode buttons = node.path("buttons");
@@ -218,10 +225,10 @@ public class AligoExternal {
                     List<Map<String, String>> buttonList = new ArrayList<>();
                     for (JsonNode btn : buttons) {
                         Map<String, String> b = new HashMap<>();
-                        b.put("name", btn.path("name").asString(""));
-                        b.put("linkType", btn.path("linkType").asString(""));
-                        b.put("linkMo", btn.path("linkMo").asString(""));
-                        b.put("linkPc", btn.path("linkPc").asString(""));
+                        b.put("name", btn.path("name").asText());
+                        b.put("linkType", btn.path("linkType").asText());
+                        b.put("linkMo", btn.path("linkMo").asText());
+                        b.put("linkPc", btn.path("linkPc").asText());
                         buttonList.add(b);
                     }
                     template.put("buttons", buttonList);

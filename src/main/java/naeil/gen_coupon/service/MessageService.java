@@ -235,11 +235,21 @@ public class MessageService {
             String message = replaceStandardVariables(templateEntity.getTemplateContent(), customer, couponIssue, "",
                     null);
 
+            log.info("===== Coupon AlimTalk Prepared =====");
+            log.info("Receiver: {}", customer.getCustomerHtel());
+            log.info("Template Code: {}", tplCode);
+            log.info("Subject: {}", templateEntity.getTemplateName());
+            log.info("Message: \n{}", message);
+            log.info("====================================");
+
+            String subject = templateEntity.getTemplateName() != null ? templateEntity.getTemplateName().stripTrailing()
+                    : "";
+
             template.add("receiver_" + index, customer.getCustomerHtel().replaceAll("\\D", ""));
             template.add("recvname_" + index, customer.getCustomerName());
-            template.add("subject_" + index, "[하이프리] 쿠폰 발급 안내");
+            template.add("subject_" + index, subject);
             template.add("message_" + index, message);
-            template.add("button_" + index, templateEntity.getButtonsJson());
+            template.add("button_" + index, "{\"button\": " + templateEntity.getButton() + "}");
 
             index++;
         }
@@ -250,6 +260,13 @@ public class MessageService {
             String productName, Integer totalCountOverride) {
         if (content == null)
             return "";
+
+        StringBuilder hexLog = new StringBuilder();
+        for (byte b : content.getBytes(java.nio.charset.StandardCharsets.UTF_8)) {
+            hexLog.append(String.format("%02X ", b));
+        }
+        log.info("Original Template Content HEX: [{}]", hexLog.toString());
+        log.info("Original Template Content: [{}]", content);
 
         String result = content;
         result = result.replace("#{고객명}", customer.getCustomerName() != null ? customer.getCustomerName() : "");
@@ -273,6 +290,7 @@ public class MessageService {
         result = result.replace("#{적립횟수}", "1개");
         result = result.replace("#{상품명}", productName != null ? productName : "");
 
+        log.info("Final Replaced Message: [{}]", result);
         return result;
     }
 
@@ -303,11 +321,19 @@ public class MessageService {
             String message = replaceStandardVariables(templateEntity.getTemplateContent(), customer, null, productName,
                     receiver.getTotalCount());
 
+            log.info("===== Stamp AlimTalk Prepared =====");
+            log.info("Receiver: {} ({})", customer.getCustomerName(), customer.getCustomerHtel());
+            log.info("Template Code: {}", tplCode);
+            log.info("Subject: {}", templateEntity.getTemplateName());
+            log.info("Message: \n{}", message);
+            String subject = templateEntity.getTemplateName() != null ? templateEntity.getTemplateName().stripTrailing()
+                    : "";
+
             template.add("receiver_" + index, customer.getCustomerHtel().replaceAll("\\D", ""));
             template.add("recvname_" + index, customer.getCustomerName());
-            template.add("subject_" + index, "[하이프리] 스탬프 적립 안내");
+            template.add("subject_" + index, subject);
             template.add("message_" + index, message);
-            template.add("button_" + index, templateEntity.getButtonsJson());
+            template.add("button_" + index, "{\"button\": " + templateEntity.getButton() + "}");
 
             index++;
         }
@@ -325,21 +351,21 @@ public class MessageService {
                         String content = (String) aligo.get("templtContent");
                         Object buttons = aligo.get("buttons");
 
-                        String buttonsJson = "[]";
+                        String buttonJson = "[]";
                         try {
                             if (buttons != null) {
-                                buttonsJson = objectMapper.writeValueAsString(buttons);
+                                buttonJson = objectMapper.writeValueAsString(buttons);
                             }
                         } catch (Exception e) {
                             // Ignore
                         }
 
                         MessageTemplateEntity currentTpl = messageTemplateRepository.findByTemplateCode(code)
-                                .orElse(new MessageTemplateEntity(code, name, content, buttonsJson));
+                                .orElse(new MessageTemplateEntity(code, name, content, buttonJson));
 
                         currentTpl.setTemplateName(name);
                         currentTpl.setTemplateContent(content);
-                        currentTpl.setButtonsJson(buttonsJson);
+                        currentTpl.setButton(buttonJson);
                         messageTemplateRepository.save(currentTpl);
 
                         if (code.equals(tplCode)) {

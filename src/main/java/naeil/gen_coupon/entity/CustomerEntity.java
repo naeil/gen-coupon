@@ -27,6 +27,9 @@ public class CustomerEntity {
     @Convert(converter = EncryptConverter.class)
     private String customerHtel;
 
+    @Column(name = "customer_htel_hash")
+    private String customerHtelHash;
+
     private Integer totalOrderCount = 0;
 
     @OneToMany(mappedBy = "customerEntity", cascade = CascadeType.PERSIST)

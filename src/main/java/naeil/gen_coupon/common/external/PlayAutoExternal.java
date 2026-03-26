@@ -221,46 +221,105 @@ public class PlayAutoExternal {
                     errorCode,
                     message));
         }
-
-        Set<String> excludedUniqs = new HashSet<>();
-        Set<String> blockSuppliers;
-        if (suppliersConfig.getConfigValue() != null && !suppliersConfig.getConfigValue().isBlank()) {
-            blockSuppliers = Arrays.stream(suppliersConfig.getConfigValue().split(","))
-                    .map(String::trim)
-                    .collect(Collectors.toSet());
-        } else {
-            blockSuppliers = new HashSet<>();
-        }
+        JsonNode resultsNode = responseBody.get("results");
         JsonNode prodNode = responseBody.get("results_prod");
 
-        if (prodNode != null && prodNode.isArray()) {
-            for (JsonNode node : prodNode) {
-                String uniq = node.path("uniq").asString();
-                String suppName = node.path("supp_name").asString(""); // 매입처 이름 가져오기
-
-                // uniq가 유효하고, 매입처가 차단 목록에 포함되어 있다면
-                if (uniq != null && !uniq.isEmpty() && blockSuppliers.contains(suppName)) {
-                    excludedUniqs.add(uniq);
-                }
-            }
-        }
-
-        log.info("excluded uniqs & suppName : {} & {}", excludedUniqs, blockSuppliers);
-
-        JsonNode resultsNode = responseBody.get("results");
-        if (resultsNode == null || !resultsNode.isArray() || resultsNode.isEmpty()) {
-            log.info("playauto order history empty from {} to {}", startDate, endDate);
+        if (resultsNode == null || !resultsNode.isArray()) {
             return new PlayAutoOrderHistoryResponseDTO[0];
         }
 
         ObjectMapper objectMapper = new ObjectMapper();
-        PlayAutoOrderHistoryResponseDTO[] orderHistories = objectMapper.treeToValue(
-                resultsNode,
-                PlayAutoOrderHistoryResponseDTO[].class);
 
-        return Arrays.stream(orderHistories)
-                .filter(dto -> !excludedUniqs.contains(dto.getUniq()))
-                .peek(dto -> log.info("response orderHistoryDTO = {}", dto)) // 로깅
-                .toArray(PlayAutoOrderHistoryResponseDTO[]::new);
+        // 1. results_prod를 uniq별로 그룹화
+        Map<String, List<JsonNode>> prodMapByUniq = new HashMap<>();
+        if (prodNode != null && prodNode.isArray()) {
+            for (JsonNode node : prodNode) {
+                String uniq = node.path("uniq").asText();
+                if (!uniq.isEmpty()) {
+                    prodMapByUniq.computeIfAbsent(uniq, k -> new ArrayList<>()).add(node);
+                }
+            }
+        }
+
+        // 2. 차단 공급처 목록 준비
+        String suppliersRaw = (suppliersConfig != null && suppliersConfig.getConfigValue() != null)
+                ? suppliersConfig.getConfigValue()
+                : "";
+        List<String> blockSuppliers = Arrays.stream(suppliersRaw.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
+
+        List<PlayAutoOrderHistoryResponseDTO> expandedList = new ArrayList<>();
+
+        for (JsonNode res : resultsNode) {
+            String uniq = res.path("uniq").asText();
+            List<JsonNode> products = prodMapByUniq.get(uniq);
+
+            if (products == null || products.isEmpty()) {
+                // products가 없으면 기존 results 항목 하나로 처리
+                try {
+                    PlayAutoOrderHistoryResponseDTO baseDto = objectMapper.treeToValue(res,
+                            PlayAutoOrderHistoryResponseDTO.class);
+                    baseDto.setInternalUniq(uniq);
+                    expandedList.add(baseDto);
+                } catch (Exception e) {
+                    log.error("JSON mapping error for uniq {}: {}", uniq, e.getMessage());
+                }
+            } else {
+                // products가 있으면 각 상품별로 확장
+                for (int i = 0; i < products.size(); i++) {
+                    JsonNode prod = products.get(i);
+                    String suppName = prod.path("supp_name").asText("");
+                    String prodName = prod.path("prod_name").asText("");
+
+                    // [차단 로직] 매입처가 차단 목록에 있지만, 상품명에 "단백깡"이 포함된 경우 예외적으로 허용
+                    boolean isBlocked = blockSuppliers.contains(suppName);
+                    boolean isException = prodName.contains("단백깡");
+
+                    if (isBlocked && !isException) {
+                        log.info("Excluded by supplier: uniq={}, prodName={}, suppName={}", uniq, prodName, suppName);
+                        continue;
+                    }
+
+                    try {
+                        int saleCnt = prod.path("opt_sale_cnt").asInt(1);
+                        // [Quantity Expansion] opt_sale_cnt 만큼 반복하여 개별 항목으로 확장
+                        for (int q = 0; q < saleCnt; q++) {
+                            // 결과물 복사본 생성 후 상품 정보 설정
+                            PlayAutoOrderHistoryResponseDTO expandedDto = objectMapper.treeToValue(res,
+                                    PlayAutoOrderHistoryResponseDTO.class);
+                            expandedDto.setProdNo(prod.path("prod_no").asInt());
+                            expandedDto.setProdName(prodName);
+                            expandedDto.setOptSaleCnt(saleCnt);
+                            expandedDto.setOrdOptSeq(prod.path("ord_opt_seq").asInt());
+
+                            // DB unique 제약 조건을 피하기 위해 새로운 internalUniq 생성
+                            // 형식: {uniq}_{prod_no}_{ord_opt_seq}_{prod_index}_{qty_index}
+                            String internalUniq = String.format("%s_%d_%d_%d_%d",
+                                    uniq,
+                                    expandedDto.getProdNo(),
+                                    expandedDto.getOrdOptSeq(),
+                                    i,
+                                    q);
+
+                            // 테스트용 로직: orderName이 "test"로 시작하면 타임스탬프 추가
+                            if (expandedDto.getOrderName() != null && expandedDto.getOrderName().startsWith("test")) {
+                                internalUniq += "_" + System.currentTimeMillis();
+                            }
+
+                            expandedDto.setInternalUniq(internalUniq);
+
+                            log.info("Expanded orderHistoryDTO (Qty={}) = {}", q + 1, expandedDto);
+                            expandedList.add(expandedDto);
+                        }
+                    } catch (Exception e) {
+                        log.error("JSON mapping error for product in uniq {}: {}", uniq, e.getMessage());
+                    }
+                }
+            }
+        }
+
+        return expandedList.toArray(new PlayAutoOrderHistoryResponseDTO[0]);
     }
 }

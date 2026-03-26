@@ -25,19 +25,17 @@ public class MessageTemplateEntity {
     private String templateContent;
 
     @Column(columnDefinition = "TEXT")
-    private String buttonsJson;
-
-
+    private String button;
 
     public MessageTemplateEntity(String templateCode, String templateName) {
         this.templateCode = templateCode;
         this.templateName = templateName;
     }
 
-    public MessageTemplateEntity(String templateCode, String templateName, String templateContent, String buttonsJson) {
+    public MessageTemplateEntity(String templateCode, String templateName, String templateContent, String button) {
         this.templateCode = templateCode;
         this.templateName = templateName;
         this.templateContent = templateContent;
-        this.buttonsJson = buttonsJson;
+        this.button = button;
     }
 }
