@@ -8,4 +8,6 @@ import java.util.Optional;
 public interface CustomerRepository extends JpaRepository<CustomerEntity, Integer> {
 
     Optional<CustomerEntity> findByCustomerHtel(String htel);
+
+    Optional<CustomerEntity> findByCustomerHtelHash(String htelHash);
 }

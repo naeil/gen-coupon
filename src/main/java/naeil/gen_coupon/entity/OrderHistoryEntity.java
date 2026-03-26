@@ -49,9 +49,11 @@ public class OrderHistoryEntity {
     public OrderHistoryEntity(CustomerEntity customer, ShopEntity shop, PlayAutoOrderHistoryResponseDTO dto) {
         this.customerEntity = customer;
         this.shopEntity = shop;
-        this.uniq = dto.getUniq();
+        this.uniq = dto.getInternalUniq();
         this.payAmt = dto.getPayAmt();
-        this.shopSaleName = dto.getShopSaleName();
+        this.shopSaleName = (dto.getProdName() != null && !dto.getProdName().isBlank())
+                ? dto.getProdName()
+                : dto.getShopSaleName();
         this.shopOrdNoReal = dto.getShopOrdNoReal();
         this.createDate = LocalDateTime.parse(dto.getOrdTime(), DATA_FORMAT);
         this.confirmDate = LocalDateTime.parse(dto.getConfirmDate(), DATA_FORMAT);

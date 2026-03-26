@@ -3,6 +3,7 @@ package naeil.gen_coupon.service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import naeil.gen_coupon.common.external.PlayAutoExternal;
+import naeil.gen_coupon.common.util.HashUtil;
 import naeil.gen_coupon.common.service.GenericService;
 import naeil.gen_coupon.dto.external.playauto.PlayAutoOrderHistoryResponseDTO;
 import naeil.gen_coupon.dto.querydsl.OrderSearchRequestDTO;
@@ -19,6 +20,7 @@ import naeil.gen_coupon.repository.OrderHistoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.SecretKey;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.PathBuilder;
@@ -46,6 +48,9 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
 
     @Autowired
     private OrderHistoryRepository orderHistoryRepository;
+
+    @Autowired
+    private SecretKey secretKey;
 
     @Transactional
     public List<CustomerDTO> getCustomerInfos() {
@@ -80,14 +85,19 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
 
             String rawHtel = dto.getOrderHtel();
             String cleanHtel = rawHtel != null ? cleanHtel(rawHtel) : "";
+            String htelHash = HashUtil.hash(cleanHtel, secretKey);
 
             CustomerEntity customer = customerCache.computeIfAbsent(
                     cleanHtel,
-                    htel -> customerRepository.findByCustomerHtel(htel)
-                            .orElseGet(() -> new CustomerEntity(
-                                    dto.getOrderName(),
-                                    dto.getOrderEmail(),
-                                    htel)));
+                    htel -> customerRepository.findByCustomerHtelHash(htelHash)
+                            .orElseGet(() -> {
+                                CustomerEntity newCustomer = new CustomerEntity(
+                                        dto.getOrderName(),
+                                        dto.getOrderEmail(),
+                                        htel);
+                                newCustomer.setCustomerHtelHash(htelHash);
+                                return newCustomer;
+                            }));
 
             customer.incrementOrderCount();
 
@@ -117,7 +127,7 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
         Integer standardAmt = config != null ? Integer.parseInt(config.getConfigValue()) : 20000;
 
         List<String> uniqList = Arrays.stream(orderHistoryInfos)
-                .map(PlayAutoOrderHistoryResponseDTO::getUniq)
+                .map(PlayAutoOrderHistoryResponseDTO::getInternalUniq)
                 .filter(Objects::nonNull)
                 .toList();
 
@@ -135,7 +145,10 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
                     }
                     return dto;
                 })
-                .filter(dto -> !existUniqList.contains(dto.getUniq()))
+                .filter(dto -> {
+                    boolean isTest = dto.getOrderName() != null && dto.getOrderName().startsWith("test");
+                    return isTest || !existUniqList.contains(dto.getInternalUniq());
+                })
                 .filter(dto -> isValidHtel(dto.getOrderHtel()))
                 .filter(dto -> dto.getPayAmt() >= standardAmt)
                 .toList();

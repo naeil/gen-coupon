@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 @Getter
+@Setter
 @NoArgsConstructor
 @ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -47,7 +48,6 @@ public class PlayAutoOrderHistoryResponseDTO {
     // EDITED: api 수집 + 주문정보 수정
 
     @JsonProperty("pay_amt")
-    @Setter
     private Integer payAmt;
 
     @JsonProperty("discount_amt")
@@ -82,5 +82,12 @@ public class PlayAutoOrderHistoryResponseDTO {
 
     @JsonProperty("order_email")
     private String orderEmail;
+
+    // --- Product Level Fields (from results_prod) ---
+    private Integer prodNo;
+    private String prodName;
+    private Integer optSaleCnt;
+    private Integer ordOptSeq;
+    private String internalUniq; // Generated unique key for DB
 
 }

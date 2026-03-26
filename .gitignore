@@ -38,3 +38,5 @@ out/
 
 src/resources/application.yaml
 .env
+src/main/resources/application.yaml
+src/test/java/naeil/gen_coupon/GenCouponServiceApplicationTests.java

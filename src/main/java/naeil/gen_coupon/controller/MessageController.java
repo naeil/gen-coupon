@@ -40,19 +40,19 @@ public class MessageController {
             } catch (Exception e) {
                 // Ignore
             }
-            final String buttonsJson = buttonsJsonValue;
+            final String buttonJsonStr = buttonsJsonValue;
 
             messageTemplateRepository.findByTemplateCode(code)
                 .ifPresentOrElse(
                     existing -> {
                         existing.setTemplateName(name);
                         existing.setTemplateContent(content);
-                        existing.setButtonsJson(buttonsJson);
+                        existing.setButton(buttonJsonStr);
                         messageTemplateRepository.save(existing);
                     },
                     () -> {
                         MessageTemplateEntity newTpl = 
-                            new MessageTemplateEntity(code, name, content, buttonsJson);
+                            new MessageTemplateEntity(code, name, content, buttonJsonStr);
                         messageTemplateRepository.save(newTpl);
                     }
                 );
