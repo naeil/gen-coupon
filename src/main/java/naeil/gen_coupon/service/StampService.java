@@ -73,6 +73,8 @@ public class StampService {
 
         Map<Integer, List<StampEntity>> alarmCandidates = new HashMap<>();
 
+        log.info("TotalCountMap: {}, Thresholds: {}", totalCountMap, couponThresholds);
+
         for (Map.Entry<Integer, List<StampEntity>> entry : pendingByCustomer.entrySet()) {
             Integer customerId = entry.getKey();
             List<StampEntity> customerPendingStamps = entry.getValue();
@@ -82,6 +84,9 @@ public class StampService {
             int newlyAddedCount = customerPendingStamps.size();
             int previousTotal = currentTotal - newlyAddedCount;
 
+            log.info("Checking milestones for {}: prev={}, curr={}, added={}", 
+                    customer.getCustomerName(), previousTotal, currentTotal, newlyAddedCount);
+
             // 해당 구간(이전 총합 ~ 현재 총합) 사이에 쿠폰 발급 기준이 하나라도 있는지 확인
             boolean reachedMilestone = couponThresholds.stream()
                     .anyMatch(t -> t > previousTotal && t <= currentTotal);
@@ -89,12 +94,19 @@ public class StampService {
             if (!reachedMilestone) {
                 alarmCandidates.put(customerId, customerPendingStamps);
             } else {
-                log.info("{} 고객 쿠폰 발급 기준 통과({} -> {}), 스탬프 알림 생략",
+                log.info("{} 고객 쿠폰 발급 기준 통과({} -> {}), 스탬프 알림 생략 및 상태 업데이트 시작",
                         customer.getCustomerName(), previousTotal, currentTotal);
+                // 쿠폰 발급으로 인해 알림이 생략된 스탬프들을 완료 상태로 표시
+                for (StampEntity s : customerPendingStamps) {
+                    s.setRslt("0");
+                    s.setMid("COUPON_ISSUED_SKIPPED");
+                }
+                stampRepository.saveAll(customerPendingStamps);
             }
         }
 
         if (!alarmCandidates.isEmpty()) {
+            log.info("Sending stamp alimtok for customers: {}", alarmCandidates.keySet());
             messageService.sendStampAlimTok(alarmCandidates, totalCountMap);
         }
     }

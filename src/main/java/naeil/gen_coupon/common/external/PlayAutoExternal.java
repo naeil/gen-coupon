@@ -261,12 +261,9 @@ public class PlayAutoExternal {
                 boolean hasValidProduct = false;
                 for (JsonNode prod : products) {
                     String suppName = prod.path("supp_name").asString("");
-                    String prodName = prod.path("prod_name").asString("");
-                    
                     boolean isBlocked = blockSuppliers.contains(suppName);
-                    boolean isException = prodName.contains("단백깡");
                     
-                    if (!isBlocked || isException) {
+                    if (!isBlocked) {
                         hasValidProduct = true;
                         break;
                     }
