@@ -22,10 +22,11 @@ CREATE TABLE `coupon_policy` (
 
 CREATE TABLE `customer` (
   `customer_id` int(11) NOT NULL AUTO_INCREMENT,
-  `total_order_count` int(11) DEFAULT NULL,
+  `total_order_count` int(11) NOT NULL DEFAULT 0,
   `customer_email` varchar(255) DEFAULT NULL,
   `customer_htel` varchar(255) DEFAULT NULL,
   `customer_name` varchar(255) DEFAULT NULL,
+  `customer_htel_hash` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`customer_id`),
   UNIQUE KEY `UKt54tutjhc2rmci74chccbyh8b` (`customer_htel`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
@@ -51,7 +52,7 @@ CREATE TABLE `message_template` (
   `template_code` varchar(255) NOT NULL,
   `template_name` varchar(255) DEFAULT NULL,
   `template_content` TEXT DEFAULT NULL,
-  `buttons_json` TEXT DEFAULT NULL,
+  `button` TEXT DEFAULT NULL,
   PRIMARY KEY (`template_id`),
   UNIQUE KEY `UK_message_template_code` (`template_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;

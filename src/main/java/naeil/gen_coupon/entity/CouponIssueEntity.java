@@ -31,11 +31,11 @@ public class CouponIssueEntity {
     private LocalDateTime createDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customerId")
+    @JoinColumn(name = "customer_id")
     private CustomerEntity customerEntity;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "couponId")
+    @JoinColumn(name = "coupon_id")
     private CouponEntity couponEntity;
 
     @Builder

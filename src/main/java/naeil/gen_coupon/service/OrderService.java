@@ -145,10 +145,7 @@ public class OrderService extends GenericService<OrderHistoryEntity, QOrderHisto
                     }
                     return dto;
                 })
-                .filter(dto -> {
-                    boolean isTest = dto.getOrderName() != null && dto.getOrderName().startsWith("test");
-                    return isTest || !existUniqList.contains(dto.getInternalUniq());
-                })
+                .filter(dto -> !existUniqList.contains(dto.getInternalUniq()))
                 .filter(dto -> isValidHtel(dto.getOrderHtel()))
                 .filter(dto -> dto.getPayAmt() >= standardAmt)
                 .toList();

@@ -18,10 +18,10 @@ public class StampEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer stampId;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customerId")
+    @JoinColumn(name = "customer_id")
     private CustomerEntity customerEntity;
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "orderHistoryId")
+    @JoinColumn(name = "order_history_id")
     private OrderHistoryEntity orderHistoryEntity;
     private LocalDate createDate;
     private Integer issueId;

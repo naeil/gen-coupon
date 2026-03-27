@@ -14,6 +14,9 @@ import java.util.List;
 public interface CouponIssueRepository extends JpaRepository<CouponIssueEntity, Integer> {
 
     @Query("SELECT c FROM CouponIssueEntity c " +
+            "JOIN FETCH c.customerEntity " +
+            "JOIN FETCH c.couponEntity ce " +
+            "JOIN FETCH ce.messageTemplateEntity " +
             "WHERE (c.rslt IS NULL OR c.rslt <> '0') " +
             "AND c.retryCount < 3")
     List<CouponIssueEntity> findCouponsToSend();
