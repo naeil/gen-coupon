@@ -30,11 +30,11 @@ public class CouponEntity {
     private List<CouponIssueEntity> couponIssueEntities;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "couponPolicyId")
+    @JoinColumn(name = "coupon_policy_id")
     private CouponPolicyEntity couponPolicyEntity;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "templateId")
+    @JoinColumn(name = "template_id")
     private MessageTemplateEntity messageTemplateEntity;
 
 }

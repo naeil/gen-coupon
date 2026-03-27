@@ -21,11 +21,11 @@ public class OrderHistoryEntity {
     private Integer orderHistoryId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customerId")
+    @JoinColumn(name = "customer_id")
     private CustomerEntity customerEntity;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "shopId")
+    @JoinColumn(name = "shop_id")
     private ShopEntity shopEntity;
 
     @Column(unique = true)
@@ -51,9 +51,9 @@ public class OrderHistoryEntity {
         this.shopEntity = shop;
         this.uniq = dto.getInternalUniq();
         this.payAmt = dto.getPayAmt();
-        this.shopSaleName = (dto.getProdName() != null && !dto.getProdName().isBlank())
-                ? dto.getProdName()
-                : dto.getShopSaleName();
+        this.shopSaleName = (dto.getShopSaleName() != null && !dto.getShopSaleName().isBlank())
+                ? dto.getShopSaleName()
+                : dto.getProdName();
         this.shopOrdNoReal = dto.getShopOrdNoReal();
         this.createDate = LocalDateTime.parse(dto.getOrdTime(), DATA_FORMAT);
         this.confirmDate = LocalDateTime.parse(dto.getConfirmDate(), DATA_FORMAT);
