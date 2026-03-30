@@ -118,8 +118,7 @@ public class StampService {
         List<StampEntity> newStamps = orders.stream()
                 .map(order -> {
                     StampEntity stamp = new StampEntity(order);
-                    // 백필 시에도 정합성을 위해 고객의 누적 주문 횟수 증가
-                    order.getCustomerEntity().incrementOrderCount();
+                    // 백필 대상은 이미 과거에 처리됐어야 할 주문이므로 카운트를 다시 증가시키지 않음
                     stamp.setRslt("0"); // Mark as already processed to avoid notifications
                     return stamp;
                 })

@@ -41,33 +41,13 @@ public class MessageService {
     private ObjectMapper objectMapper;
 
     public void sendCouponAlimTok() {
-        // test용 로직
+
         List<CouponIssueEntity> couponIssueEntities = findCouponsToSend();
 
-        List<String> targetNaList = List.of("test", "test2", "test_재연", "test_한얼");
-
-        List<CouponIssueEntity> testOnlyList = couponIssueEntities.stream()
-                .filter(c -> targetNaList.contains(c.getCustomerEntity().getCustomerName()))
-                .collect(Collectors.toList());
-
-        if (testOnlyList.isEmpty()) {
-            log.info("테스트용 고객 데이터가 없어 발송을 중단합니다.");
-            return;
-        }
-
-        log.info("테스트 발송 대상 리스트 : {}", testOnlyList);
-
         // 템플릿 코드별로 그룹화
-        Map<String, List<CouponIssueEntity>> groupedByTemplate = testOnlyList.stream()
+        Map<String, List<CouponIssueEntity>> groupedByTemplate = couponIssueEntities.stream()
                 .filter(c -> c.getCouponEntity() != null && c.getCouponEntity().getMessageTemplateEntity() != null)
                 .collect(Collectors.groupingBy(c -> c.getCouponEntity().getMessageTemplateEntity().getTemplateCode()));
-
-        // Map<String, List<CouponIssueEntity>> groupedByTemplate =
-        // couponIssueEntities.stream()
-        // .filter(c -> c.getCouponEntity() != null &&
-        // c.getCouponEntity().getMessageTemplateEntity() != null)
-        // .collect(Collectors.groupingBy(c ->
-        // c.getCouponEntity().getMessageTemplateEntity().getTemplateCode()));
 
         for (Map.Entry<String, List<CouponIssueEntity>> entry : groupedByTemplate.entrySet()) {
             String tplCode = entry.getKey();
@@ -83,6 +63,11 @@ public class MessageService {
                 log.info("Sent Coupon Alarm - TemplateCode: {}, Count: {}", tplCode, group.size());
             } catch (Exception e) {
                 log.error("coupon alimtok error (tpl: {}): {}", tplCode, e.getMessage());
+                for (CouponIssueEntity couponIssue : group) {
+                    couponIssue.updateRslt("ERROR");
+                    couponIssue.increaseRetryCount();
+                }
+                couponIssueRepository.saveAll(group);
             }
         }
     }
@@ -90,19 +75,12 @@ public class MessageService {
     public void sendStampAlimTok(Map<Integer, List<StampEntity>> targetMap, Map<Integer, Integer> countMap) {
         List<CustomerSendDTO> receivers = new ArrayList<>();
 
-        List<String> testTargetNames = List.of("test", "test2", "test_재연", "test_한얼");
-
         for (Integer customerId : targetMap.keySet()) {
             List<StampEntity> stamps = targetMap.get(customerId);
             if (stamps == null || stamps.isEmpty())
                 continue;
 
             CustomerEntity customer = stamps.get(0).getCustomerEntity(); // 대표 고객 정보
-
-            // test 용 로직
-            if (!testTargetNames.contains(customer.getCustomerName())) {
-                continue;
-            }
 
             // 대표 스탬프(0번째)의 주문에서 상품명 추출 - customer와 같은 stamps.get(0) 사용
             StampEntity representativeStamp = stamps.get(0);
@@ -115,10 +93,8 @@ public class MessageService {
             receivers.add(new CustomerSendDTO(customer, totalCount, stamps, productName));
         }
 
-        // if(receivers.isEmpty()) return;
-
         if (receivers.isEmpty()) {
-            log.info("테스트용 'test' 고객 스탬프 데이터가 없어 발송을 중단합니다.");
+            log.info("발송할 고객 데이터가 없어 발송을 중단합니다.");
             return;
         }
 
@@ -133,6 +109,15 @@ public class MessageService {
                     receivers.size());
         } catch (Exception e) {
             log.error("alimtok error : {}", e.getMessage());
+            List<StampEntity> midUpdate = new ArrayList<>();
+            for (CustomerSendDTO customerSendDTO : receivers) {
+                for (StampEntity stamp : customerSendDTO.getStamps()) {
+                    stamp.setRslt("ERROR");
+                    stamp.increaseRetryCount();
+                    midUpdate.add(stamp);
+                }
+            }
+            stampRepository.saveAll(midUpdate);
         }
     }
 
@@ -157,6 +142,8 @@ public class MessageService {
         }
         stampRepository.saveAll(midUpdate);
     }
+
+
 
     @Transactional
     public void updateCouponSendResult() {
@@ -261,13 +248,6 @@ public class MessageService {
         if (content == null)
             return "";
 
-        StringBuilder hexLog = new StringBuilder();
-        for (byte b : content.getBytes(java.nio.charset.StandardCharsets.UTF_8)) {
-            hexLog.append(String.format("%02X ", b));
-        }
-        log.info("Original Template Content HEX: [{}]", hexLog.toString());
-        log.info("Original Template Content: [{}]", content);
-
         String result = content;
         result = result.replace("#{고객명}", customer.getCustomerName() != null ? customer.getCustomerName() : "");
 
@@ -340,6 +320,7 @@ public class MessageService {
         return template;
     }
 
+    @Transactional
     private MessageTemplateEntity getTemplateOrSync(String tplCode) {
         return messageTemplateRepository.findByTemplateCode(tplCode)
                 .orElseGet(() -> {

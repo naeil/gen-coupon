@@ -468,8 +468,8 @@
                             <td class="text-nowrap">${formatDate(order.createDate)}</td>
                             <td class="text-start ps-4">${order.shopSaleName}</td>
                             <td class="fw-bold text-primary text-nowrap">1</td>
-                            <td class="text-start">
-                                <span class="badge border bg-danger-subtle text-danger border-danger-subtle text-nowrap text-start">
+                            <td class="text-center">
+                                <span class="badge border ${(order.rslt === '알림톡 발송 완료' || order.rslt === '알림톡 발송 생략 (쿠폰 발급)') ? 'bg-success-subtle text-success border-success-subtle' : 'bg-danger-subtle text-danger border-danger-subtle'} text-nowrap text-center">
                                     ${order.rslt || '메시지 전송 실패'}
                                 </span>
                             </td>
@@ -488,8 +488,8 @@
                             <td class="text-muted text-nowrap">${formatDate(coupon.createDate)}</td>
                             <td class="text-center fw-bold">${coupon.imwebCouponName}</td>
                             <td class="text-primary font-monospace text-nowrap">${coupon.issuedCouponCode}</td>
-                            <td class="text-start">
-                                <span class="badge border ${(coupon.rslt === '알림톡 발송 완료' || !coupon.rslt) ? 'bg-success-subtle text-success border-success-subtle' : 'bg-danger-subtle text-danger border-danger-subtle'} text-nowrap text-start">
+                            <td class="text-center">
+                                <span class="badge border ${(coupon.rslt === '알림톡 발송 완료' || !coupon.rslt) ? 'bg-success-subtle text-success border-success-subtle' : 'bg-danger-subtle text-danger border-danger-subtle'} text-nowrap text-center">
                                     ${coupon.rslt === '알림톡 발송 완료' ? coupon.rslt : '알림톡 발송 실패 : ' + (coupon.rslt || '알 수 없는 오류')}
                                 </span>
                             </td>

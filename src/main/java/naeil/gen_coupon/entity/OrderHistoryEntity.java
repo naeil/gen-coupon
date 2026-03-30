@@ -56,6 +56,17 @@ public class OrderHistoryEntity {
                 : dto.getProdName();
         this.shopOrdNoReal = dto.getShopOrdNoReal();
         this.createDate = LocalDateTime.parse(dto.getOrdTime(), DATA_FORMAT);
-        this.confirmDate = LocalDateTime.parse(dto.getConfirmDate(), DATA_FORMAT);
+        this.confirmDate = parseDateTime(dto.getConfirmDate());
+    }
+
+    private static LocalDateTime parseDateTime(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return LocalDateTime.parse(value, DATA_FORMAT);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
