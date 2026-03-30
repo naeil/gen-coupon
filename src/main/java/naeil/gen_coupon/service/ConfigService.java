@@ -39,22 +39,11 @@ public class ConfigService {
     @Transactional
     public SettingResponse getConfig() {
 
-        List<ConfigResponse> configs = configRepository.findAll().stream().map(ConfigResponse::toDTO).toList();
-        
-        // stamp_template_id가 있으면 이름을 찾아서 임시로 추가 (프론트 표시용)
-        List<ConfigResponse> enrichedConfigs = configs.stream().map(c -> {
-            if ("stamp_template_id".equals(c.getConfigKey()) && c.getConfigValue() != null) {
-                messageTemplateRepository.findByTemplateCode(c.getConfigValue()).ifPresent(tpl -> {
-                    // ConfigResponse는 DTO이므로 별도의 필드가 없으면 동적으로 처리하기 어려울 수 있으나,
-                    // 일단은 맵이나 다른 방식으로 전달하거나 DTO에 필드를 추가해야 함.
-                    // 여기서는 간단하게 새로운 ConfigResponse를 리스트에 추가하여 전달함 (프론트에서 th:value로 쓰기 위함)
-                });
-            }
-            return c;
-        }).collect(Collectors.toList());
+        List<ConfigResponse> enrichedConfigs = configRepository.findAll().stream()
+                .map(ConfigResponse::toDTO)
+                .collect(Collectors.toList());
 
-        // 더 깔끔한 방법: 별도의 맵으로 전달하거나 DTO 수정
-        // 현재 settings.html에서 configMap['stamp_template_name']을 기대하므로 이를 위해 ConfigResponse 리스트에 추가
+        // stamp_template_id가 있으면 템플릿 이름을 별도 항목으로 추가 (프론트 표시용)
         configRepository.findByConfigKey("stamp_template_id").ifPresent(config -> {
             messageTemplateRepository.findByTemplateCode(config.getConfigValue()).ifPresent(tpl -> {
                 enrichedConfigs.add(ConfigResponse.builder()
@@ -93,17 +82,17 @@ public class ConfigService {
                     .collect(Collectors.toMap(ConfigEntity::getConfigKey, c -> c));
 
             String newCollectTime = configMap.get("collect_time");
-            
+
             for (Map.Entry<String, String> entry : configMap.entrySet()) {
                 String key = entry.getKey();
                 String newValue = entry.getValue();
-                
+
                 ConfigEntity config = existingMap.get(key);
                 if (config == null) {
                     config = new ConfigEntity();
                     config.setConfigKey(key);
                 }
-                
+
                 String currentValue = config.getConfigValue();
 
                 // 스케줄 시간 값 변경 확인
@@ -116,16 +105,16 @@ public class ConfigService {
                 config.setConfigValue(newValue);
                 configRepository.save(config);
             }
-            
+
             couponService.updateCoupon(setting.getCoupons());
 
             // 새로운 시간으로 스케줄 재시작 (collect_time 또는 collect_period 변경 시)
             if (scheduleTimeChanged) {
                 // 이번 업데이트에 collect_time이 포함되어 있으면 그 값을 사용, 없으면 DB에서 조회
-                String interval = (newCollectTime != null && !newCollectTime.isBlank()) 
-                        ? newCollectTime 
+                String interval = (newCollectTime != null && !newCollectTime.isBlank())
+                        ? newCollectTime
                         : getValue("collect_time");
-                
+
                 log.info("Restarting scheduler with interval: {}", interval);
                 scheduler.start(interval);
             }

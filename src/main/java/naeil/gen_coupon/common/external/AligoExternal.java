@@ -140,40 +140,15 @@ public class AligoExternal {
     }
 
     public List<Map<String, String>> sendResultWithRetry(String mid) {
+        List<Map<String, String>> result = sendResult(mid);
 
-        int maxRetry = 3;
-        int retryCount = 0;
-
-        List<Map<String, String>> lastResult;
-
-        do {
-            lastResult = sendResult(mid);
-
-            if (!hasPending(lastResult)) {
-                log.info("AlimTok result completed. mid={}", mid);
-                return lastResult;
-            }
-
-            retryCount++;
-            log.warn("AlimTok result pending. retry={}/{}", retryCount, maxRetry);
-
-            try {
-                Thread.sleep(10_000);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
-
-        } while (retryCount < maxRetry);
-
-        for (Map<String, String> r : lastResult) {
-            String rslt = r.get("rslt");
-            if (rslt == null || rslt.isBlank()) {
-                r.put("rslt", "TO");
-            }
+        if (hasPending(result)) {
+            log.info("AlimTok result still pending for mid={}. Will retry on next schedule cycle.", mid);
+        } else {
+            log.info("AlimTok result completed. mid={}", mid);
         }
 
-        return lastResult;
+        return result;
     }
 
     public List<Map<String, Object>> getTemplateList() {

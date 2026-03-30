@@ -22,8 +22,21 @@ public class OrderHistoryDTO {
     private LocalDateTime createDate;
     private LocalDateTime confirmDate;
     private StampDTO stampDTO;
+    private String rslt;
 
     public static OrderHistoryDTO toDTO(OrderHistoryEntity orderHistory) {
+        String rsltMsg = "";
+        if (orderHistory.getStampEntity() != null) {
+            String mid = orderHistory.getStampEntity().getMid();
+            String code = orderHistory.getStampEntity().getRslt();
+            
+            if ("COUPON_ISSUED_SKIPPED".equals(mid)) {
+                rsltMsg = "알림톡 발송 생략 (쿠폰 발급)";
+            } else {
+                rsltMsg = naeil.gen_coupon.enums.AlimTokResult.getMessageByCode(code);
+            }
+        }
+
         return OrderHistoryDTO.builder()
                 .orderHistoryId(orderHistory.getOrderHistoryId())
                 .uniq(orderHistory.getUniq())
@@ -36,6 +49,7 @@ public class OrderHistoryDTO {
                 .createDate(orderHistory.getCreateDate())
                 .confirmDate(orderHistory.getConfirmDate())
                 .stampDTO(StampResponse.toDTO(orderHistory.getStampEntity()))
+                .rslt(rsltMsg)
                 .build();
     }
 }
