@@ -3,7 +3,7 @@ VALUES
 ('minimum_amount', '20000'),
 ('collect_period', 'now'),
 ('collect_time', '24h'),
-('blocked_suppliers', '국민돈까스,[샘플발송]국민돈까스,내일그룹_하이프리,내일그룹_샘플');
+('blocked_suppliers', '국민돈까스,[샘플발송]국민돈까스,내일그룹_샘플');
 
 
 INSERT IGNORE INTO shop (shop_code, shop_name)
