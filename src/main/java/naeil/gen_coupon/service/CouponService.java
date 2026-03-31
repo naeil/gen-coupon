@@ -153,47 +153,36 @@ public class CouponService extends GenericService<CouponIssueEntity, QCouponIssu
     }
 
     public List<ImWebCouponItemDTO> fetchIssueCouponsFromImweb(String couponCode, Integer needCount, Long usedCount) {
-        // 아임웹 API 호출 로직 구현
         int PAGE_SIZE = 100;
-        Long totalNeeded = Long.valueOf(usedCount) + needCount;
+        long startIdx = (usedCount == null ? 0 : usedCount);
+        long endIdx = startIdx + needCount - 1;
 
-        // 총 필요한 마지막 페이지
-        int lastPageNeeded = (int) Math.ceil((double) totalNeeded / PAGE_SIZE);
-
-        // 이미 사용한 마지막 페이지
-        int lastUsedPage = (usedCount == 0)
-                ? 0
-                : (int) Math.ceil((double) usedCount / PAGE_SIZE);
-
-        // 추가로 호출해야 할 페이지 수
-        int pagesToCall = Math.max(lastPageNeeded - lastUsedPage, 0);
+        long startPage = (startIdx / PAGE_SIZE) + 1;
+        long endPage = (endIdx / PAGE_SIZE) + 1;
 
         List<ImWebCouponItemDTO> mergedResults = new ArrayList<>();
-
         String token = apiClient.getImWebToken();
 
-        int skipInFirstPage = (int) (usedCount % PAGE_SIZE);
-        for (int i = 1; i <= pagesToCall; i++) {
-            int pageToCall = lastUsedPage + i;
+        for (long page = startPage; page <= endPage; page++) {
+            List<ImWebCouponItemDTO> pageResult = apiClient.fetchIssuedCoupons(token, couponCode, PAGE_SIZE, (int) page);
 
-            // imweb API 호출
-            List<ImWebCouponItemDTO> pageResult = apiClient.fetchIssuedCoupons(token, couponCode, PAGE_SIZE,
-                    pageToCall);
-
-            if (i == 1 && skipInFirstPage > 0) {
-                // 첫 페이지에서만 이미 사용된 부분 skip
-                pageResult = pageResult.stream()
-                        .skip(skipInFirstPage)
-                        .toList();
+            if (page == startPage) {
+                int skipInFirstPage = (int) (startIdx % PAGE_SIZE);
+                if (skipInFirstPage > 0) {
+                    pageResult = pageResult.stream()
+                            .skip(skipInFirstPage)
+                            .toList();
+                }
             }
-
             mergedResults.addAll(pageResult);
+        }
+
+        if (mergedResults.size() > needCount) {
+            return mergedResults.subList(0, needCount);
         }
 
         return mergedResults;
     }
-
-
 
     @Transactional(readOnly = true)
     public List<CouponIssueResponse> searchCouponIssueList(CouponSearchRequestDTO requestDTO) {
@@ -281,18 +270,20 @@ public class CouponService extends GenericService<CouponIssueEntity, QCouponIssu
             coupon.setExpiredDate(dto.getExpiredDate());
             // 템플릿 처리: 코드와 이름을 모두 확인하여 처리
             if (dto.getAlimTalkTemplateCode() != null && !dto.getAlimTalkTemplateCode().isEmpty()) {
-                MessageTemplateEntity template = messageTemplateRepository.findByTemplateCode(dto.getAlimTalkTemplateCode())
+                MessageTemplateEntity template = messageTemplateRepository
+                        .findByTemplateCode(dto.getAlimTalkTemplateCode())
                         .orElseGet(() -> {
-                            MessageTemplateEntity newTemplate = new MessageTemplateEntity(dto.getAlimTalkTemplateCode(), dto.getAlimTalkTemplateName());
+                            MessageTemplateEntity newTemplate = new MessageTemplateEntity(dto.getAlimTalkTemplateCode(),
+                                    dto.getAlimTalkTemplateName());
                             return messageTemplateRepository.save(newTemplate);
                         });
-                
+
                 // 이미 존재하는 템플릿이지만 이름이 없는 경우 업데이트 (선택 사항)
                 if (template.getTemplateName() == null || template.getTemplateName().isEmpty()) {
                     template.setTemplateName(dto.getAlimTalkTemplateName());
                     messageTemplateRepository.save(template);
                 }
-                
+
                 coupon.setMessageTemplateEntity(template);
             } else {
                 coupon.setMessageTemplateEntity(null);
