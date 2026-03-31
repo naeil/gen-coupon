@@ -48,16 +48,6 @@ public class AligoExternal {
         body.add("sender", sender);
         body.addAll(messageTemplate);
 
-        log.info("===== Aligo Request Details =====");
-        log.info("URL: https://kakaoapi.aligo.in/akv10/alimtalk/send/");
-        log.info("Template Code: {}", messageTemplate.getFirst("tpl_code"));
-        messageTemplate.forEach((key, values) -> {
-            if (key.startsWith("receiver_") || key.startsWith("message_") || key.startsWith("subject_") || key.startsWith("button_") || key.startsWith("recvname_") || key.equals("image")) {
-                log.info("Param: {} = {}", key, values);
-            }
-        });
-        log.info("================================");
-
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 
         ResponseEntity<JsonNode> response;

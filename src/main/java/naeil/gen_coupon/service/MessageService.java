@@ -143,8 +143,6 @@ public class MessageService {
         stampRepository.saveAll(midUpdate);
     }
 
-
-
     @Transactional
     public void updateCouponSendResult() {
 
@@ -167,7 +165,7 @@ public class MessageService {
             for (CouponIssueEntity couponIssue : couponIssueEntitiesWithMid) {
                 String htel = couponIssue.getCustomerEntity().getCustomerHtel().replaceAll("\\D", "");
                 String rslt = rsltMap.get(htel);
-                couponIssue.updateRslt(rslt == null || rslt.isBlank() ? "UNKNOWN" : rslt);
+                couponIssue.updateRslt(rslt == null || rslt.isBlank() ? "WAIT" : rslt);
             }
         }
     }
@@ -194,7 +192,7 @@ public class MessageService {
             for (StampEntity stamp : stampEntitiesWithMid) {
                 String htel = stamp.getCustomerEntity().getCustomerHtel().replaceAll("\\D", "");
                 String rslt = rsltMap.get(htel);
-                stamp.setRslt(rslt == null || rslt.isBlank() ? "UNKNOWN" : rslt);
+                stamp.setRslt(rslt == null || rslt.isBlank() ? "WAIT" : rslt);
             }
         }
     }
