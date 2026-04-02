@@ -299,11 +299,6 @@ public class MessageService {
             String message = replaceStandardVariables(templateEntity.getTemplateContent(), customer, null, productName,
                     receiver.getTotalCount());
 
-            log.info("===== Stamp AlimTalk Prepared =====");
-            log.info("Receiver: {} ({})", customer.getCustomerName(), customer.getCustomerHtel());
-            log.info("Template Code: {}", tplCode);
-            log.info("Subject: {}", templateEntity.getTemplateName());
-            log.info("Message: \n{}", message);
             String subject = templateEntity.getTemplateName() != null ? templateEntity.getTemplateName().stripTrailing()
                     : "";
 

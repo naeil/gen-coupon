@@ -84,7 +84,6 @@ public class PlayAutoExternal {
         }
 
         token = root.get(0).path("token").asString("");
-        log.info("token : {}", token);
 
         return token;
     }
@@ -103,8 +102,6 @@ public class PlayAutoExternal {
                 .queryParam("used", "true")
                 .queryParam("usable_shop", "true")
                 .toUriString();
-
-        log.info("requestUrl : {}", requestUrl);
 
         ResponseEntity<String> response;
         ObjectMapper objectMapper = new ObjectMapper();
@@ -254,21 +251,21 @@ public class PlayAutoExternal {
         for (JsonNode res : resultsNode) {
             String uniq = res.path("uniq").asString();
             List<JsonNode> products = prodMapByUniq.getOrDefault(uniq, Collections.emptyList());
-            
-            // [차단 로직 복구] 
+
+            // [차단 로직 복구]
             // 주문 내 모든 상품이 차단 대상이고 "단백깡" 예외에도 해당하지 않으면 이 주문은 제외합니다.
             if (!products.isEmpty()) {
                 boolean hasValidProduct = false;
                 for (JsonNode prod : products) {
                     String suppName = prod.path("supp_name").asString("");
                     boolean isBlocked = blockSuppliers.contains(suppName);
-                    
+
                     if (!isBlocked) {
                         hasValidProduct = true;
                         break;
                     }
                 }
-                
+
                 if (!hasValidProduct) {
                     log.info("Excluded by block list: uniq={}", uniq);
                     continue;
@@ -276,16 +273,17 @@ public class PlayAutoExternal {
             }
 
             try {
-                PlayAutoOrderHistoryResponseDTO dto = objectMapper.treeToValue(res, PlayAutoOrderHistoryResponseDTO.class);
+                PlayAutoOrderHistoryResponseDTO dto = objectMapper.treeToValue(res,
+                        PlayAutoOrderHistoryResponseDTO.class);
                 dto.setInternalUniq(uniq);
-                
+
                 // 단일 품목 정보를 대표로 설정
                 if (!products.isEmpty()) {
                     JsonNode firstProd = products.get(0);
                     dto.setProdNo(firstProd.path("prod_no").asInt());
                     dto.setProdName(firstProd.path("prod_name").asString());
                 }
-                
+
                 dtoList.add(dto);
             } catch (Exception e) {
                 log.error("JSON mapping error for uniq {}: {}", uniq, e.getMessage());
