@@ -65,7 +65,6 @@ public class ImWebExternal {
         if (token.isEmpty()) {
             throw new CustomException(502, "Invalid auth response");
         }
-        log.info("token : {}", token);
 
         return token;
     }
@@ -82,8 +81,6 @@ public class ImWebExternal {
                 .queryParam("limit", limit)
                 .queryParam("offset", offset)
                 .toUriString();
-
-        log.info("requestUrl : {}", requestUrl);
 
         ResponseEntity<ImWebCouponIssueResponseDTO> response;
         try {
@@ -111,8 +108,6 @@ public class ImWebExternal {
                 .queryParam("limit", limit)
                 .queryParam("offset", offset)
                 .toUriString();
-
-        log.info("requestUrl : {}", requestUrl);
 
         ResponseEntity<ImWebCouponResponseDTO> response;
         try {
